@@ -35,6 +35,30 @@
       #clients-table tr td{background:#fff}.client-row-open td{background:#fffdf7}.client-row-done td{background:#eff9f1}.client-row-open:hover td,.client-row-done:hover td{background:#f5fbf9}.client-row-open .status-select{border-color:#f1dfb2}.client-row-done .status-select{border-color:#bfe2d2}
       @media(min-width:901px){#clients-view .table-wrap table{table-layout:fixed;min-width:0}#clients-view .table-wrap th:nth-child(1),#clients-view .table-wrap td:nth-child(1){width:12%}#clients-view .table-wrap th:nth-child(2),#clients-view .table-wrap td:nth-child(2){width:12%}#clients-view .table-wrap th:nth-child(3),#clients-view .table-wrap td:nth-child(3){width:12%}#clients-view .table-wrap th:nth-child(4),#clients-view .table-wrap td:nth-child(4){width:18%}#clients-view .table-wrap th:nth-child(5),#clients-view .table-wrap td:nth-child(5){width:9%}#clients-view .table-wrap th:nth-child(6),#clients-view .table-wrap td:nth-child(6){width:10%}#clients-view .table-wrap th:nth-child(7),#clients-view .table-wrap td:nth-child(7){width:9%}#clients-view .table-wrap th:nth-child(8),#clients-view .table-wrap td:nth-child(8){width:12%}#clients-view .table-wrap th:nth-child(9),#clients-view .table-wrap td:nth-child(9){width:12%}}
     </style>
+    <style>
+      :root{--ink:#183442;--muted:#6f878c;--nav:#12384a;--accent:#e47752;--mint:#2c806d;--line:#d9e7e3;--surface:#fff;--canvas:#f2f7f5}
+      body{background:var(--canvas);color:var(--ink);font-size:14px}
+      .sidebar{background:linear-gradient(180deg,#10394b 0%,#0d3040 100%);box-shadow:5px 0 22px rgba(13,48,64,.12)}
+      .brand{padding-bottom:30px}.brand-mark{box-shadow:0 5px 13px rgba(244,201,93,.2)}
+      .nav-item{font-weight:650;letter-spacing:.01em}.nav-item.active{box-shadow:inset 3px 0 #f4c95d,0 5px 14px rgba(5,27,37,.14)}
+      .topbar{height:88px;padding:20px 36px;background:rgba(255,255,255,.96)}
+      .topbar .eyebrow{color:#6c8c92;font-size:16px;font-weight:800;letter-spacing:.14em}
+      .view{padding:30px 36px 48px}.hero-row{margin-bottom:22px}.hero-row h2{font-size:30px;letter-spacing:-.025em}.hero-row p{font-size:15px}
+      .primary{border-radius:11px;box-shadow:0 5px 14px rgba(228,119,82,.2);padding:13px 18px}
+      .metric-grid{gap:14px;margin-bottom:20px}.metric{border-radius:14px;padding:16px 18px;box-shadow:0 2px 10px rgba(24,52,66,.04)}.metric-label{font-size:13px}.metric-value{font-size:28px;letter-spacing:-.03em}
+      .attention-panel{gap:12px;margin:-3px 0 20px}.attention-card{border-radius:12px;padding:13px 15px}
+      .toolbar{gap:11px;margin-bottom:14px}.search,.toolbar select{border-radius:11px;min-height:44px}.search input{font-size:14px}
+      .panel{border-radius:15px;box-shadow:0 3px 14px rgba(24,52,66,.045)}.panel-heading{padding:18px 20px 14px}.panel-heading h3{font-size:17px}
+      table{font-size:13px}th{padding:13px 10px;background:#f8fbfa;font-size:10px;letter-spacing:.09em}td{padding:14px 10px;line-height:1.3}
+      .status-select{min-height:35px;border-radius:9px;font-weight:700}.edit-btn,.done-btn{border-radius:9px;min-height:35px}
+      #center-table tr.row-overdue td{background:#fff0f0}#center-table tr.row-soon td{background:#fff9df}#center-table tr.row-ok td{background:#eff9f1}
+      #center-table tr.row-overdue td:first-child{box-shadow:inset 4px 0 #e18484}#center-table tr.row-soon td:first-child{box-shadow:inset 4px 0 #e8c75d}#center-table tr.row-ok td:first-child{box-shadow:inset 4px 0 #8cc9a4}
+      .comment-input{border-radius:9px;line-height:1.45;background:#fcfefd}
+      .people-tabs{margin-top:0;margin-bottom:20px}.person-tab{font-weight:650}.person-tab.active{box-shadow:0 4px 10px rgba(36,87,107,.18)}
+      .modal-card{border-radius:18px}.modal-heading{padding-bottom:2px}
+      @media(min-width:901px){.view{padding-left:36px;padding-right:36px}.table-wrap td{font-size:13px}}
+      @media(max-width:620px){.topbar{padding:16px}.topbar .eyebrow{font-size:13px}.view{padding:22px 14px 34px}.hero-row h2{font-size:26px}.metric-grid{grid-template-columns:repeat(2,1fr)}.metric-value{font-size:23px}.attention-panel{grid-template-columns:repeat(2,1fr)}}
+    </style>
   </head>
   <body>
     <div class="app-shell">
