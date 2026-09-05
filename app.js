@@ -204,3 +204,5 @@ document.querySelector('[data-new-client]')?.addEventListener('click',()=>openCl
 const previousClientAwareLoad=loadRemoteData;loadRemoteData=async function(){await previousClientAwareLoad();try{const d=await kurroRequest({api:'data'});loadRemoteClients(d.clients)}catch(e){}};
 document.querySelectorAll('.nav-item').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.view==='clients')$('page-title').textContent='Pendientes con clientes'}));
 loadRemoteData();
+async function deleteClientEditor(){const i=clientEditorIndex,r=clientRows[i];if(!r||!confirm('¿Quieres eliminar este pendiente?'))return;clientRows.splice(i,1);saveClientData();closeClientEditor();renderClients();if(r.serverRow){try{await remoteWrite(Promise.all(['status','client','contact','task','priority','target','updated','comments','closed'].map(field=>kurroRequest({api:'updateClient',fileId:CLIENTS_FILE_ID,row:r.serverRow,field,value:''}))))}catch(e){showSyncToast('Eliminado en esta vista; falta publicar la conexión')}}showSyncToast('Pendiente eliminado')}
+$('delete-client-editor')?.addEventListener('click',deleteClientEditor);
