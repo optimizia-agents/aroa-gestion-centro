@@ -180,6 +180,28 @@ const localMarkCenterDone=markCenterDone;markCenterDone=function(index){const r=
 const localUpdatePendingField=updatePendingField;updatePendingField=function(index,field,value){const r=pendingRows[index];r[field]=value;saveData();if(r.fileId&&r.serverRow){remoteWrite(kurroRequest({api:'updatePending',fileId:r.fileId,row:r.serverRow,field,value}).catch(()=>{}))}renderPending()};
 const localMarkPendingDone=markPendingDone;markPendingDone=function(index){const r=pendingRows[index];r.status='REALIZADO';if(r.fileId&&r.serverRow)remoteWrite(kurroRequest({api:'updatePending',fileId:r.fileId,row:r.serverRow,field:'status',value:'REALIZADO'})).then(()=>loadRemoteData()).catch(()=>localMarkPendingDone(index));else localMarkPendingDone(index)};
 loadRemoteData();
+
+// Garantiza que la acción Editar permanezca visible aunque otra rutina
+// vuelva a pintar la tabla de pendientes.
+const kurroRenderPendingWithEdit = renderPending;
+renderPending = function(){
+  kurroRenderPendingWithEdit();
+  document.querySelectorAll('#pending-table tr').forEach(row=>{
+    const actionCell=row.lastElementChild;
+    if(!actionCell || actionCell.querySelector('.edit-btn')) return;
+    const text=row.children[1]?.textContent.trim()||'';
+    const person=row.children[2]?.textContent.trim()||'';
+    const index=pendingRows.findIndex(item=>item.text===text&&item.person===person);
+    if(index<0) return;
+    const button=document.createElement('button');
+    button.className='edit-btn pending-edit-visible';
+    button.type='button';
+    button.textContent='Editar';
+    button.onclick=()=>openPendingEditor(index);
+    actionCell.appendChild(button);
+  });
+};
+renderPending();
 function updatePendingField(index,field,value){pendingRows[index][field]=value;saveData()}
 function markPendingDone(index){pendingRows[index].status='REALIZADO';pendingRows[index].updated=formatDate(new Date());saveData();renderPending()}
 renderPending=function(){const q=($('pending-search').value||'').toLowerCase(),person=window.person||'all',priority=$('pending-priority').value,state=$('pending-status').value;const rows=pendingRows.filter(r=>(person==='all'||r.person===person)&&(priority==='all'||r.priority===priority)&&(state==='all'||r.status===state)&&[r.person,r.text,r.priority,r.comments].join(' ').toLowerCase().includes(q));$('pending-table').innerHTML=rows.length?rows.map(r=>{const i=pendingRows.indexOf(r);return `<tr><td><select class="status-select" onchange="updatePendingField(${i},'status',this.value)"><option ${r.status==='PENDIENTE'?'selected':''}>PENDIENTE</option><option ${r.status==='REALIZADO'?'selected':''}>REALIZADO</option></select></td><td>${r.text}</td><td><strong>${r.person}</strong></td><td><select class="status-select" onchange="updatePendingField(${i},'priority',this.value)"><option ${r.priority==='NORMAL'?'selected':''}>NORMAL</option><option ${r.priority==='ALTA'?'selected':''}>ALTA</option></select></td><td class="date">${r.date||'<span class="muted">Sin fecha</span>'}</td><td class="date">${r.updated}</td><td><textarea class="comment-input" rows="2" placeholder="Añadir comentario" onchange="updatePendingField(${i},'comments',this.value)">${r.comments||''}</textarea></td><td><button class="done-btn" onclick="markPendingDone(${i})" ${r.status==='REALIZADO'?'disabled':''}>Hecho</button></td></tr>`}).join(''):`<tr><td colspan="8" class="empty">No hay resultados con estos filtros.</td></tr>`;$('pending-heading').textContent=person==='all'?'Todos mis pendientes':`Pendientes con ${person}`;$('pending-count').textContent=`${rows.length} registros`};
