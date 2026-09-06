@@ -76,7 +76,7 @@
         <nav>
           <button class="nav-item active" data-view="dashboard"><span>⌂</span> Resumen</button>
           <button class="nav-item" data-view="center"><span>▦</span> Centro</button>
-          <button class="nav-item" data-view="pending"><span>✓</span> Mis pendientes</button>
+          <button class="nav-item" data-view="pending"><span>✓</span> Seguimientos</button>
           <button class="nav-item" data-view="clients"><span>◉</span> Clientes</button>
         </nav>
         <div class="sidebar-note"><span class="pulse"></span><div><strong>Datos reales cargados</strong><small>Lectura inicial: 4 sept 2026</small></div></div>
@@ -103,11 +103,11 @@
         </section>
 
         <section id="pending-view" class="view">
-          <div class="hero-row"><div><h2>Mis pendientes</h2><p>Seguimiento agrupado por persona o empresa.</p></div><button class="primary" data-new-pending>＋ Nuevo pendiente</button></div>
+          <div class="hero-row"><div><h2>Seguimientos</h2><p>Temas, acuerdos y recordatorios organizados por persona o empresa.</p></div><button class="primary" data-new-pending>＋ Registrar seguimiento</button></div>
           <div class="people-tabs" id="people-tabs"></div>
           <div class="metric-grid" id="pending-metrics"></div>
-          <div class="toolbar"><div class="search"><span>⌕</span><input id="pending-search" placeholder="Buscar en mis pendientes" /></div><select id="pending-priority"><option value="all">Todas las prioridades</option><option value="NORMAL">Normal</option><option value="ALTA">Alta</option></select><select id="pending-status"><option value="PENDIENTE">Pendientes</option><option value="all">Todos los estados</option><option value="REALIZADO">Realizados</option></select></div>
-          <div class="panel"><div class="panel-heading"><div><h3 id="pending-heading">Todos mis pendientes</h3><p>Fuentes: Pendientes con Miguel · Pendientes con Properval</p></div><span class="count-pill" id="pending-count"></span></div><div class="table-wrap"><table><thead><tr><th>Estado</th><th>Pendiente / decisión</th><th>Persona o empresa</th><th>Prioridad</th><th>Fecha objetivo</th><th>Actualización</th><th>Comentarios</th><th>Acción</th></tr></thead><tbody id="pending-table"></tbody></table></div></div>
+          <div class="toolbar"><div class="search"><span>⌕</span><input id="pending-search" placeholder="Buscar en seguimientos" /></div><select id="pending-priority"><option value="all">Todas las prioridades</option><option value="NORMAL">Normal</option><option value="ALTA">Alta</option></select><select id="pending-status"><option value="PENDIENTE">Activos</option><option value="all">Todos los estados</option><option value="REALIZADO">Completados</option></select></div>
+          <div class="panel"><div class="panel-heading"><div><h3 id="pending-heading">Todos los seguimientos</h3><p>Temas registrados con Miguel y Properval.</p></div><span class="count-pill" id="pending-count"></span></div><div class="table-wrap"><table><thead><tr><th>Estado</th><th>Tema / decisión</th><th>Persona o empresa</th><th>Prioridad</th><th>Fecha objetivo</th><th>Actualización</th><th>Comentarios</th><th>Acción</th></tr></thead><tbody id="pending-table"></tbody></table></div></div>
         </section>
 
         <section id="clients-view" class="view">
