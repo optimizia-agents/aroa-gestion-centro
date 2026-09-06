@@ -68,6 +68,20 @@
       #pending-view .pending-person .edit-btn{order:-1;display:block!important;visibility:visible!important;opacity:1!important}
       @media(min-width:901px){#pending-view .table-wrap th:last-child,#pending-view .table-wrap td:last-child{min-width:145px}}
     </style>
+    <style>
+      /* Pase visual: jerarquía clara y lectura rápida */
+      body{background:linear-gradient(135deg,#f1f7f5 0%,#f8fbfa 48%,#edf5f3 100%)}
+      .sidebar{position:relative;overflow:hidden}.sidebar:after{content:'';position:absolute;width:190px;height:190px;border:1px solid rgba(190,231,222,.12);border-radius:50%;right:-110px;top:170px;pointer-events:none}
+      .topbar{box-shadow:0 2px 12px rgba(24,52,66,.035);position:sticky;top:0;z-index:5}.topbar .eyebrow{color:#527c83}
+      .hero-row{padding:2px 0 4px}.hero-row h2{color:#153b4b}.hero-row>div>p:last-child{max-width:700px}
+      .metric{position:relative;overflow:hidden}.metric:before{content:'';position:absolute;left:0;top:0;right:0;height:3px;background:#a8d8cd}.metric.alert:before{background:#e47752}.metric-grid .metric:nth-child(2):before{background:#74b7bd}.metric-grid .metric:nth-child(3):before{background:#e4c96b}.metric-grid .metric:nth-child(4):before{background:#9bb4d5}
+      .dashboard-panel{border-color:#d7e8e3}.dashboard-panel .panel-heading{background:linear-gradient(90deg,#fbfefd,#f4faf8)}.dashboard-item{min-height:64px}.dashboard-item .dashboard-kind{color:#4c8180}
+      .dashboard-quick button{min-height:78px}.dashboard-quick button:first-child{border-left:4px solid #72b8bd}.dashboard-quick button:nth-child(2){border-left:4px solid #e4c96b}.dashboard-quick button:nth-child(3){border-left:4px solid #e47752}
+      .panel-heading h3{letter-spacing:-.01em}.count-pill{box-shadow:inset 0 0 0 1px #d4e8e2}
+      .toolbar select:hover,.search:focus-within{border-color:#86beb5;box-shadow:0 0 0 3px rgba(134,190,181,.12)}
+      .table-wrap tbody tr{transition:background .18s ease,transform .18s ease}.table-wrap tbody tr:hover{transform:translateY(-1px)}
+      @media(max-width:620px){.sidebar nav{overflow-x:auto;padding-bottom:2px}.nav-item{flex:0 0 auto}.topbar{position:relative}.dashboard-quick button{min-height:64px}.dashboard-quick span{margin-top:2px}}
+    </style>
   </head>
   <body>
     <div class="app-shell">
