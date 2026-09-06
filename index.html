@@ -79,7 +79,6 @@
           <button class="nav-item" data-view="pending"><span>✓</span> Seguimientos</button>
           <button class="nav-item" data-view="clients"><span>◉</span> Clientes</button>
         </nav>
-        <div class="sidebar-note"><span class="pulse"></span><div><strong>Datos reales cargados</strong><small>Lectura inicial: 4 sept 2026</small></div></div>
       </aside>
 
       <main class="main">
@@ -100,7 +99,7 @@
           <div class="hero-row"><div><h2>Control del centro</h2><p>Revisiones, mantenimiento y acciones abiertas en Fuenlabrada.</p></div><button class="primary" data-new-center onclick="openNewCenterEditor()">＋ Nueva acción</button></div>
           <div class="metric-grid" id="center-metrics"></div><div id="attention-panel" class="attention-panel" aria-label="Resumen de atención"></div>
           <div class="toolbar"><div class="search"><span>⌕</span><input id="center-search" placeholder="Buscar actividad, categoría o responsable" /></div><select id="center-category"><option value="all">Todas las categorías</option></select><select id="center-status"><option value="open">Pendientes</option><option value="all">Todos los estados</option><option value="process">En proceso</option><option value="done">Realizado</option></select><select id="center-sort"><option value="next">Ordenar: próxima revisión</option><option value="activity">Ordenar: actividad</option><option value="category">Ordenar: categoría</option><option value="last">Ordenar: última revisión</option><option value="frequency">Ordenar: periodicidad</option><option value="status">Ordenar: estado</option></select></div>
-          <div class="panel"><div class="panel-heading"><div><h3>Registro maestro</h3><p>Fuente: Planificación General Sales Center Fuenlabrada</p></div><span class="count-pill" id="center-count"></span></div><div class="table-wrap"><table><thead><tr><th>Actividad</th><th>Categoría</th><th>Periodicidad</th><th>Última revisión</th><th>Próxima revisión</th><th>Responsable</th><th>Estado</th><th>Siguiente acción / comentarios</th><th>Acciones</th></tr></thead><tbody id="center-table"></tbody></table></div></div>
+          <div class="panel"><div class="panel-heading"><div><h3>Actividades del centro</h3><p>Revisiones, mantenimiento y acciones para tener bajo control.</p></div><span class="count-pill" id="center-count"></span></div><div class="table-wrap"><table><thead><tr><th>Actividad</th><th>Categoría</th><th>Periodicidad</th><th>Última revisión</th><th>Próxima revisión</th><th>Responsable</th><th>Estado</th><th>Siguiente acción / comentarios</th><th>Acciones</th></tr></thead><tbody id="center-table"></tbody></table></div></div>
         </section>
 
         <section id="pending-view" class="view">
@@ -115,7 +114,7 @@
           <div class="hero-row"><div><h2>Seguimientos con clientes</h2><p>Gestiones y compromisos organizados por cada cliente.</p></div><button class="primary" data-new-client>＋ Registrar seguimiento</button></div>
           <div class="metric-grid" id="client-metrics"></div>
           <div class="toolbar"><div class="search"><span>⌕</span><input id="client-search" placeholder="Buscar cliente, seguimiento o comentario" /></div><select id="client-priority"><option value="all">Todas las prioridades</option><option value="NORMAL">Normal</option><option value="ALTA">Alta</option></select><select id="client-status"><option value="PENDIENTE">Activos</option><option value="all">Todos los estados</option><option value="EN PROCESO">En proceso</option><option value="REALIZADO">Completados</option></select></div>
-          <div class="panel"><div class="panel-heading"><div><h3>Todos los seguimientos con clientes</h3><p>Fuente: KURRO · Seguimientos con clientes</p></div><span class="count-pill" id="client-count"></span></div><div class="table-wrap"><table id="clients-table"><thead><tr><th>Estado</th><th>Cliente</th><th>Contacto</th><th>Tema / decisión</th><th>Prioridad</th><th>Fecha objetivo</th><th>Actualización</th><th>Comentarios</th><th>Acciones</th></tr></thead><tbody id="client-table"></tbody></table></div></div>
+          <div class="panel"><div class="panel-heading"><div><h3>Todos los seguimientos con clientes</h3><p>Compromisos y temas abiertos para cada cliente.</p></div><span class="count-pill" id="client-count"></span></div><div class="table-wrap"><table id="clients-table"><thead><tr><th>Estado</th><th>Cliente</th><th>Contacto</th><th>Tema / decisión</th><th>Prioridad</th><th>Fecha objetivo</th><th>Actualización</th><th>Comentarios</th><th>Acciones</th></tr></thead><tbody id="client-table"></tbody></table></div></div>
         </section>
       </main>
     </div>

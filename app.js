@@ -254,6 +254,9 @@ function normalizeLabels(){
   document.querySelectorAll('#client-table .empty').forEach(x=>x.textContent='No hay seguimientos con estos filtros. Pulsa «Registrar seguimiento» para añadir el primero.');
 }
 normalizeLabels();
+function cleanInternalLabels(){document.querySelectorAll('#center-metrics *,#pending-metrics *,#dashboard-metrics *').forEach(el=>{if(el.children.length)return;if(el.textContent.includes('Registro maestro'))el.textContent=el.textContent.replaceAll('Registro maestro','Actividades del centro')})}
+cleanInternalLabels();
+new MutationObserver(cleanInternalLabels).observe(document.body,{subtree:true,childList:true});
 document.querySelector('[data-quick-center]')?.addEventListener('click',()=>openNewCenterEditor());
 document.querySelector('[data-quick-pending]')?.addEventListener('click',()=>openPendingEditor());
 document.querySelector('[data-quick-client]')?.addEventListener('click',()=>openClientEditor());
