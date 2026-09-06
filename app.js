@@ -254,3 +254,6 @@ function normalizeLabels(){
   document.querySelectorAll('#client-table .empty').forEach(x=>x.textContent='No hay seguimientos con estos filtros. Pulsa «Registrar seguimiento» para añadir el primero.');
 }
 normalizeLabels();
+document.querySelector('[data-quick-center]')?.addEventListener('click',()=>openNewCenterEditor());
+document.querySelector('[data-quick-pending]')?.addEventListener('click',()=>openPendingEditor());
+document.querySelector('[data-quick-client]')?.addEventListener('click',()=>openClientEditor());
