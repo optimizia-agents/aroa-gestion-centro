@@ -289,6 +289,9 @@ document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('
 ['center-search','center-category','center-status','center-sort'].forEach(id=>{
   const control=$(id);
   if(!control)return;
-  control.addEventListener('input',()=>renderCenter());
-  control.addEventListener('change',()=>renderCenter());
+  const finalControl=control.cloneNode(true);
+  finalControl.value=control.value;
+  control.replaceWith(finalControl);
+  finalControl.addEventListener('input',()=>renderCenter());
+  finalControl.addEventListener('change',()=>renderCenter());
 });
