@@ -312,7 +312,7 @@ document.addEventListener('change',event=>{
 
 // Normaliza también el resultado visible por si una rutina antigua vuelve a
 // pintar la tabla después de los filtros. Así todas las vistas conservan la
-// acción única «Editar / seguimiento».
+// Acción única «Editar» en todas las vistas.
 function normalizeCenterRowActions(){
   const table=$('center-table');
   if(!table)return;
@@ -321,7 +321,7 @@ function normalizeCenterRowActions(){
     const edit=cell?.querySelector('.edit-btn');
     if(!edit)return;
     cell.querySelectorAll('.done-btn,input[type="date"]').forEach(control=>control.remove());
-    edit.textContent='Editar / seguimiento';
+    edit.textContent='Editar';
   });
 }
 normalizeCenterRowActions();
@@ -338,7 +338,7 @@ renderPending=function(){
     if(status?.value!=='REALIZADO')return;
     row.querySelector('.done-btn')?.remove();
     const edit=row.querySelector('.edit-btn');
-    if(edit)edit.textContent='Editar seguimiento';
+    if(edit)edit.textContent='Editar';
   });
 };
 renderPending();
@@ -403,3 +403,8 @@ restoreFilters();
 Object.values(filterSets).forEach(set=>set.ids.forEach(id=>$(id)?.addEventListener('input',saveFilters)));
 document.querySelectorAll('[data-reset-filters]').forEach(button=>button.addEventListener('click',()=>resetFilterSet(button.dataset.resetFilters)));
 renderCenter();renderPending();renderClients();
+
+// Todas las tablas usan la misma acción visible, también después de cambiar filtros.
+function normalizeEditLabels(){document.querySelectorAll('.edit-btn').forEach(button=>{if(button.textContent.trim()!=='Editar')button.textContent='Editar'})}
+normalizeEditLabels();
+new MutationObserver(()=>queueMicrotask(normalizeEditLabels)).observe(document.body,{childList:true,subtree:true});
