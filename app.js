@@ -295,3 +295,13 @@ document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('
   finalControl.addEventListener('input',()=>renderCenter());
   finalControl.addEventListener('change',()=>renderCenter());
 });
+
+// Algunos navegadores pueden conservar un listener antiguo durante el cambio
+// de filtro. Este repintado se ejecuta al terminar todos los listeners y deja
+// siempre las acciones con el formato único de la vista final.
+document.addEventListener('input',event=>{
+  if(['center-search','center-category','center-status','center-sort'].includes(event.target?.id))queueMicrotask(()=>renderCenter());
+},true);
+document.addEventListener('change',event=>{
+  if(['center-search','center-category','center-status','center-sort'].includes(event.target?.id))queueMicrotask(()=>renderCenter());
+},true);
