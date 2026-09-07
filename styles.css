@@ -2,8 +2,7 @@
 /* Mantiene una única acción visible en la tabla del centro, incluso si una
    carga antigua vuelve a incluir controles de registro. */
 #center-table .row-actions input[type="date"],#center-table .row-actions .done-btn{display:none!important}
-#center-table .row-actions .edit-btn{font-size:0;min-width:126px}
-#center-table .row-actions .edit-btn::after{content:'Editar / seguimiento';font-size:12px}
+#center-table .row-actions .edit-btn{font-size:12px;min-width:126px}
 #center-view .row-actions .edit-btn{min-width:0;font-size:11px;padding:7px 4px;line-height:1.15}
 .toolbar-reset{border:1px solid #cfe1dc;background:#fff;color:#537078;border-radius:9px;padding:11px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
 .toolbar-reset:hover{border-color:#79bbb1;color:#2c6870;background:#f5fbf8}
