@@ -113,6 +113,15 @@
       @media(max-width:620px){.due-date-cell .overdue-label{margin-top:4px}}
     </style>
     <style>
+      /* Jerarquía visual del resumen: la urgencia se entiende sin botones ni acciones. */
+      #dashboard-urgent-list .dashboard-item{position:relative;padding-left:12px;border-left:4px solid #dceee9}
+      #dashboard-urgent-list .dashboard-item.is-overdue{border-left-color:#e18484;background:linear-gradient(90deg,#fff7f7,transparent 22%)}
+      #dashboard-urgent-list .dashboard-item.is-soon{border-left-color:#e4c96b;background:linear-gradient(90deg,#fffdf1,transparent 22%)}
+      #dashboard-urgent-list .dashboard-item strong{line-height:1.35}
+      #dashboard-urgent-list .dashboard-item small{font-weight:650}
+      @media(max-width:620px){#dashboard-urgent-list .dashboard-item{padding-left:10px}}
+    </style>
+    <style>
       .dependency-cell{display:grid;gap:4px;min-width:92px}.dependency-type{display:inline-flex;width:max-content;padding:3px 7px;border-radius:6px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}.dependency-type.interno{background:#e7f4ef;color:#277565}.dependency-type.externo{background:#fff2e7;color:#a65a34}.dependency-detail{color:#42626b;font-size:12px;line-height:1.25;overflow-wrap:anywhere}
       #center-view .dependency-cell{min-width:0;max-width:100%}#center-view .dependency-detail{max-width:100%;word-break:break-word}
       #center-view .table-wrap td:nth-child(6):before{content:'Dependencia'}
@@ -171,6 +180,6 @@
     <div id="pending-editor" class="modal" aria-hidden="true"><div class="modal-card pending-editor-card" role="dialog" aria-modal="true" aria-labelledby="pending-editor-title"><div class="modal-heading"><div><p class="eyebrow">SEGUIMIENTOS</p><h2 id="pending-editor-title">Nuevo seguimiento</h2></div><button class="modal-close" data-close-pending aria-label="Cerrar">×</button></div><p class="pending-editor-note">Puedes cambiar el estado, la prioridad, la fecha objetivo y el seguimiento.</p><div class="editor-grid"><label>Tema / decisión<input id="pending-edit-text"></label><label>Persona o empresa<div class="select-with-add"><select id="pending-edit-person"><option>Miguel</option><option>Properval</option></select><button type="button" class="add-option-button" id="add-pending-person" aria-label="Añadir persona o empresa">+</button></div></label><label>Prioridad<select id="pending-edit-priority"><option>NORMAL</option><option>ALTA</option></select></label><label>Estado<select id="pending-edit-status"><option>PENDIENTE</option><option>REALIZADO</option></select></label><label>Fecha objetivo<input id="pending-edit-date" type="date"></label><label class="editor-wide">Comentarios<textarea id="pending-edit-comments" rows="4"></textarea></label></div><div class="modal-actions"><button class="secondary" data-close-pending>Cancelar</button><button class="primary" id="save-pending-editor">Guardar seguimiento</button></div></div></div>
     <div id="client-editor" class="modal" aria-hidden="true"><div class="modal-card pending-editor-card" role="dialog" aria-modal="true" aria-labelledby="client-editor-title"><div class="modal-heading"><div><p class="eyebrow">SEGUIMIENTOS CON CLIENTES</p><h2 id="client-editor-title">Nuevo seguimiento</h2></div><button class="modal-close" data-close-client aria-label="Cerrar">×</button></div><p class="pending-editor-note">Guarda el cliente, el contacto y el seguimiento en la tabla compartida.</p><div class="editor-grid"><label>Cliente<div class="select-with-add"><select id="client-edit-client"><option value="">Sin asignar</option></select><button type="button" class="add-option-button" id="add-client-option" aria-label="Añadir cliente">+</button></div></label><label>Contacto<input id="client-edit-contact" placeholder="Persona de contacto"></label><label class="editor-wide">Tema / decisión<input id="client-edit-text"></label><label>Prioridad<select id="client-edit-priority"><option>NORMAL</option><option>ALTA</option></select></label><label>Estado<select id="client-edit-status"><option>PENDIENTE</option><option>EN PROCESO</option><option>REALIZADO</option></select></label><label>Fecha objetivo<input id="client-edit-date" type="date"></label><label class="editor-wide">Comentarios<textarea id="client-edit-comments" rows="5"></textarea></label></div><div class="modal-actions"><button class="danger-button" id="delete-client-editor">Eliminar</button><span class="modal-spacer"></span><button class="secondary" data-close-client>Cancelar</button><button class="primary" id="save-client-editor">Guardar seguimiento</button></div></div></div>
     <div id="toast" class="toast"></div>
-    <script src="app.js?v=22"></script>
+    <script src="app.js?v=23"></script>
   </body>
 </html>
