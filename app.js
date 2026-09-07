@@ -457,3 +457,30 @@ renderClients();
 function normalizeEditLabels(){document.querySelectorAll('.edit-btn').forEach(button=>{if(button.textContent.trim()!=='Editar')button.textContent='Editar'})}
 normalizeEditLabels();
 new MutationObserver(()=>queueMicrotask(normalizeEditLabels)).observe(document.body,{childList:true,subtree:true});
+
+function renderPendingMetricsUnified(){
+  const active=pendingRows.filter(r=>r.status!=='REALIZADO');
+  if(!$('pending-metrics'))return;
+  $('pending-metrics').innerHTML=metric('Seguimientos activos',active.length,'Todos los responsables',active.length===0)+metric('Alta prioridad',active.filter(r=>r.priority==='ALTA').length,'Para atender')+metric('Con fecha objetivo',active.filter(r=>r.date).length,'Para organizar')+metric('Sin fecha objetivo',active.filter(r=>!r.date).length,'Pendientes de organizar');
+}
+function setupPersonFilter(){
+  const toolbar=$('pending-priority')?.parentElement;
+  if(!toolbar)return;
+  $('people-tabs')?.style.setProperty('display','none','important');
+  let select=$('pending-person-filter');
+  if(!select){
+    select=document.createElement('select');
+    select.id='pending-person-filter';
+    select.setAttribute('aria-label','Filtrar por persona o empresa');
+    toolbar.insertBefore(select,$('pending-priority'));
+    select.addEventListener('change',()=>{window.person=select.value;saveFilters();renderPending()});
+  }
+  const current=window.person||'all';
+  const people=[...new Set(pendingRows.map(r=>r.person).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+  select.innerHTML='<option value="all">Todas las personas y empresas</option>'+people.map(p=>`<option value="${p}">${p}</option>`).join('');
+  select.value=people.includes(current)?current:'all';
+  window.person=select.value;
+}
+const refreshPendingMetricsOriginal=refreshKURROMetrics;
+refreshKURROMetrics=function(){refreshPendingMetricsOriginal();renderPendingMetricsUnified();setupPersonFilter()};
+renderPendingMetricsUnified();setupPersonFilter();
