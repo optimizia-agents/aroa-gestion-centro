@@ -457,6 +457,26 @@ renderClients=function(){
 };
 renderClients();
 
+// Navegación única y estable: evita que las capas antiguas de compatibilidad
+// interfieran entre sí al cambiar de pestaña.
+function activateView(view){
+  const target=$(view+'-view');
+  if(!target)return;
+  document.querySelectorAll('.nav-item').forEach(item=>item.classList.toggle('active',item.dataset.view===view));
+  document.querySelectorAll('.view').forEach(section=>section.classList.toggle('active-view',section===target));
+  if(view==='dashboard')renderDashboard();
+  if(view==='center')renderCenter();
+  if(view==='pending')renderPending();
+  if(view==='clients')renderClients();
+  const titles={dashboard:'Resumen',center:'Centro',pending:'Seguimientos',clients:'Seguimientos con clientes'};
+  if($('page-title'))$('page-title').textContent=titles[view]||'';
+}
+document.querySelectorAll('.nav-item').forEach(item=>item.addEventListener('click',event=>{
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  activateView(item.dataset.view);
+},true));
+
 // Todas las tablas usan la misma acción visible, también después de cambiar filtros.
 function normalizeEditLabels(){document.querySelectorAll('.edit-btn').forEach(button=>{if(button.textContent.trim()!=='Editar')button.textContent='Editar'})}
 normalizeEditLabels();
