@@ -373,6 +373,28 @@ function normalizeTableConsistency(){
 new MutationObserver(normalizeTableConsistency).observe(document.body,{childList:true,subtree:true});
 normalizeTableConsistency();
 
+function normalizeClientColumns(){
+  const table=$('client-table');
+  if(!table)return;
+  const note=document.querySelector('#client-editor .pending-editor-note');
+  if(note)note.textContent='Guarda el cliente, su email y el seguimiento en la tabla compartida.';
+  document.querySelectorAll('#clients-table thead th:nth-child(3)').forEach(th=>{th.textContent='Email';th.style.display='none'});
+  table.querySelectorAll(':scope > tr').forEach(row=>{
+    const cells=row.children;
+    if(cells.length<9||row.querySelector('.empty'))return;
+    const emailCell=cells[2],clientCell=cells[1];
+    const email=emailCell.textContent.trim();
+    emailCell.style.display='none';
+    if(email&&!clientCell.querySelector('.client-email'))clientCell.insertAdjacentHTML('beforeend',`<span class="client-email">${email}</span>`);
+  });
+  const input=$('client-edit-contact');
+  if(input){
+    input.placeholder='correo@empresa.com';
+    if(input.parentElement?.firstChild?.nodeType===3)input.parentElement.firstChild.nodeValue='Email';
+  }
+}
+normalizeClientColumns();
+
 // Reafirma el render final del Centro después de las rutinas antiguas.
 const renderCenterCanonical=()=>{renderCenterWithoutDuplicateAction();renderAttention();applyCenterQuickFilter();normalizeCenterRowActions()};
 renderCenter=renderCenterCanonical;
@@ -427,6 +449,7 @@ renderClients=function(){
   document.querySelectorAll('#client-table .done-btn').forEach(button=>button.remove());
   const count=$('client-count'), rows=$('client-table')?.querySelectorAll(':scope > tr');
   if(count&&rows)count.textContent=recordCount([...rows].filter(row=>!row.querySelector('.empty')).length);
+  normalizeClientColumns();
 };
 renderClients();
 
