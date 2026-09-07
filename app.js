@@ -350,14 +350,28 @@ const renderPendingCanonical=()=>{
   const q=($('pending-search').value||'').toLowerCase(),person=window.person||'all',priority=$('pending-priority').value,state=$('pending-status').value;
   const rows=pendingRows.filter(r=>(person==='all'||r.person===person)&&(priority==='all'||r.priority===priority)&&(state==='all'||r.status===state)&&[r.person,r.text,r.priority,r.comments].join(' ').toLowerCase().includes(q));
   $('pending-table').innerHTML=rows.length?rows.map(r=>{
-    const i=pendingRows.indexOf(r),complete=r.status==='REALIZADO';
-    return `<tr><td><select class="status-select" aria-label="Estado de ${r.text}" onchange="updatePendingField(${i},'status',this.value)"><option ${r.status==='PENDIENTE'?'selected':''}>PENDIENTE</option><option ${complete?'selected':''}>REALIZADO</option></select></td><td>${r.text}</td><td><strong>${r.person}</strong></td><td><select class="status-select" aria-label="Prioridad de ${r.text}" onchange="updatePendingField(${i},'priority',this.value)"><option ${r.priority==='NORMAL'?'selected':''}>NORMAL</option><option ${r.priority==='ALTA'?'selected':''}>ALTA</option></select></td><td class="date"><input class="pending-date" type="date" aria-label="Fecha objetivo de ${r.text}" value="${pendingDateForEditor(r.date)}" onchange="updatePendingField(${i},'date',pendingDateFromEditor(this.value))"></td><td class="date">${r.updated||'<span class="muted">Sin fecha</span>'}</td><td><textarea class="comment-input" rows="2" placeholder="Añadir comentario" onchange="updatePendingField(${i},'comments',this.value)">${r.comments||''}</textarea></td><td><div class="pending-person"><button class="edit-btn" onclick="openPendingEditor(${i})">Editar</button>${complete?'':`<button class="done-btn" onclick="updatePendingField(${i},'status','REALIZADO')">Hecho</button>`}</div></td></tr>`;
+    const i=pendingRows.indexOf(r);
+    return `<tr><td><select class="status-select" aria-label="Estado de ${r.text}" onchange="updatePendingField(${i},'status',this.value)"><option ${r.status==='PENDIENTE'?'selected':''}>PENDIENTE</option><option ${r.status==='REALIZADO'?'selected':''}>REALIZADO</option></select></td><td>${r.text}</td><td><strong>${r.person}</strong></td><td><select class="status-select" aria-label="Prioridad de ${r.text}" onchange="updatePendingField(${i},'priority',this.value)"><option ${r.priority==='NORMAL'?'selected':''}>NORMAL</option><option ${r.priority==='ALTA'?'selected':''}>ALTA</option></select></td><td class="date"><input class="pending-date" type="date" aria-label="Fecha objetivo de ${r.text}" value="${pendingDateForEditor(r.date)}" onchange="updatePendingField(${i},'date',pendingDateFromEditor(this.value))"></td><td class="date">${r.updated||'<span class="muted">Sin fecha</span>'}</td><td><textarea class="comment-input" rows="2" placeholder="Añadir comentario" onchange="updatePendingField(${i},'comments',this.value)">${r.comments||''}</textarea></td><td><div class="pending-person"><button class="edit-btn" onclick="openPendingEditor(${i})">Editar</button></div></td></tr>`;
   }).join(''):`<tr><td colspan="8" class="empty">No hay resultados con estos filtros.</td></tr>`;
   $('pending-heading').textContent=person==='all'?'Todos los seguimientos':`Seguimientos con ${person}`;
-  $('pending-count').textContent=`${rows.length} registros`;
+  $('pending-count').textContent=recordCount(rows.length);
 };
 renderPending=renderPendingCanonical;
 renderPendingCanonical();
+
+function recordCount(n){return `${n} ${n===1?'registro':'registros'}`}
+
+function normalizeTableConsistency(){
+  [['center-count','center-table'],['pending-count','pending-table'],['client-count','client-table']].forEach(([countId,tableId])=>{
+    const count=$(countId), table=$(tableId);
+    if(!count||!table)return;
+    const visible=[...table.querySelectorAll(':scope > tr')].filter(row=>row.style.display!=='none'&&!row.querySelector('.empty')).length;
+    if(visible||table.querySelector('.empty'))count.textContent=recordCount(visible);
+  });
+  document.querySelectorAll('#client-table .done-btn').forEach(button=>button.remove());
+}
+new MutationObserver(normalizeTableConsistency).observe(document.body,{childList:true,subtree:true});
+normalizeTableConsistency();
 
 // Reafirma el render final del Centro después de las rutinas antiguas.
 const renderCenterCanonical=()=>{renderCenterWithoutDuplicateAction();renderAttention();applyCenterQuickFilter();normalizeCenterRowActions()};
