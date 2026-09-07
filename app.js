@@ -324,7 +324,7 @@ function normalizeCenterRowActions(){
     const edit=cell?.querySelector('.edit-btn');
     if(!edit)return;
     cell.querySelectorAll('.done-btn,input[type="date"]').forEach(control=>control.remove());
-    edit.textContent='Editar';
+    if(edit.textContent.trim()!=='Editar')edit.textContent='Editar';
   });
 }
 normalizeCenterRowActions();
