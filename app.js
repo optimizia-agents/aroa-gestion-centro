@@ -368,3 +368,12 @@ document.addEventListener('input',event=>{
 document.addEventListener('change',event=>{
   if(['pending-search','pending-priority','pending-status','pending-sort'].includes(event.target?.id))setTimeout(()=>renderPending(),0);
 },true);
+
+// Enlazado directo para los selectores nativos ocultos: garantiza el repintado
+// incluso en navegadores que no propagan su evento al documento.
+['pending-search','pending-priority','pending-status','pending-sort'].forEach(id=>{
+  const control=$(id);
+  if(!control)return;
+  control.addEventListener('input',()=>setTimeout(()=>renderPending(),10));
+  control.addEventListener('change',()=>setTimeout(()=>renderPending(),10));
+});
