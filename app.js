@@ -305,3 +305,20 @@ document.addEventListener('input',event=>{
 document.addEventListener('change',event=>{
   if(['center-search','center-category','center-status','center-sort'].includes(event.target?.id))queueMicrotask(()=>renderCenter());
 },true);
+
+// Normaliza también el resultado visible por si una rutina antigua vuelve a
+// pintar la tabla después de los filtros. Así todas las vistas conservan la
+// acción única «Editar / seguimiento».
+function normalizeCenterRowActions(){
+  const table=$('center-table');
+  if(!table)return;
+  table.querySelectorAll('tr').forEach(row=>{
+    const cell=row.lastElementChild;
+    const edit=cell?.querySelector('.edit-btn');
+    if(!edit)return;
+    cell.querySelectorAll('.done-btn,input[type="date"]').forEach(control=>control.remove());
+    edit.textContent='Editar / seguimiento';
+  });
+}
+normalizeCenterRowActions();
+if($('center-table'))new MutationObserver(()=>queueMicrotask(normalizeCenterRowActions)).observe($('center-table'),{childList:true,subtree:true});
