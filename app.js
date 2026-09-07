@@ -323,3 +323,18 @@ function normalizeCenterRowActions(){
 normalizeCenterRowActions();
 if($('center-table'))new MutationObserver(()=>queueMicrotask(normalizeCenterRowActions)).observe($('center-table'),{childList:true,subtree:true});
 setInterval(normalizeCenterRowActions,250);
+
+// Los seguimientos realizados también se pueden recuperar: se mantiene su
+// edición disponible y se evita mostrar una acción «Hecho» que ya no aplica.
+const renderPendingWithRecovery=renderPending;
+renderPending=function(){
+  renderPendingWithRecovery();
+  document.querySelectorAll('#pending-table tr').forEach(row=>{
+    const status=row.querySelector('select.status-select');
+    if(status?.value!=='REALIZADO')return;
+    row.querySelector('.done-btn')?.remove();
+    const edit=row.querySelector('.edit-btn');
+    if(edit)edit.textContent='Editar seguimiento';
+  });
+};
+renderPending();
