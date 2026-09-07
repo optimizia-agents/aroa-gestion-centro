@@ -367,7 +367,10 @@ function normalizeTableConsistency(){
     const count=$(countId), table=$(tableId);
     if(!count||!table)return;
     const visible=[...table.querySelectorAll(':scope > tr')].filter(row=>row.style.display!=='none'&&!row.querySelector('.empty')).length;
-    if(visible||table.querySelector('.empty'))count.textContent=recordCount(visible);
+    if(visible||table.querySelector('.empty')){
+      const next=recordCount(visible);
+      if(count.textContent!==next)count.textContent=next;
+    }
   });
   document.querySelectorAll('#client-table .done-btn').forEach(button=>button.remove());
 }
