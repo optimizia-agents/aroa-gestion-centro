@@ -377,3 +377,10 @@ document.addEventListener('change',event=>{
   control.addEventListener('input',()=>setTimeout(()=>renderPending(),10));
   control.addEventListener('change',()=>setTimeout(()=>renderPending(),10));
 });
+
+// Si un navegador vuelve a usar un render antiguo, lo detectamos en la tabla
+// y restauramos la columna de acciones sin depender del evento del selector.
+if($('pending-table'))new MutationObserver(()=>{
+  const row=$('pending-table').querySelector('tr');
+  if(row&&!row.querySelector('.edit-btn'))renderPendingCanonical();
+}).observe($('pending-table'),{childList:true,subtree:true});
