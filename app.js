@@ -259,6 +259,7 @@ document.querySelectorAll('.nav-item').forEach(b=>b.addEventListener('click',()=
 
 // Dependencia: se muestra y se guarda sin añadir otra columna visual.
 const baseOpenCenterEditorWithDependency=openCenterEditor;
+function syncDependencyEditor(){const type=$('edit-type'),provider=$('edit-provider')?.closest('label');if(provider)provider.style.display=type?.value==='EXTERNO'?'grid':'none'}
 openCenterEditor=function(index){baseOpenCenterEditorWithDependency(index);const r=centerRows[index];if(!r)return;$('edit-type').value=dependencyType(r);$('edit-provider').value=r.provider||'';syncDependencyEditor()};
 $('edit-type')?.addEventListener('change',syncDependencyEditor);
 const baseSaveCenterEditorWithDependency=saveCenterEditorFlexible;
