@@ -387,3 +387,19 @@ if($('pending-table'))new MutationObserver(()=>{
   const row=$('pending-table').querySelector('tr');
   if(row&&!row.querySelector('.edit-btn'))renderPendingCanonical();
 }).observe($('pending-table'),{childList:true,subtree:true});
+
+// Conserva la última vista elegida en cada apartado y permite volver a verla completa.
+const FILTERS_KEY='kurro-filters-v1';
+const filterSets={
+  center:{ids:['center-search','center-category','center-status','center-sort'],defaults:{'center-search':'','center-category':'all','center-status':'open','center-sort':'next'}},
+  pending:{ids:['pending-search','pending-priority','pending-status','pending-sort'],defaults:{'pending-search':'','pending-priority':'all','pending-status':'PENDIENTE','pending-sort':'date'}},
+  clients:{ids:['client-search','client-priority','client-status','client-sort'],defaults:{'client-search':'','client-priority':'all','client-status':'PENDIENTE','client-sort':'date'}}
+};
+function readFilters(){try{return JSON.parse(localStorage.getItem(FILTERS_KEY)||'{}')}catch(e){return {}}}
+function saveFilters(){const data={};Object.values(filterSets).forEach(set=>set.ids.forEach(id=>{const el=$(id);if(el)data[id]=el.value}));try{localStorage.setItem(FILTERS_KEY,JSON.stringify(data))}catch(e){}}
+function restoreFilters(){const saved=readFilters();Object.values(filterSets).forEach(set=>set.ids.forEach(id=>{const el=$(id);if(el&&saved[id]!=null&&[...el.options].some(o=>o.value===saved[id]))el.value=saved[id]}));}
+function resetFilterSet(name){const set=filterSets[name];if(!set)return;set.ids.forEach(id=>{const el=$(id);if(el)el.value=set.defaults[id]});if(name==='pending')window.person='all';document.querySelectorAll('.person-tab').forEach(x=>x.classList.toggle('active',x.dataset.person==='all'));saveFilters();if(name==='center')renderCenter();if(name==='pending')renderPending();if(name==='clients')renderClients();}
+restoreFilters();
+Object.values(filterSets).forEach(set=>set.ids.forEach(id=>$(id)?.addEventListener('input',saveFilters)));
+document.querySelectorAll('[data-reset-filters]').forEach(button=>button.addEventListener('click',()=>resetFilterSet(button.dataset.resetFilters)));
+renderCenter();renderPending();renderClients();
