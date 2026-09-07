@@ -282,3 +282,13 @@ function rerenderVisibleView(view){
 document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
   rerenderVisibleView(button.dataset.view);
 }));
+
+// Los controles se enlazaron al arrancar la aplicación. Al haber varias capas
+// de compatibilidad, se vuelve a enlazar aquí la versión final para que ningún
+// filtro pueda recuperar un renderizado antiguo.
+['center-search','center-category','center-status','center-sort'].forEach(id=>{
+  const control=$(id);
+  if(!control)return;
+  control.addEventListener('input',()=>renderCenter());
+  control.addEventListener('change',()=>renderCenter());
+});
