@@ -363,8 +363,8 @@ renderCenterCanonical();
 // pueden pintar después de la vista final. Este repintado se ejecuta al cerrar
 // el evento y conserva siempre la columna de acciones.
 document.addEventListener('input',event=>{
-  if(['pending-search','pending-priority','pending-status','pending-sort'].includes(event.target?.id))queueMicrotask(()=>renderPending());
+  if(['pending-search','pending-priority','pending-status','pending-sort'].includes(event.target?.id))setTimeout(()=>renderPending(),0);
 },true);
 document.addEventListener('change',event=>{
-  if(['pending-search','pending-priority','pending-status','pending-sort'].includes(event.target?.id))queueMicrotask(()=>renderPending());
+  if(['pending-search','pending-priority','pending-status','pending-sort'].includes(event.target?.id))setTimeout(()=>renderPending(),0);
 },true);
