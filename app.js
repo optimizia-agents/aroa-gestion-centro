@@ -322,3 +322,4 @@ function normalizeCenterRowActions(){
 }
 normalizeCenterRowActions();
 if($('center-table'))new MutationObserver(()=>queueMicrotask(normalizeCenterRowActions)).observe($('center-table'),{childList:true,subtree:true});
+setInterval(normalizeCenterRowActions,250);
