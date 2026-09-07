@@ -270,3 +270,15 @@ new MutationObserver(cleanInternalLabels).observe(document.body,{subtree:true,ch
 document.querySelector('[data-quick-center]')?.addEventListener('click',()=>openNewCenterEditor());
 document.querySelector('[data-quick-pending]')?.addEventListener('click',()=>openPendingEditor());
 document.querySelector('[data-quick-client]')?.addEventListener('click',()=>openClientEditor());
+
+// Cada cambio de pestaña vuelve a pintar su contenido con los datos actuales.
+// Los filtros permanecen en sus controles, así que la vista no pierde el contexto.
+function rerenderVisibleView(view){
+  if(view==='dashboard')renderDashboard();
+  if(view==='center')renderCenter();
+  if(view==='pending')renderPending();
+  if(view==='clients')renderClients();
+}
+document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
+  rerenderVisibleView(button.dataset.view);
+}));
