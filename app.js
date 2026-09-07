@@ -358,3 +358,13 @@ renderPendingCanonical();
 const renderCenterCanonical=()=>{renderCenterWithoutDuplicateAction();renderAttention();applyCenterQuickFilter();normalizeCenterRowActions()};
 renderCenter=renderCenterCanonical;
 renderCenterCanonical();
+
+// Tras cambiar cualquier filtro de Seguimientos, algunas rutinas antiguas
+// pueden pintar después de la vista final. Este repintado se ejecuta al cerrar
+// el evento y conserva siempre la columna de acciones.
+document.addEventListener('input',event=>{
+  if(['pending-search','pending-priority','pending-status','pending-sort'].includes(event.target?.id))queueMicrotask(()=>renderPending());
+},true);
+document.addEventListener('change',event=>{
+  if(['pending-search','pending-priority','pending-status','pending-sort'].includes(event.target?.id))queueMicrotask(()=>renderPending());
+},true);
