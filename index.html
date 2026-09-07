@@ -71,7 +71,7 @@
     <style>
       /* Pase visual: jerarquía clara y lectura rápida */
       body{background:linear-gradient(135deg,#f1f7f5 0%,#f8fbfa 48%,#edf5f3 100%)}
-      .sidebar{position:relative;overflow:hidden}.sidebar:after{content:'';position:absolute;width:190px;height:190px;border:1px solid rgba(190,231,222,.12);border-radius:50%;right:-110px;top:170px;pointer-events:none}
+      .sidebar{position:relative;overflow:hidden}
       .topbar{box-shadow:0 2px 12px rgba(24,52,66,.035);position:sticky;top:0;z-index:5}.topbar .eyebrow{color:#527c83}
       .hero-row{padding:2px 0 4px}.hero-row h2{color:#153b4b}.hero-row>div>p:last-child{max-width:700px}
       .metric{position:relative;overflow:hidden}.metric:before{content:'';position:absolute;left:0;top:0;right:0;height:3px;background:#a8d8cd}.metric.alert:before{background:#e47752}.metric-grid .metric:nth-child(2):before{background:#74b7bd}.metric-grid .metric:nth-child(3):before{background:#e4c96b}.metric-grid .metric:nth-child(4):before{background:#9bb4d5}
@@ -107,6 +107,10 @@
       @media(max-width:900px){.topbar{padding-left:25px;padding-right:25px}.view{padding-top:26px}.hero-row h2{font-size:29px}}
       @media(max-width:620px){.topbar{height:76px}.topbar .eyebrow{font-size:12px;letter-spacing:.12em}.top-actions{gap:7px}.refresh-button{padding:8px 10px}.view{padding-top:21px}.hero-row h2{font-size:27px}#dashboard-view .hero-row{padding:22px 19px;border-radius:15px}#dashboard-view .hero-row .primary{width:auto}.metric{min-height:102px;padding:15px}.metric-label{font-size:12px}.metric-value{font-size:25px}.metric-note{font-size:11px}.panel-heading{padding:17px 16px 14px}.dashboard-list{padding-left:16px;padding-right:16px}.dashboard-item{gap:9px}.dashboard-item .dashboard-kind{min-width:76px}.dashboard-item strong{font-size:14px}.dashboard-item .dashboard-open{font-size:11px;padding:7px 8px}}
       @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+    </style>
+    <style>
+      .due-date-cell{white-space:normal;line-height:1.25}.due-date-cell .overdue-label{display:block;width:max-content;margin:5px 0 0;color:#b94f36;background:#fff0eb;border-radius:5px;padding:3px 6px;font-size:10px;font-weight:800;letter-spacing:.02em}
+      @media(max-width:620px){.due-date-cell .overdue-label{margin-top:4px}}
     </style>
   </head>
   <body>
