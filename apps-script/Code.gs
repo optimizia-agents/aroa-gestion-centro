@@ -1,9 +1,10 @@
 const CONFIG = {
-  planningId: '1AiIsFZCyZVp4ERTi0ExreV10StjayEw9tLWv4W21foQ',
+  sourceId: '1AiIsFZCyZVp4ERTi0ExreV10StjayEw9tLWv4W21foQ',
   planningSheet: 'Registro Maestro',
-  miguelId: '1XYm5UjRaFjbOL2mMxgEI5FaENbN5CNExHRTBqc481SI',
-  propervalId: '1QKJDejpfH7wuSCQXwH1465k5Q363F32IJ45B9w7EIqs',
-  clientsId: '1hSQQSyeWiJ03Hf76s0X4pbYANMDAUwygN6pOUbQNNtY'
+  pendingSheet: 'Seguimientos',
+  clientsSheet: 'Clientes',
+  configSheet: 'Listas',
+  allowedEmail: 'optimizia.agents@gmail.com'
 };
 
 function doGet(e) {
@@ -11,6 +12,8 @@ function doGet(e) {
   if (p.api) {
     let result;
     if (p.api === 'data') result = getAppData();
+    else if (p.api === 'config') result = getConfig();
+    else if (p.api === 'updateConfig') result = updateConfigOption(p.type, p.value || '');
     else if (p.api === 'updatePending') result = updatePendingField(p.fileId, p.row, p.field, p.value || '');
     else if (p.api === 'updateClient') result = updateClientField(p.fileId, p.row, p.field, p.value || '');
     else if (p.api === 'updateCell') result = updateCell(p.fileId, p.sheetName || '', p.row, p.column, p.value || '');
@@ -21,6 +24,7 @@ function doGet(e) {
     return ContentService.createTextOutput(callback + '(' + body + ')')
       .setMimeType(ContentService.MimeType.JAVASCRIPT);
   }
+  assertAllowed_();
   return HtmlService.createHtmlOutputFromFile('Index')
     .setTitle('Aroa Rodríguez · Gestión del centro')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
@@ -32,19 +36,78 @@ function readSheet_(id, sheetName) {
   return {id, name: sheet.getName(), values: sheet.getDataRange().getDisplayValues()};
 }
 
-function getAppData() {
+function assertAllowed_() {
+  const email = String(Session.getActiveUser().getEmail() || '').trim().toLowerCase();
+  if (email !== CONFIG.allowedEmail) throw new Error('Acceso no autorizado');
+}
+
+function sourceSheet_(name) {
+  const book = SpreadsheetApp.openById(CONFIG.sourceId);
+  const sheet = book.getSheetByName(name);
+  if (!sheet) throw new Error('Pestaña no encontrada: ' + name);
+  return sheet;
+}
+
+function pendingView_(person) {
+  const sheet = sourceSheet_(CONFIG.pendingSheet);
+  const values = sheet.getDataRange().getDisplayValues();
+  const header = values[0] || [];
+  const personCol = header.indexOf('Persona o empresa');
+  const statusCol = header.indexOf('Estado');
+  const commentsCol = header.indexOf('Comentarios');
+  const taskCol = header.indexOf('Pendiente / decisión');
+  const priorityCol = header.indexOf('Prioridad');
+  const targetCol = header.indexOf('Fecha objetivo');
+  const updatedCol = header.indexOf('Actualización');
+  const closedCol = header.indexOf('Cerrado');
+  const rows = values.slice(1).map((row, index) => ({row, index: index + 2})).filter(item => String(item.row[personCol] || '').trim() === person);
   return {
-    planning: readSheet_(CONFIG.planningId, CONFIG.planningSheet),
-    miguel: readSheet_(CONFIG.miguelId),
-    properval: readSheet_(CONFIG.propervalId),
-    clients: readSheet_(CONFIG.clientsId),
+    id: CONFIG.sourceId,
+    name: CONFIG.pendingSheet,
+    values: [
+      ['Estado', 'Comentarios', 'Pendiente / decisión', 'Prioridad', 'Fecha objetivo', 'Actualización', 'Cerrado', '_fila_origen'],
+      ...rows.map(item => [
+        item.row[statusCol] || '', item.row[commentsCol] || '', item.row[taskCol] || '',
+        item.row[priorityCol] || '', item.row[targetCol] || '', item.row[updatedCol] || '',
+        item.row[closedCol] || '', item.index
+      ])
+    ]
+  };
+}
+
+function getAppData() {
+  assertAllowed_();
+  return {
+    planning: readSheet_(CONFIG.sourceId, CONFIG.planningSheet),
+    miguel: pendingView_('Miguel'),
+    properval: pendingView_('Properval'),
+    clients: readSheet_(CONFIG.sourceId, CONFIG.clientsSheet),
     generatedAt: new Date().toISOString()
   };
 }
 
+function getConfig() {
+  assertAllowed_();
+  return readSheet_(CONFIG.sourceId, CONFIG.configSheet);
+}
+
+function updateConfigOption(type, value) {
+  assertAllowed_();
+  const allowed = ['categoria', 'prioridad', 'responsable', 'persona', 'client'];
+  const cleanType = String(type || '').trim().toLowerCase();
+  const cleanValue = String(value || '').trim();
+  if (!allowed.includes(cleanType) || !cleanValue) throw new Error('Opción no válida');
+  const sheet = sourceSheet_(CONFIG.configSheet);
+  const values = sheet.getDataRange().getDisplayValues();
+  const exists = values.slice(1).some(row => String(row[0]).toLowerCase() === cleanType && String(row[1]).trim().toLowerCase() === cleanValue.toLowerCase() && String(row[2]).toUpperCase() !== 'FALSE');
+  if (!exists) sheet.appendRow([cleanType, cleanValue, true, values.length, 'Añadido desde la aplicación']);
+  return {ok: true, type: cleanType, value: cleanValue};
+}
+
 function updateClientField(fileId, row, field, value) {
-  if (String(fileId) !== CONFIG.clientsId) throw new Error('Archivo no permitido');
-  const sheet = SpreadsheetApp.openById(fileId).getSheets()[0];
+  assertAllowed_();
+  if (String(fileId) !== CONFIG.sourceId) throw new Error('Archivo no permitido');
+  const sheet = sourceSheet_(CONFIG.clientsSheet);
   const map = {status:1, client:2, contact:3, task:4, priority:5, target:6, updated:7, comments:8, closed:9};
   if (!map[field]) throw new Error('Campo no permitido');
   sheet.getRange(Number(row), map[field]).setValue(value || '');
@@ -52,32 +115,28 @@ function updateClientField(fileId, row, field, value) {
 }
 
 function updateCell(fileId, sheetName, row, column, value) {
-  const book = SpreadsheetApp.openById(fileId);
-  const sheet = book.getSheetByName(sheetName) || book.getSheets()[0];
+  assertAllowed_();
+  if (String(fileId) !== CONFIG.sourceId || ![CONFIG.planningSheet, CONFIG.pendingSheet, CONFIG.clientsSheet, CONFIG.configSheet].includes(sheetName)) throw new Error('Destino no permitido');
+  const sheet = sourceSheet_(sheetName);
   sheet.getRange(Number(row), Number(column)).setValue(value);
   return {ok: true, updatedAt: new Date().toISOString()};
 }
 
 function updatePendingField(fileId, row, field, value) {
-  const book = SpreadsheetApp.openById(fileId);
-  const sheet = book.getSheets()[0];
+  assertAllowed_();
+  if (String(fileId) !== CONFIG.sourceId) throw new Error('Archivo no permitido');
+  const sheet = sourceSheet_(CONFIG.pendingSheet);
   const r = Number(row);
-  const map = {status: 1, task: 2, priority: 3, target: 4, updated: 5, closed: 6};
-  if (field === 'comments') {
-    let last = sheet.getLastColumn();
-    const headers = sheet.getRange(1, 1, 1, Math.max(last, 1)).getDisplayValues()[0];
-    let col = headers.indexOf('Comentarios') + 1;
-    if (!col) { col = last + 1; sheet.getRange(1, col).setValue('Comentarios'); }
-    sheet.getRange(r, col).setValue(value || '');
-  } else if (map[field]) {
-    sheet.getRange(r, map[field]).setValue(value || '');
-  } else { throw new Error('Campo no permitido'); }
+  const map = {person: 'Persona o empresa', status: 'Estado', comments: 'Comentarios', task: 'Pendiente / decisión', priority: 'Prioridad', target: 'Fecha objetivo', updated: 'Actualización', closed: 'Cerrado'};
+  const column = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getDisplayValues()[0].indexOf(map[field]) + 1;
+  if (!column) throw new Error('Campo no permitido');
+  sheet.getRange(r, column).setValue(value || '');
   return {ok: true, field, updatedAt: new Date().toISOString()};
 }
 
 function markPlanningDone(row, dateText) {
-  const book = SpreadsheetApp.openById(CONFIG.planningId);
-  const sheet = book.getSheetByName(CONFIG.planningSheet);
+  assertAllowed_();
+  const sheet = sourceSheet_(CONFIG.planningSheet);
   const r = Number(row);
   const frequency = String(sheet.getRange(r, 3).getDisplayValue() || '').toLowerCase();
   const date = new Date(dateText + 'T12:00:00');
@@ -96,7 +155,7 @@ function markPlanningDone(row, dateText) {
 }
 
 function exportPlanningXlsx() {
-  const url = 'https://docs.google.com/spreadsheets/d/' + CONFIG.planningId + '/export?format=xlsx';
+  const url = 'https://docs.google.com/spreadsheets/d/' + CONFIG.sourceId + '/export?format=xlsx';
   const response = UrlFetchApp.fetch(url, {headers: {Authorization: 'Bearer ' + ScriptApp.getOAuthToken()}});
   const blob = response.getBlob().setName('Planificación General Sales Center Fuenlabrada.xlsx');
   return {name: blob.getName(), mimeType: blob.getContentType(), base64: Utilities.base64Encode(blob.getBytes())};
