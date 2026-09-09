@@ -151,7 +151,7 @@ $('delete-client-editor')?.addEventListener('click',deleteClientEditor);
 
 // Todas las tablas usan una única acción de fila: Editar.
 function removeExtraRowActions(){
-  document.querySelectorAll('#pending-table .done-btn,#client-table .done-btn').forEach(button=>button.remove());
+  document.querySelectorAll('#center-table .done-btn,#pending-table .done-btn,#client-table .done-btn').forEach(button=>button.remove());
 }
 const renderPendingWithSingleAction=renderPending;
 renderPending=()=>{renderPendingWithSingleAction();removeExtraRowActions()};
