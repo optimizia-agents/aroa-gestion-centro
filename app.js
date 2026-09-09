@@ -158,3 +158,15 @@ renderPending=()=>{renderPendingWithSingleAction();removeExtraRowActions()};
 const renderClientsWithSingleAction=renderClients;
 renderClients=()=>{renderClientsWithSingleAction();removeExtraRowActions()};
 removeExtraRowActions();
+
+// Cada entrada en Centro parte de su configuración operativa habitual.
+// El estado elegido filtra la tabla, pero no debe quedarse pegado al cambiar de vista.
+document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
+  if(button.dataset.view!=='center')return;
+  $('center-search').value='';
+  $('center-category').value='all';
+  $('center-status').value='open';
+  $('center-sort').value='next';
+  window.centerQuickFilter=null;
+  renderCenter();
+}));
