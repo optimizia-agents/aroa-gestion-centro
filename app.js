@@ -216,6 +216,9 @@ function restoreViewFilters(view){
   if(view==='clients')renderClients();
   if(view==='center')renderCenter();
 }
-Object.keys(VIEW_FILTER_FIELDS).forEach(view=>VIEW_FILTER_FIELDS[view].forEach(id=>$(id)?.addEventListener('input',()=>saveViewFilters(view))));
+Object.keys(VIEW_FILTER_FIELDS).forEach(view=>VIEW_FILTER_FIELDS[view].forEach(id=>{
+  $(id)?.addEventListener('input',()=>saveViewFilters(view));
+  $(id)?.addEventListener('change',()=>saveViewFilters(view));
+}));
 document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>setTimeout(()=>restoreViewFilters(button.dataset.view),0)));
 Object.keys(VIEW_FILTER_FIELDS).forEach(restoreViewFilters);
