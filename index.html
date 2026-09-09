@@ -50,7 +50,10 @@
       .toolbar{gap:11px;margin-bottom:14px}.search,.toolbar select{border-radius:11px;min-height:44px}.search input{font-size:14px}
       .panel{border-radius:15px;box-shadow:0 3px 14px rgba(24,52,66,.045)}.panel-heading{padding:18px 20px 14px}.panel-heading h3{font-size:17px}
       table{font-size:13px}th{padding:13px 10px;background:#f8fbfa;font-size:10px;letter-spacing:.09em}td{padding:14px 10px;line-height:1.3}
-      .status-select{min-height:35px;border-radius:9px;font-weight:700}.edit-btn,.done-btn{border-radius:9px;min-height:35px}.pending-table .done-btn,.client-table .done-btn{display:none}
+      .status-select{min-height:35px;border-radius:9px;font-weight:700}.edit-btn,.done-btn{border-radius:9px;min-height:35px}
+      /* En estas tablas la única acción de fila es Editar. La prioridad evita que
+         las reglas responsive de .row-actions vuelvan a mostrar Hecho. */
+      #pending-table .done-btn,#client-table .done-btn{display:none!important}
       #center-table tr.row-overdue td{background:#fff0f0}#center-table tr.row-soon td{background:#fff9df}#center-table tr.row-ok td{background:#eff9f1}
       #center-table tr.row-overdue td:first-child{box-shadow:inset 4px 0 #e18484}#center-table tr.row-soon td:first-child{box-shadow:inset 4px 0 #e8c75d}#center-table tr.row-ok td:first-child{box-shadow:inset 4px 0 #8cc9a4}
       .comment-input{border-radius:9px;line-height:1.45;background:#fcfefd}
