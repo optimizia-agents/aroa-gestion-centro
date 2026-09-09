@@ -195,3 +195,27 @@ const renderClientsHomogeneous=renderClients;
 renderClients=function(){renderClientsHomogeneous();harmonizeTableRows('client-table')};
 renderPending();
 renderClients();
+
+// Conserva la configuración de cada vista al navegar por la aplicación.
+const VIEW_FILTERS_KEY='kurro-view-filters-v1';
+const VIEW_FILTER_FIELDS={
+  center:['center-search','center-category','center-status','center-sort'],
+  pending:['pending-search','pending-priority','pending-status'],
+  clients:['client-search','client-priority','client-status']
+};
+function readViewFilters(){try{return JSON.parse(localStorage.getItem(VIEW_FILTERS_KEY)||'{}')}catch(e){return {}}}
+function saveViewFilters(view){
+  const fields=VIEW_FILTER_FIELDS[view]; if(!fields)return;
+  const all=readViewFilters(); all[view]=Object.fromEntries(fields.map(id=>[id,$(id)?.value||'']));
+  try{localStorage.setItem(VIEW_FILTERS_KEY,JSON.stringify(all))}catch(e){}
+}
+function restoreViewFilters(view){
+  const fields=VIEW_FILTER_FIELDS[view],saved=readViewFilters()[view]; if(!fields||!saved)return;
+  fields.forEach(id=>{if($(id)&&saved[id]!==undefined)$(id).value=saved[id]});
+  if(view==='pending')renderPending();
+  if(view==='clients')renderClients();
+  if(view==='center')renderCenter();
+}
+Object.keys(VIEW_FILTER_FIELDS).forEach(view=>VIEW_FILTER_FIELDS[view].forEach(id=>$(id)?.addEventListener('input',()=>saveViewFilters(view))));
+document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>setTimeout(()=>restoreViewFilters(button.dataset.view),0)));
+Object.keys(VIEW_FILTER_FIELDS).forEach(restoreViewFilters);
