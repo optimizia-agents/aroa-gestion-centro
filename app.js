@@ -153,6 +153,8 @@ $('delete-client-editor')?.addEventListener('click',deleteClientEditor);
 function removeExtraRowActions(){
   document.querySelectorAll('#center-table .done-btn,#pending-table .done-btn,#client-table .done-btn').forEach(button=>button.remove());
 }
+const renderCenterWithSingleAction=renderCenter;
+renderCenter=()=>{renderCenterWithSingleAction();removeExtraRowActions()};
 const renderPendingWithSingleAction=renderPending;
 renderPending=()=>{renderPendingWithSingleAction();removeExtraRowActions()};
 const renderClientsWithSingleAction=renderClients;
