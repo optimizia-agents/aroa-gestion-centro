@@ -148,3 +148,13 @@ document.querySelectorAll('.nav-item').forEach(b=>b.addEventListener('click',()=
 loadRemoteData();
 async function deleteClientEditor(){const i=clientEditorIndex,r=clientRows[i];if(!r||!confirm('¿Quieres eliminar este pendiente?'))return;clientRows.splice(i,1);saveClientData();closeClientEditor();renderClients();if(r.serverRow){try{await remoteWrite(Promise.all(['status','client','contact','task','priority','target','updated','comments','closed'].map(field=>kurroRequest({api:'updateClient',fileId:CLIENTS_FILE_ID,row:r.serverRow,field,value:''}))))}catch(e){showSyncToast('Eliminado en esta vista; falta publicar la conexión')}}showSyncToast('Pendiente eliminado')}
 $('delete-client-editor')?.addEventListener('click',deleteClientEditor);
+
+// Todas las tablas usan una única acción de fila: Editar.
+function removeExtraRowActions(){
+  document.querySelectorAll('#pending-table .done-btn,#client-table .done-btn').forEach(button=>button.remove());
+}
+const renderPendingWithSingleAction=renderPending;
+renderPending=()=>{renderPendingWithSingleAction();removeExtraRowActions()};
+const renderClientsWithSingleAction=renderClients;
+renderClients=()=>{renderClientsWithSingleAction();removeExtraRowActions()};
+removeExtraRowActions();
