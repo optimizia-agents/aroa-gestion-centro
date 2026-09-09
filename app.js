@@ -152,7 +152,7 @@ $('delete-client-editor')?.addEventListener('click',deleteClientEditor);
 // Todas las tablas usan una única acción de fila: Editar.
 function removeExtraRowActions(){
   document.querySelectorAll('#center-table .done-btn,#pending-table .done-btn,#client-table .done-btn').forEach(button=>button.remove());
-  document.querySelectorAll('#center-table .row-actions input[type="date"]').forEach(input=>input.remove());
+  document.querySelectorAll('table .row-actions input[type="date"]').forEach(input=>input.remove());
 }
 const renderCenterWithSingleAction=renderCenter;
 renderCenter=()=>{renderCenterWithSingleAction();removeExtraRowActions()};
