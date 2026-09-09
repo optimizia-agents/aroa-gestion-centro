@@ -102,8 +102,6 @@ $('[data-new-center]')?.addEventListener('click',openNewCenterEditor);$('delete-
 const localMarkCenterDone=markCenterDone;markCenterDone=function(index){const r=centerRows[index],input=$(`done-date-${index}`);if(!input?.value||isOverdue(r)){localMarkCenterDone(index);return}if(r.serverRow)remoteWrite(kurroRequest({api:'markPlanningDone',row:r.serverRow,dateText:input.value})).then(()=>loadRemoteData()).catch(()=>localMarkCenterDone(index));else localMarkCenterDone(index)};
 const localUpdatePendingField=updatePendingField;updatePendingField=function(index,field,value){const r=pendingRows[index];r[field]=value;saveData();if(r.fileId&&r.serverRow){remoteWrite(kurroRequest({api:'updatePending',fileId:r.fileId,row:r.serverRow,field,value}).catch(()=>{}))}renderPending()};
 const localMarkPendingDone=markPendingDone;markPendingDone=function(index){const r=pendingRows[index];r.status='REALIZADO';if(r.fileId&&r.serverRow)remoteWrite(kurroRequest({api:'updatePending',fileId:r.fileId,row:r.serverRow,field:'status',value:'REALIZADO'})).then(()=>loadRemoteData()).catch(()=>localMarkPendingDone(index));else localMarkPendingDone(index)};
-loadRemoteData();
-
 // Garantiza que la acción Editar permanezca visible aunque otra rutina
 // vuelva a pintar la tabla de pendientes.
 const kurroRenderPendingWithEdit = renderPending;
