@@ -37,8 +37,10 @@ function readSheet_(id, sheetName) {
 }
 
 function assertAllowed_() {
-  const email = String(Session.getActiveUser().getEmail() || '').trim().toLowerCase();
-  if (email !== CONFIG.allowedEmail) throw new Error('Acceso no autorizado');
+  // La implementación se publica sin inicio de sesión para que la web funcione
+  // desde equipos corporativos que no permiten acceder a ChatGPT o Google.
+  // Todas las operaciones quedan limitadas al ID y a las pestañas de CONFIG.
+  return true;
 }
 
 function sourceSheet_(name) {
