@@ -2,3 +2,4 @@
 #center-table .done-btn,#pending-table .done-btn,#client-table .done-btn{display:none!important}
 .table-wrap table .row-actions input[type="date"],.table-wrap table .row-actions .done-btn{display:none!important}
 .table-wrap table .row-actions{min-width:0}
+.data-alert{margin:14px 44px 0;padding:12px 15px;border:1px solid #f0c9a9;border-radius:9px;background:#fff7ef;color:#92552f;font-size:13px;line-height:1.4}.data-alert[hidden]{display:none}@media(max-width:620px){.data-alert{margin:12px 16px 0}}
