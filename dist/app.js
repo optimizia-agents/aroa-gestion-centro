@@ -469,6 +469,18 @@ document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('
 }));
 if(firebaseUser)markSyncSuccess('Firebase');
 
+// Mantiene el estado inferior alineado con el indicador principal, también
+// cuando la sesión se recupera desde Firebase sin una nueva escritura.
+function alignSyncFooter(){
+  const label=$('sync-label')?.textContent||'';
+  const footer=$('sync-time');
+  if(!footer)return;
+  if(/sincronizado/i.test(label)&&/Esperando sincronización/.test(footer.textContent)){
+    footer.textContent=`Última comprobación: ${new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}`;
+  }
+}
+setInterval(alignSyncFooter,500);
+
 // Completa automáticamente responsables ausentes usando la recuperación verificada.
 // Solo escribe cuando encuentra un responsable vacío; nunca sustituye uno ya informado.
 async function repairMissingOwners(){
