@@ -292,6 +292,7 @@ function harmonizeTableRows(tableId){
   });
 }
 function ensurePendingActionCells(){
+  const clean=value=>String(value||'').replace(/\s+/g,' ').trim().toLocaleLowerCase('es');
   document.querySelectorAll('#pending-table tr').forEach(row=>{
     if(row.children.length===6){
       const comments=document.createElement('td');
@@ -301,9 +302,9 @@ function ensurePendingActionCells(){
     }
     const actionCell=row.lastElementChild;
     if(!actionCell||actionCell.querySelector('.edit-btn'))return;
-    const text=row.children[1]?.textContent.trim()||'';
-    const person=row.children[2]?.textContent.trim()||'';
-    const index=pendingRows.findIndex(item=>item.text===text&&item.person===person);
+    const text=clean(row.children[1]?.textContent);
+    const person=clean(row.children[2]?.textContent);
+    const index=pendingRows.findIndex(item=>clean(item.text)===text&&clean(item.person)===person);
     if(index<0)return;
     const button=document.createElement('button');
     button.className='edit-btn pending-edit-visible';
