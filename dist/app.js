@@ -183,14 +183,23 @@ document.querySelector('[data-new-client]')?.addEventListener('click',()=>openCl
 
 function htmlEscape(value){return String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;')}
 function directoryText(row){return row.map(v=>String(v??'').trim()).join(' ').toLocaleLowerCase('es')}
+function directoryCanonicalRow(row){
+  if(Array.isArray(row)&&row.length>=30)return row;
+  // Compatibilidad segura con la primera carga antigua de 8 columnas.
+  // Nunca reutilizamos su último campo como Riesgo visible.
+  const legacy=Array.isArray(row)?row:[];const canonical=Array(30).fill('');
+  canonical[0]=legacy[0]||'';canonical[4]=legacy[1]||'';canonical[27]=legacy[2]||'';
+  canonical[10]=legacy[3]||'';canonical[9]=legacy[4]||'';canonical[6]=legacy[5]||'';
+  canonical[17]=legacy[6]||'';return canonical;
+}
 function closeDirectoryDetail(){const modal=$('directory-detail-modal');if(modal){modal.classList.remove('open');modal.setAttribute('aria-hidden','true')}}
-function openDirectoryDetail(index){const row=directoryRows[Number(index)];if(!row)return;const body=$('directory-detail-body');if(!body)return;body.innerHTML=directoryHeaders.map((header,i)=>`<div class="directory-detail-field"><span>${htmlEscape(header||`Campo ${i+1}`)}</span><strong>${htmlEscape(row[i]||'Sin dato')}</strong></div>`).join('');$('directory-detail-modal').classList.add('open');$('directory-detail-modal').setAttribute('aria-hidden','false')}
+function openDirectoryDetail(index){const row=directoryCanonicalRow(directoryRows[Number(index)]);if(!row)return;const body=$('directory-detail-body');if(!body)return;body.innerHTML=directoryHeaders.map((header,i)=>`<div class="directory-detail-field"><span>${htmlEscape(header||`Campo ${i+1}`)}</span><strong>${htmlEscape(row[i]||'Sin dato')}</strong></div>`).join('');$('directory-detail-modal').classList.add('open');$('directory-detail-modal').setAttribute('aria-hidden','false')}
 function renderDirectory(){
   const body=$('directory-body'); if(!body)return;
   const query=String($('directory-search')?.value||'').trim().toLocaleLowerCase('es');
   const rows=query?directoryRows.filter(row=>directoryText(row).includes(query)):directoryRows;
   if(!directoryLoaded&&!directoryRows.length){body.innerHTML='<tr><td colspan="10" class="empty">El directorio todavía no está cargado en Firebase.</td></tr>';$('directory-count').textContent='Sin cargar';return}
-  body.innerHTML=rows.length?rows.slice(0,250).map(row=>{const index=directoryRows.indexOf(row);return `<tr><td><strong>${htmlEscape(row[0])}</strong></td><td>${htmlEscape([row[4],row[5]].filter(Boolean).join(' '))}</td><td>${htmlEscape(row[27])}</td><td>${htmlEscape(row[10])}</td><td>${htmlEscape(row[9])}</td><td>${htmlEscape(row[8])}</td><td>${htmlEscape(row[3])}</td><td>${htmlEscape([row[6],row[7]].filter(Boolean).join(' '))}</td><td>${htmlEscape(row[17])}</td><td><button class="edit-btn directory-detail-button" data-directory-index="${index}">Ver ficha</button></td></tr>`}).join(''):`<tr><td colspan="10" class="empty">No hay clientes que coincidan con la búsqueda.</td></tr>`;
+  body.innerHTML=rows.length?rows.slice(0,250).map(row=>{const index=directoryRows.indexOf(row);const c=directoryCanonicalRow(row);return `<tr><td><strong>${htmlEscape(c[0])}</strong></td><td>${htmlEscape([c[4],c[5]].filter(Boolean).join(' '))}</td><td>${htmlEscape(c[27])}</td><td>${htmlEscape(c[10])}</td><td>${htmlEscape(c[9])}</td><td>${htmlEscape(c[8])}</td><td>${htmlEscape(c[3])}</td><td>${htmlEscape([c[6],c[7]].filter(Boolean).join(' '))}</td><td>${htmlEscape(c[17])}</td><td><button class="edit-btn directory-detail-button" data-directory-index="${index}">Ver ficha</button></td></tr>`}).join(''):`<tr><td colspan="10" class="empty">No hay clientes que coincidan con la búsqueda.</td></tr>`;
   $('directory-count').textContent=query?`${rows.length} resultados${rows.length>250?' · muestra los primeros 250':''}`:`${rows.length} clientes`;
   if($('directory-source'))$('directory-source').textContent=directoryRows.length?`Directorio guardado en Firebase · ${directoryRows.length} clientes · solo lectura`:'Directorio guardado en Firebase · solo lectura';
   if($('directory-metrics'))$('directory-metrics').innerHTML=metric('Clientes cargados',directoryRows.length,'Directorio completo')+metric('Campos de búsqueda',directoryHeaders.length,'Se revisan todos')+metric('Resultados',rows.length,'Coincidencias actuales')+metric('Fuente','Firebase','Sin Google Sheets');
