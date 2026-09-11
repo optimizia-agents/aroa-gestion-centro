@@ -287,3 +287,41 @@ loadGvizData=async function(){if(firebaseUser)return firebaseDataFromRows();retu
 kurroRequest=async function(params){if(firebaseUser){if(params.api==='data')return firebaseDataFromRows();await firebasePersistSnapshot();return{ok:true,result:{firebase:true}}}return legacyKurroRequest(params)};
 async function startFirebaseRest(){addFirebaseRestUI();if(restIdToken)await finishFirebaseRest();else openFirebaseAuth()}
 startFirebaseRest();
+
+// Descarga una copia de trabajo con los datos que están visibles tras la última sincronización.
+// El botón exige sesión para evitar exportar una copia privada por accidente.
+function exportCurrentWorkbook(){
+  if(!firebaseUser){
+    showSyncToast('Inicia sesión para descargar la copia actualizada');
+    openFirebaseAuth();
+    return;
+  }
+  if(kurroPendingWrites){
+    showSyncToast('Espera a que termine el guardado');
+    return;
+  }
+  if(typeof XLSX==='undefined'){
+    showSyncToast('No se ha podido preparar el Excel. Comprueba la conexión y vuelve a intentarlo');
+    return;
+  }
+  const statusLabel=value=>value==='done'?'REALIZADO':value==='process'?'EN PROCESO':'PENDIENTE';
+  const center=[['Actividad','Categoría','Periodicidad','Última revisión','Próxima revisión','Responsable','Estado','Siguiente acción / comentarios'],...centerRows.map(r=>[r.activity||'',r.category||'',r.frequency||'',r.last||'',r.next||'',r.owner||'',statusLabel(effectiveStatus(r)),r.action||''])];
+  const pending=[['Estado','Pendiente / decisión','Persona o empresa','Prioridad','Fecha objetivo','Actualización','Comentarios'],...pendingRows.map(r=>[r.status||'PENDIENTE',r.text||'',r.person||'',r.priority||'NORMAL',r.date||'',r.updated||'',r.comments||''])];
+  const clients=[['Estado','Cliente','Contacto','Pendiente / decisión','Prioridad','Fecha objetivo','Actualización','Comentarios'],...clientRows.map(r=>[r.status||'PENDIENTE',r.client||'',r.contact||'',r.text||'',r.priority||'NORMAL',r.date||'',r.updated||'',r.comments||''])];
+  const workbook=XLSX.utils.book_new();
+  [
+    ['Centro',center],
+    ['Mis pendientes',pending],
+    ['Clientes',clients]
+  ].forEach(([name,rows])=>{
+    const sheet=XLSX.utils.aoa_to_sheet(rows);
+    sheet['!freeze']={xSplit:0,ySplit:1};
+    sheet['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:Math.max(rows.length-1,0),c:rows[0].length-1}})};
+    sheet['!cols']=rows[0].map((header,index)=>({wch:Math.min(Math.max(String(header).length+3,...rows.slice(1,Math.min(rows.length,20)).map(row=>String(row[index]||'').length+1)),42)}));
+    XLSX.utils.book_append_sheet(workbook,sheet,name);
+  });
+  const stamp=new Date().toISOString().slice(0,10);
+  XLSX.writeFile(workbook,`Aroa_Gestion_Fuenlabrada_${stamp}.xlsx`);
+  showSyncToast('Copia Excel descargada');
+}
+document.querySelector('#download-workbook')?.addEventListener('click',exportCurrentWorkbook);
