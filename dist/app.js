@@ -282,7 +282,7 @@ function harmonizeTableRows(tableId){
   table.querySelectorAll('tr').forEach(row=>{
     row.querySelectorAll('select,input[type="date"],textarea').forEach(control=>{
       const cell=control.closest('td'); if(!cell)return;
-      const value=control.tagName==='SELECT'?control.options[control.selectedIndex]?.text:(control.value||'');
+      const value=control.tagName==='SELECT'?control.options[control.selectedIndex]?.text:(control.matches('input[type="date"]')?normalizeSheetDate(control.value):(control.value||''));
       const text=document.createElement('span');
       text.className='table-value';
       text.textContent=value||'Sin fecha';
