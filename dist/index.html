@@ -75,17 +75,17 @@
       <aside class="sidebar">
         <div class="brand"><span class="brand-mark">AR</span><div><strong>Aroa Rodríguez</strong><small>Gestión del centro</small></div></div>
         <nav>
-          <button class="nav-item active" data-view="center"><span>▦</span> Centro</button>
-          <button class="nav-item" data-view="pending"><span>✓</span> Mis pendientes</button>
-          <button class="nav-item" data-view="clients"><span>◉</span> Clientes</button>
+          <button class="nav-item active" data-view="center" aria-current="page"><span>▦</span> Control del centro</button>
+          <button class="nav-item" data-view="pending"><span>✓</span> Seguimientos</button>
+          <button class="nav-item" data-view="clients"><span>◉</span> Pendientes de clientes</button>
         </nav>
-        <div class="sidebar-note"><span class="pulse"></span><div><strong>Datos reales cargados</strong><small>Lectura inicial: 4 sept 2026</small></div></div>
+        <div class="sidebar-note"><span class="pulse"></span><div><strong>Datos guardados en Firebase</strong><small id="sync-time">Esperando sincronización</small></div></div>
       </aside>
 
       <main class="main">
         <header class="topbar">
           <div><p class="eyebrow">SALES CENTER · FUENLABRADA</p><h1 id="page-title">Centro</h1></div>
-          <div class="top-actions"><span class="sync-dot"></span><span class="sync-label" id="sync-label">Google Sheets · respaldo</span><button class="refresh-button" data-refresh title="Actualizar datos">↻ Actualizar</button><button class="icon-button" aria-label="Notificaciones">♢</button><div class="avatar">AR</div></div>
+          <div class="top-actions"><span class="sync-dot"></span><span class="sync-label" id="sync-label">Firebase · esperando acceso</span><span class="sync-time" id="top-sync-time" aria-live="polite"></span><button class="refresh-button" id="download-workbook" title="Descargar una copia actualizada en Excel">⇩ Descargar Excel</button><button class="refresh-button" data-refresh title="Comprobar y actualizar los datos">↻ Actualizar</button><button class="icon-button" aria-label="Notificaciones">♢</button><div class="avatar">AR</div></div>
         </header>
         <div id="data-alert" class="data-alert" role="status" aria-live="polite" hidden></div>
 
@@ -116,9 +116,11 @@
     <div id="pending-editor" class="modal" aria-hidden="true"><div class="modal-card pending-editor-card" role="dialog" aria-modal="true" aria-labelledby="pending-editor-title"><div class="modal-heading"><div><p class="eyebrow">MIS PENDIENTES</p><h2 id="pending-editor-title">Nuevo pendiente</h2></div><button class="modal-close" data-close-pending aria-label="Cerrar">×</button></div><p class="pending-editor-note">Puedes cambiar el estado, la prioridad, la fecha objetivo y el seguimiento.</p><div class="editor-grid"><label>Pendiente / decisión<input id="pending-edit-text"></label><label>Persona o empresa<div class="select-with-add"><select id="pending-edit-person"><option>Miguel</option><option>Properval</option></select><button type="button" class="add-option-button" id="add-pending-person" aria-label="Añadir persona o empresa">+</button></div></label><label>Prioridad<select id="pending-edit-priority"><option>NORMAL</option><option>ALTA</option></select></label><label>Estado<select id="pending-edit-status"><option>PENDIENTE</option><option>REALIZADO</option></select></label><label>Fecha objetivo<input id="pending-edit-date" type="date"></label><label class="editor-wide">Comentarios<textarea id="pending-edit-comments" rows="4"></textarea></label></div><div class="modal-actions"><button class="secondary" data-close-pending>Cancelar</button><button class="primary" id="save-pending-editor">Guardar pendiente</button></div></div></div>
     <div id="client-editor" class="modal" aria-hidden="true"><div class="modal-card pending-editor-card" role="dialog" aria-modal="true" aria-labelledby="client-editor-title"><div class="modal-heading"><div><p class="eyebrow">PENDIENTES CON CLIENTES</p><h2 id="client-editor-title">Nuevo pendiente</h2></div><button class="modal-close" data-close-client aria-label="Cerrar">×</button></div><p class="pending-editor-note">Guarda el cliente, el contacto y el seguimiento en la tabla compartida.</p><div class="editor-grid"><label>Cliente<div class="select-with-add"><select id="client-edit-client"><option value="">Sin asignar</option></select><button type="button" class="add-option-button" id="add-client-option" aria-label="Añadir cliente">+</button></div></label><label>Contacto<input id="client-edit-contact" placeholder="Persona de contacto"></label><label class="editor-wide">Pendiente / decisión<input id="client-edit-text"></label><label>Prioridad<select id="client-edit-priority"><option>NORMAL</option><option>ALTA</option></select></label><label>Estado<select id="client-edit-status"><option>PENDIENTE</option><option>EN PROCESO</option><option>REALIZADO</option></select></label><label>Fecha objetivo<input id="client-edit-date" type="date"></label><label class="editor-wide">Comentarios<textarea id="client-edit-comments" rows="5"></textarea></label></div><div class="modal-actions"><button class="danger-button" id="delete-client-editor">Eliminar</button><span class="modal-spacer"></span><button class="secondary" data-close-client>Cancelar</button><button class="primary" id="save-client-editor">Guardar pendiente</button></div></div></div>
     <div id="toast" class="toast"></div>
+<style>body.auth-locked .app-shell{visibility:hidden}body.auth-locked #firebase-auth{display:flex!important}.sync-time{font-size:11px;color:#81969a;white-space:nowrap}.refresh-button.busy{opacity:.65;pointer-events:none}@media(max-width:900px){.sync-time{display:none}}@media(max-width:620px){.top-actions{gap:7px}.top-actions .refresh-button{padding:8px 9px;font-size:11px}}</style>
 <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore-compat.js"></script>
-<script src="app.js?v=20260911-firebase3"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="app.js?v=20260911-firebase17"></script>
   </body>
 </html>
