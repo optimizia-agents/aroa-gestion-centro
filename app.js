@@ -259,7 +259,7 @@ Object.keys(VIEW_FILTER_FIELDS).forEach(restoreViewFilters);
 const legacyKurroRequest=kurroRequest, legacyLoadGvizData=loadGvizData, legacyLoadRemoteData=loadRemoteData;
 let firebaseBootstrapping=false;
 function firebaseDataFromRows(){
-  const planning=[['Actividad','Categoría','Periodicidad','Última revisión','Próxima revisión','','Responsable','', '', 'Siguiente acción / comentarios','', 'Estado'],...centerRows.map(r=>[r.activity||'',r.category||'',r.frequency||'',r.last||'',r.next||'','',r.owner||'','','',r.action||'', '',r.status==='done'?'REALIZADO':r.status==='process'?'EN PROCESO':'PENDIENTE'])];
+  const planning=[['Actividad','Categoría','Periodicidad','Última revisión','Próxima revisión','Responsable','','','','Siguiente acción / comentarios','', 'Estado'],...centerRows.map(r=>[r.activity||'',r.category||'',r.frequency||'',r.last||'',r.next||'',r.owner||'','','','',r.action||'', '',r.status==='done'?'REALIZADO':r.status==='process'?'EN PROCESO':'PENDIENTE'])];
   const pendingFor=person=>[['Estado','Comentarios','Pendiente / decisión','Prioridad','Fecha objetivo','Actualización','Cerrado','Fila'],...pendingRows.filter(r=>r.person===person).map((r,i)=>[r.status||'PENDIENTE',r.comments||'',r.text||'',r.priority||'NORMAL',r.date||'',r.updated||'',r.closed||'',r.serverRow||i+2])];
   const clients=[['Estado','Cliente','Contacto','Pendiente / decisión','Prioridad','Fecha objetivo','Actualización','Comentarios','Cerrado'],...clientRows.map(r=>[r.status||'PENDIENTE',r.client||'',r.contact||'',r.text||'',r.priority||'NORMAL',r.date||'',r.updated||'',r.comments||'',r.closed||''])];
   return {planning:{id:'firebase',name:'Registro Maestro',values:planning},miguel:{id:'firebase',name:'Seguimientos',values:pendingFor('Miguel')},properval:{id:'firebase',name:'Seguimientos',values:pendingFor('Properval')},clients:{id:'firebase',name:'Clientes',values:clients}};
@@ -267,7 +267,7 @@ function firebaseDataFromRows(){
 function firebaseSnapshot(){return{center:centerRows.map(r=>({...r})),pending:pendingRows.map(r=>({...r})),clients:clientRows.map(r=>({...r})),lists:mergedKurroLists(),updated:new Date().toISOString()}}
 async function restoreOwnersFromLegacySource(){
   const current=centerRows.map(row=>({...row}));
-  if(!current.length||current.some(row=>String(row.owner||'').trim()))return false;
+  if(!current.length||current.every(row=>String(row.owner||'').trim()))return false;
   await legacyLoadRemoteData();
   const owners=new Map(centerRows.map(row=>[`${String(row.activity||'').trim().toLowerCase()}|${String(row.frequency||'').trim().toLowerCase()}`,String(row.owner||'').trim()]));
   centerRows.splice(0,centerRows.length,...current.map(row=>{const key=`${String(row.activity||'').trim().toLowerCase()}|${String(row.frequency||'').trim().toLowerCase()}`;return{...row,owner:owners.get(key)||row.owner||''}}));
