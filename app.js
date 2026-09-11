@@ -48,34 +48,6 @@ const originalSavePendingEditor=savePendingEditor;savePendingEditor=async functi
 renderPending=function(){const q=($('pending-search').value||'').toLowerCase(),person=window.person||'all',priority=$('pending-priority').value,state=$('pending-status').value;const rows=pendingRows.filter(r=>(person==='all'||r.person===person)&&(priority==='all'||r.priority===priority)&&(state==='all'||r.status===state)&&[r.person,r.text,r.priority,r.comments].join(' ').toLowerCase().includes(q));$('pending-table').innerHTML=rows.length?rows.map(r=>{const i=pendingRows.indexOf(r);return `<tr><td><select class="status-select" aria-label="Estado de ${r.text}" onchange="updatePendingField(${i},'status',this.value)"><option ${r.status==='PENDIENTE'?'selected':''}>PENDIENTE</option><option ${r.status==='REALIZADO'?'selected':''}>REALIZADO</option></select></td><td>${r.text}</td><td><strong>${r.person}</strong></td><td><select class="status-select" aria-label="Prioridad de ${r.text}" onchange="updatePendingField(${i},'priority',this.value)"><option ${r.priority==='NORMAL'?'selected':''}>NORMAL</option><option ${r.priority==='ALTA'?'selected':''}>ALTA</option></select></td><td class="date"><input class="pending-date" type="date" aria-label="Fecha objetivo de ${r.text}" value="${pendingDateForEditor(r.date)}" onchange="updatePendingField(${i},'date',pendingDateFromEditor(this.value))"></td><td class="date">${r.updated||'<span class="muted">Sin fecha</span>'}</td><td><textarea class="comment-input" rows="2" placeholder="Añadir comentario" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'" onchange="updatePendingField(${i},'comments',this.value)">${r.comments||''}</textarea></td><td><div class="pending-person"><button class="done-btn" onclick="updatePendingField(${i},'status','REALIZADO')" ${r.status==='REALIZADO'?'disabled':''}>Hecho</button><button class="edit-btn" onclick="openPendingEditor(${i})">Editar</button></div></td></tr>`}).join(''):`<tr><td colspan="8" class="empty">No hay resultados con estos filtros.</td></tr>`;$('pending-heading').textContent=person==='all'?'Todos mis pendientes':`Pendientes con ${person}`;$('pending-count').textContent=`${rows.length} registros`};
 renderCenter();renderPending();
 
-// Copia manual de seguridad para trabajar sin depender del ordenador del trabajo.
-function kurroBackupSnapshot(){
-  return {
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    source: 'Centro Fuenlabrada · Gestión',
-    center: centerRows.map(r=>({...r})),
-    pending: pendingRows.map(r=>({...r})),
-    clients: typeof clientRows!=='undefined'?clientRows.map(r=>({...r})):[],
-    lists: typeof savedKurroLists==='function'?savedKurroLists():{}
-  };
-}
-function downloadKurroBackup(){
-  const stamp=new Date().toISOString().slice(0,10),fileName=`copia-kurro-${stamp}.json`;
-  const blob=new Blob([JSON.stringify(kurroBackupSnapshot(),null,2)],{type:'application/json;charset=utf-8'});
-  const url=URL.createObjectURL(blob),link=document.createElement('a');
-  link.href=url;link.download=fileName;document.body.appendChild(link);link.click();link.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),1000);showSyncToast(`Copia descargada: ${fileName}`);
-}
-function emailKurroBackup(){
-  const stamp=new Date().toISOString().slice(0,10),fileName=`copia-kurro-${stamp}.json`;
-  downloadKurroBackup();
-  const subject=encodeURIComponent(`Copia de seguridad KURRO · ${stamp}`);
-  const body=encodeURIComponent(`He descargado la copia de seguridad «${fileName}».\n\nAdjunta ese archivo a este correo antes de enviarlo.`);
-  setTimeout(()=>{window.location.href=`mailto:?subject=${subject}&body=${body}`},250);
-}
-document.querySelector('[data-download-backup]')?.addEventListener('click',downloadKurroBackup);
-document.querySelector('[data-email-backup]')?.addEventListener('click',emailKurroBackup);
 // La próxima revisión se calcula por defecto, pero admite una fecha manual.
 const legacyOpenCenterEditor= openCenterEditor, legacyOpenNewCenterEditor=openNewCenterEditor;
 openCenterEditor=function(index){legacyOpenCenterEditor(index);if($('edit-next'))$('edit-next').dataset.manual='false'};
@@ -131,7 +103,7 @@ function refreshKURROMetrics(){if($('center-metrics'))$('center-metrics').innerH
 async function refreshKURROFromSheets(silent=false){if(kurroRefreshInFlight||kurroPendingWrites||isEditingKURRO())return;kurroRefreshInFlight=true;try{await loadRemoteData();if(!silent)showSyncToast('Datos actualizados desde Google Sheets')}finally{kurroRefreshInFlight=false}}
 setInterval(()=>{if(document.visibilityState==='visible')refreshKURROFromSheets(true)},30000);
 window.addEventListener('focus',()=>refreshKURROFromSheets(true));
-document.querySelector('[data-refresh]')?.addEventListener('click',async()=>{const button=document.querySelector('[data-refresh]');button?.classList.add('busy');if($('sync-label'))$('sync-label').textContent='Actualizando…';await refreshKURROFromSheets(false);if($('sync-label'))$('sync-label').textContent='Sincronizado';button?.classList.remove('busy')});
+document.querySelector('[data-refresh]')?.addEventListener('click',async()=>{const button=document.querySelector('[data-refresh]');button?.classList.add('busy');if($('sync-label'))$('sync-label').textContent='Actualizando…';const ok=await refreshKURROFromSheets(false);if($('sync-label'))$('sync-label').textContent=ok?'Sincronizado':'Sin conexión · últimos datos';button?.classList.remove('busy')});
 const localUpdateCenterField=updateCenterField;updateCenterField=function(index,field,value){const r=centerRows[index];if(field==='status'&&value==='done'&&isOverdue(r)){r.status='process';renderCenter();return}r[field]=value;saveData();if(r.serverRow){const col=field==='owner'?7:field==='action'?10:field==='status'?12:null;if(col)remoteWrite(kurroRequest({api:'updateCell',fileId:'1AiIsFZCyZVp4ERTi0ExreV10StjayEw9tLWv4W21foQ',sheetName:'Registro Maestro',row:r.serverRow,column:col,value:field==='status'?(value==='done'?'REALIZADO':value==='process'?'EN PROCESO':'PENDIENTE'):value}).catch(reportRemoteWriteFailure))}renderCenter()};
 let centerEditorIndex=null;
 function dateForEditor(value){const p=String(value||'').split('/');return p.length===3?`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`:''}
@@ -144,9 +116,9 @@ async function saveCenterEditor(){const index=centerEditorIndex,isNew=index===-1
 document.querySelectorAll('[data-close-editor]').forEach(button=>button.addEventListener('click',closeCenterEditor));$('edit-frequency')?.addEventListener('change',()=>{$('edit-frequency-custom').hidden=$('edit-frequency').value!=='custom'});$('save-center-editor')?.addEventListener('click',saveCenterEditor);
 async function deleteCenterEditor(){const index=centerEditorIndex,r=centerRows[index];if(!r||!r.serverRow||!confirm('¿Quieres eliminar esta actividad?'))return;const requests=[];for(let column=1;column<=12;column++)requests.push(kurroRequest({api:'updateCell',fileId:'1AiIsFZCyZVp4ERTi0ExreV10StjayEw9tLWv4W21foQ',sheetName:'Registro Maestro',row:r.serverRow,column,value:''}));try{await remoteWrite(Promise.all(requests));closeCenterEditor();await loadRemoteData();showSyncToast('Actividad eliminada')}catch(e){showSyncToast('No se pudo eliminar la actividad')}}
 $('[data-new-center]')?.addEventListener('click',openNewCenterEditor);$('delete-center-editor')?.addEventListener('click',deleteCenterEditor);
-const localMarkCenterDone=markCenterDone;markCenterDone=function(index){const r=centerRows[index],input=$(`done-date-${index}`);if(!input?.value||isOverdue(r)){localMarkCenterDone(index);return}if(r.serverRow)remoteWrite(kurroRequest({api:'markPlanningDone',row:r.serverRow,dateText:input.value})).then(()=>loadRemoteData()).catch(()=>localMarkCenterDone(index));else localMarkCenterDone(index)};
+const localMarkCenterDone=markCenterDone;markCenterDone=function(index){const r=centerRows[index],input=$(`done-date-${index}`);if(!input?.value||isOverdue(r)){localMarkCenterDone(index);return}if(r.serverRow)remoteWrite(kurroRequest({api:'markPlanningDone',row:r.serverRow,dateText:input.value})).then(()=>loadRemoteData()).catch(()=>{localMarkCenterDone(index);reportRemoteWriteFailure()});else localMarkCenterDone(index)};
 const localUpdatePendingField=updatePendingField;updatePendingField=function(index,field,value){const r=pendingRows[index];r[field]=value;saveData();if(r.fileId&&r.serverRow){remoteWrite(kurroRequest({api:'updatePending',fileId:r.fileId,row:r.serverRow,field,value}).catch(reportRemoteWriteFailure))}renderPending()};
-const localMarkPendingDone=markPendingDone;markPendingDone=function(index){const r=pendingRows[index];r.status='REALIZADO';if(r.fileId&&r.serverRow)remoteWrite(kurroRequest({api:'updatePending',fileId:r.fileId,row:r.serverRow,field:'status',value:'REALIZADO'})).then(()=>loadRemoteData()).catch(()=>localMarkPendingDone(index));else localMarkPendingDone(index)};
+const localMarkPendingDone=markPendingDone;markPendingDone=function(index){const r=pendingRows[index];r.status='REALIZADO';r.updated=new Date().toLocaleDateString('es-ES');saveData();renderPending();if(r.fileId&&r.serverRow)remoteWrite(kurroRequest({api:'updatePending',fileId:r.fileId,row:r.serverRow,field:'status',value:'REALIZADO'})).then(()=>loadRemoteData()).catch(reportRemoteWriteFailure)};
 // Garantiza que la acción Editar permanezca visible aunque otra rutina
 // vuelva a pintar la tabla de pendientes.
 const kurroRenderPendingWithEdit = renderPending;
