@@ -74,7 +74,7 @@ function updateEditorNextPreview(){const date=$('edit-last')?.value,frequency=$(
 document.querySelector('[data-new-pending]')?.addEventListener('click',()=>openPendingEditor());document.querySelectorAll('[data-close-pending]').forEach(b=>b.addEventListener('click',closePendingEditor));$('save-pending-editor')?.addEventListener('click',savePendingEditor);$('edit-last')?.addEventListener('change',updateEditorNextPreview);$('edit-frequency')?.addEventListener('change',updateEditorNextPreview);$('edit-frequency-custom')?.addEventListener('input',updateEditorNextPreview);renderPending();
 // Sincronización con Google Sheets para la versión web pública.
 const KURRO_SOURCE_ID='1AiIsFZCyZVp4ERTi0ExreV10StjayEw9tLWv4W21foQ';
-const KURRO_API_PRIMARY=(window.location.hostname==='script.google.com'||window.location.hostname.endsWith('.googleusercontent.com'))?window.location.origin+window.location.pathname:'https://script.google.com/macros/s/AKfycbxYR1QiFC507Q7HcwTGxtJECnBdXBWocGcti96svbh-DJK_a47wpGrPn60tMKjn3wUK/exec';
+const KURRO_API_PRIMARY=(window.location.hostname==='script.google.com'||window.location.hostname.endsWith('.googleusercontent.com'))?window.location.origin+window.location.pathname:'https://script.google.com/macros/s/AKfycbxIwfEjyxlOcSMq9ZPKc-Sm0EBPKErkjGPqPiKDfRGZ-OYEsB6_JCHpTcc1krNi1ac87Q/exec';
 // Se conservan las publicaciones anteriores como rutas de recuperación. Han
 // funcionado desde equipos con políticas de navegador distintas y todas leen
 // el mismo archivo maestro. Las escrituras siempre se intentan primero en la
