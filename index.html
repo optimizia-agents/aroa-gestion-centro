@@ -80,6 +80,7 @@
           <button class="nav-item active" data-view="center" aria-current="page"><span>▦</span> Control del centro</button>
           <button class="nav-item" data-view="pending"><span>✓</span> Seguimientos</button>
           <button class="nav-item" data-view="clients"><span>◉</span> Pendientes de clientes</button>
+          <button class="nav-item" data-view="directory"><span>⌕</span> Clientes</button>
         </nav>
         <div class="sidebar-note"><span class="pulse"></span><div><strong>Datos guardados en Firebase</strong><small id="sync-time">Esperando sincronización</small></div></div>
       </aside>
@@ -112,6 +113,13 @@
           <div class="toolbar"><div class="search"><span>⌕</span><input id="client-search" placeholder="Buscar cliente, pendiente o comentario" /></div><select id="client-priority"><option value="all">Todas las prioridades</option><option value="NORMAL">Normal</option><option value="ALTA">Alta</option></select><select id="client-status"><option value="PENDIENTE">Pendientes</option><option value="all">Todos los estados</option><option value="EN PROCESO">En proceso</option><option value="REALIZADO">Realizados</option></select></div>
           <div class="panel"><div class="panel-heading"><div><h3>Todos los pendientes con clientes</h3><p>Fuente: KURRO - Pendientes con clientes</p></div><span class="count-pill" id="client-count"></span></div><div class="table-wrap"><table id="clients-table"><thead><tr><th>Estado</th><th>Cliente</th><th>Contacto</th><th>Pendiente / decisión</th><th>Prioridad</th><th>Fecha objetivo</th><th>Actualización</th><th>Comentarios</th><th>Acciones</th></tr></thead><tbody id="client-table"></tbody></table></div></div>
         </section>
+
+        <section id="directory-view" class="view">
+          <div class="hero-row"><div><h2>Directorio de clientes</h2><p>Busca rápidamente por número, CIF, nombre, dirección, teléfono o cualquier otro campo del Excel.</p></div><button class="primary" id="directory-import-button" type="button">＋ Actualizar directorio</button><input id="directory-file" type="file" accept=".xlsx,.xls" hidden></div>
+          <div class="metric-grid" id="directory-metrics"></div>
+          <div class="toolbar"><div class="search"><span>⌕</span><input id="directory-search" placeholder="Buscar por cualquier dato del cliente" /></div><button class="secondary" id="directory-clear" type="button">Limpiar búsqueda</button></div>
+          <div class="panel"><div class="panel-heading"><div><h3>Clientes disponibles</h3><p id="directory-source">Directorio guardado en Firebase · solo lectura</p></div><span class="count-pill" id="directory-count"></span></div><div class="table-wrap"><table id="directory-table" class="directory-table"><thead><tr><th>Cliente</th><th>Nombre</th><th>CIF / NIF</th><th>Teléfono</th><th>Ciudad</th><th>Dirección</th><th>Comercial principal</th><th>Riesgo</th></tr></thead><tbody id="directory-body"></tbody></table></div></div>
+        </section>
       </main>
     </div>
     <div id="center-editor" class="modal" aria-hidden="true"><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="editor-title"><div class="modal-heading"><div><p class="eyebrow">REGISTRO DEL CENTRO</p><h2 id="editor-title">Editar actividad</h2></div><button class="modal-close" data-close-editor aria-label="Cerrar">×</button></div><div class="editor-grid"><label>Actividad<input id="edit-activity"></label><label>Categoría<input id="edit-category"></label><label>Periodicidad<select id="edit-frequency"><option value="Semanal">Semanal</option><option value="Mensual">Mensual</option><option value="Bimestral">Bimestral</option><option value="Trimestral">Trimestral</option><option value="Semestral">Semestral</option><option value="Anual">Anual</option><option value="Cada 3 años">Cada 3 años</option><option value="Cada 5 años">Cada 5 años</option><option value="Cuando aplique">Cuando aplique</option><option value="Según cambios">Según cambios</option><option value="Sin periodicidad">Sin periodicidad</option><option value="custom">Otra</option></select><input id="edit-frequency-custom" class="frequency-custom" placeholder="Especifica la periodicidad" hidden></label><label><span id="edit-last-label">Última revisión</span><input id="edit-last" type="date"></label><label>Próxima revisión<input id="edit-next" type="date" title="Se calcula automáticamente, pero puedes modificarla"></label><label>Responsable<div class="select-with-add"><select id="edit-owner"><option value="">Sin asignar</option></select><button type="button" class="add-option-button" id="add-owner" aria-label="Añadir responsable">+</button></div></label><label>Estado<select id="edit-status"><option value="open">Pendiente</option><option value="process">En proceso</option><option value="done">Realizado</option></select></label><label class="editor-wide">Siguiente acción / comentarios<textarea id="edit-action" rows="4"></textarea></label></div><div class="modal-actions"><button class="danger-button" id="delete-center-editor">Eliminar</button><span class="modal-spacer"></span><button class="secondary" data-close-editor>Cancelar</button><button class="primary" id="save-center-editor">Guardar cambios</button></div></div></div>
@@ -123,6 +131,6 @@
 <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore-compat.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script src="app.js?v=20260911-firebase18"></script>
+  <script src="app.js?v=20260911-firebase19"></script>
   </body>
 </html>
