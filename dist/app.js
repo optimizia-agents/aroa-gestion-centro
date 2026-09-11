@@ -113,6 +113,36 @@ async function loadGvizData(){
   let clients=[];try{clients=await gvizRequest('Clientes')}catch(e){}
   const planning=[planningRaw[0],...planningRaw.slice(1).map(row=>[row[0],row[1],row[2],row[3],row[4],row[6],row[7],row[8],row[9],row[9],row[10],row[11]||row[10]])];const header=pendingRaw[0]||[],personCol=header.indexOf('Persona o empresa');const forPerson=person=>[['Estado','Comentarios','Pendiente / decisión','Prioridad','Fecha objetivo','Actualización','Cerrado','Fila'],...pendingRaw.slice(1).filter(row=>String(row[personCol]||'').trim()===person).map((row,index)=>[row[1]||'PENDIENTE',row[2]||'',row[3]||'',row[4]||'NORMAL',row[5]||'',row[6]||'',row[7]||'',index+2])];return{planning:{id:KURRO_SOURCE_ID,name:'Registro Maestro',values:planning},miguel:{id:KURRO_SOURCE_ID,name:'Seguimientos',values:forPerson('Miguel')},properval:{id:KURRO_SOURCE_ID,name:'Seguimientos',values:forPerson('Properval')},clients:{id:KURRO_SOURCE_ID,name:'Clientes',values:clients}}}
 function setDataAlert(message){const alert=$('data-alert');if(!alert)return;alert.textContent=message;alert.hidden=!message}
+function activateMetricCard(card,action){
+  if(!card)return;
+  card.classList.add('metric-action');
+  card.setAttribute('role','button');
+  card.setAttribute('tabindex','0');
+  card.addEventListener('click',action);
+  card.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();action()}});
+}
+function decorateActionableMetrics(){
+  const pending=$('pending-metrics');
+  if(pending&&!pending.dataset.decorated){
+    pending.dataset.decorated='true';
+    const cards=[...pending.children];
+    activateMetricCard(cards[0],()=>{$('pending-status').value='PENDIENTE';renderPending()});
+    activateMetricCard(cards[1],()=>{window.person='Miguel';document.querySelector('[data-person="Miguel"]')?.click()});
+    activateMetricCard(cards[2],()=>{window.person='Properval';document.querySelector('[data-person="Properval"]')?.click()});
+  }
+  const clients=$('client-metrics');
+  if(clients&&!clients.dataset.decorated){
+    clients.dataset.decorated='true';
+    const cards=[...clients.children];
+    activateMetricCard(cards[0],()=>{$('client-status').value='PENDIENTE';renderClients()});
+    activateMetricCard(cards[1],()=>{$('client-status').value='EN PROCESO';renderClients()});
+    activateMetricCard(cards[2],()=>{$('client-priority').value='ALTA';renderClients()});
+  }
+}
+const renderMetricsWithActions=refreshKURROMetrics;
+refreshKURROMetrics=function(){renderMetricsWithActions();decorateActionableMetrics()};
+const renderClientMetricsWithActions=renderClientMetrics;
+renderClientMetrics=function(){renderClientMetricsWithActions();decorateActionableMetrics()};
 function remotePlanningRow(row,index){const y=String(row[11]||'').trim().toUpperCase();let status=/REALIZADO|ACEPTADO|HECHO/.test(y)?'done':/EN PROCESO|PROCESO/.test(y)?'process':'open';return{activity:row[0]||'',category:row[1]||'Otros',frequency:row[2]||'',last:normalizeSheetDate(row[3]),next:normalizeSheetDate(row[4]),owner:row[5]||'',status,action:row[9]||'',serverRow:index+2}}
 function remotePendingRow(row,index,person,fileId){return{person,status:String(row[0]||'PENDIENTE').toUpperCase(),comments:row[1]||'',text:row[2]||'',priority:String(row[3]||'NORMAL').toUpperCase(),date:normalizeSheetDate(row[4]),updated:normalizeSheetDate(row[5]),closed:normalizeSheetDate(row[6]),serverRow:Number(row[7]||index+2),fileId}}
 async function loadRemoteData(){if(!firebaseUser&&hasFirebaseSessionHint())return false;let error=null;for(let attempt=0;attempt<3;attempt++){try{let data;try{data=await loadGvizData()}catch(readError){error=readError;data=await kurroRequest({api:'data'})}window.kurroLastData=data;const planningValues=data?.planning?.values||[],planningRows=planningValues.slice(1).map((row,index)=>({row,index})).filter(x=>x.row.some(Boolean)).map(x=>remotePlanningRow(x.row,x.index));if(planningValues.length<2||!planningRows.length)throw new Error('La fuente no devolvió registros');centerRows.splice(0,centerRows.length,...planningRows);const p=[];for(const source of [{data:data?.miguel,person:'Miguel'},{data:data?.properval,person:'Properval'}])if(source.data?.values?.length)source.data.values.slice(1).filter(r=>r.some(Boolean)).forEach((r,i)=>p.push(remotePendingRow(r,i,source.person,source.data.id)));pendingRows.splice(0,pendingRows.length,...p);saveData();refreshKURROMetrics();renderCenter();renderPending();markSyncSuccess('Firebase');setDataAlert('');return true}catch(e){error=e;if(attempt<2)await new Promise(r=>setTimeout(r,1800))}}refreshKURROMetrics();renderCenter();renderPending();const hasCachedData=Boolean(centerRows.length||pendingRows.length);if($('sync-label'))$('sync-label').textContent=hasCachedData?'Sin conexión · últimos datos':'No se han podido cargar los datos';markSyncFailure();setDataAlert(hasCachedData?'Sin conexión: se muestran los últimos datos guardados en este dispositivo.':'No se pueden cargar los datos. Comprueba la conexión y pulsa «Actualizar».');if(!hasCachedData){showSyncToast('No se pudieron cargar los datos');setTimeout(()=>{if(!centerRows.length&&!pendingRows.length)loadRemoteData()},5000)}console.warn('No se pudo actualizar la vista',error);return false}
@@ -347,6 +377,11 @@ Object.keys(VIEW_FILTER_FIELDS).forEach(view=>VIEW_FILTER_FIELDS[view].forEach(i
 }));
 document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>setTimeout(()=>restoreViewFilters(button.dataset.view),0)));
 Object.keys(VIEW_FILTER_FIELDS).forEach(restoreViewFilters);
+
+document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
+  const titles={center:'Control del centro',pending:'Seguimientos',clients:'Gestiones de clientes',directory:'Directorio'};
+  if($('page-title'))$('page-title').textContent=titles[button.dataset.view]||'Centro';
+}));
 
 // Firebase es el almacenamiento principal cuando la usuaria ha iniciado sesión.
 // Google Sheets se conserva como respaldo y como fuente de migración inicial.

@@ -70,6 +70,8 @@
       #pending-view .pending-edit-visible:hover{background:#e5f5ef}
       @media(min-width:901px){#pending-view .table-wrap th:last-child,#pending-view .table-wrap td:last-child{min-width:145px}}
       .overdue-label{display:none!important}
+      .metric-action{cursor:pointer}.metric-action:hover,.metric-action:focus-visible{border-color:#8cc6b4;box-shadow:0 4px 14px rgba(36,87,107,.12);transform:translateY(-1px)}
+      #directory-view #directory-metrics{display:none}
     </style>
     <style>
       @media(min-width:901px){#directory-table{width:100%!important;min-width:980px!important;table-layout:fixed!important}#directory-table th:nth-child(1),#directory-table td:nth-child(1){width:8%!important}#directory-table th:nth-child(2),#directory-table td:nth-child(2){width:17%!important}#directory-table th:nth-child(3),#directory-table td:nth-child(3){width:11%!important}#directory-table th:nth-child(4),#directory-table td:nth-child(4){width:9%!important}#directory-table th:nth-child(5),#directory-table td:nth-child(5){width:9%!important}#directory-table th:nth-child(6),#directory-table td:nth-child(6){width:8%!important}#directory-table th:nth-child(7),#directory-table td:nth-child(7){width:6%!important}#directory-table th:nth-child(8),#directory-table td:nth-child(8){width:15%!important}#directory-table th:nth-child(9),#directory-table td:nth-child(9){width:9%!important}#directory-table th:nth-child(10),#directory-table td:nth-child(10){width:8%!important}}
@@ -82,8 +84,8 @@
         <nav>
           <button class="nav-item active" data-view="center" aria-current="page"><span>▦</span> Control del centro</button>
           <button class="nav-item" data-view="pending"><span>✓</span> Seguimientos</button>
-          <button class="nav-item" data-view="clients"><span>◉</span> Pendientes de clientes</button>
-          <button class="nav-item" data-view="directory"><span>⌕</span> Clientes</button>
+          <button class="nav-item" data-view="clients"><span>◉</span> Gestiones de clientes</button>
+          <button class="nav-item" data-view="directory"><span>⌕</span> Directorio</button>
         </nav>
         <div class="sidebar-note"><span class="pulse"></span><div><strong>Datos guardados en Firebase</strong><small id="sync-time">Esperando sincronización</small></div></div>
       </aside>
@@ -111,14 +113,14 @@
         </section>
 
         <section id="clients-view" class="view">
-          <div class="hero-row"><div><h2>Pendientes con clientes</h2><p>Seguimiento de gestiones y compromisos con cada cliente.</p></div><button class="primary" data-new-client>＋ Nuevo pendiente</button></div>
+          <div class="hero-row"><div><h2>Gestiones de clientes</h2><p>Seguimiento de gestiones y compromisos con cada cliente.</p></div><button class="primary" data-new-client>＋ Nueva gestión</button></div>
           <div class="metric-grid" id="client-metrics"></div>
           <div class="toolbar"><div class="search"><span>⌕</span><input id="client-search" placeholder="Buscar cliente, pendiente o comentario" /></div><select id="client-priority"><option value="all">Todas las prioridades</option><option value="NORMAL">Normal</option><option value="ALTA">Alta</option></select><select id="client-status"><option value="PENDIENTE">Pendientes</option><option value="all">Todos los estados</option><option value="EN PROCESO">En proceso</option><option value="REALIZADO">Realizados</option></select></div>
-          <div class="panel"><div class="panel-heading"><div><h3>Todos los pendientes con clientes</h3><p>Fuente: KURRO - Pendientes con clientes</p></div><span class="count-pill" id="client-count"></span></div><div class="table-wrap"><table id="clients-table"><thead><tr><th>Estado</th><th>Cliente</th><th>Contacto</th><th>Pendiente / decisión</th><th>Prioridad</th><th>Fecha objetivo</th><th>Actualización</th><th>Comentarios</th><th>Acciones</th></tr></thead><tbody id="client-table"></tbody></table></div></div>
+          <div class="panel"><div class="panel-heading"><div><h3>Gestiones abiertas</h3><p>Fuente: KURRO - Pendientes con clientes</p></div><span class="count-pill" id="client-count"></span></div><div class="table-wrap"><table id="clients-table"><thead><tr><th>Estado</th><th>Cliente</th><th>Contacto</th><th>Pendiente / decisión</th><th>Prioridad</th><th>Fecha objetivo</th><th>Actualización</th><th>Comentarios</th><th>Acciones</th></tr></thead><tbody id="client-table"></tbody></table></div></div>
         </section>
 
         <section id="directory-view" class="view">
-          <div class="hero-row"><div><h2>Directorio de clientes</h2><p>Busca rápidamente por número, CIF, nombre, dirección, teléfono o cualquier otro campo del Excel.</p></div><button class="primary" id="directory-import-button" type="button">＋ Actualizar directorio</button><input id="directory-file" type="file" accept=".xlsx,.xls" hidden></div>
+          <div class="hero-row"><div><h2>Directorio</h2><p>Busca por número, CIF, nombre, dirección, teléfono o cualquier otro campo.</p></div><button class="primary" id="directory-import-button" type="button">＋ Actualizar directorio</button><input id="directory-file" type="file" accept=".xlsx,.xls" hidden></div>
           <div class="metric-grid" id="directory-metrics"></div>
           <div class="toolbar"><div class="search"><span>⌕</span><input id="directory-search" placeholder="Buscar por cualquier dato del cliente" /></div><button class="secondary" id="directory-clear" type="button">Limpiar búsqueda</button></div>
           <div class="panel"><div class="panel-heading"><div><h3>Clientes disponibles</h3><p id="directory-source">Directorio guardado en Firebase · solo lectura</p></div><span class="count-pill" id="directory-count"></span></div><div class="table-wrap"><table id="directory-table" class="directory-table"><thead><tr><th>Cliente</th><th>Nombre</th><th>CIF / NIF</th><th>Teléfono</th><th>Ciudad</th><th>Código postal</th><th>Planta</th><th>Dirección</th><th>Comercial principal</th><th>Acciones</th></tr></thead><tbody id="directory-body"></tbody></table></div></div>
@@ -136,6 +138,6 @@
 <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore-compat.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script src="app.js?v=20260911-firebase27"></script>
+  <script src="app.js?v=20260911-firebase28"></script>
   </body>
 </html>
