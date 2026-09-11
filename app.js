@@ -16,6 +16,10 @@ let firebaseDb=null,firebaseAuth=null,firebaseUser=null,firebaseWriteQueue=Promi
 function hasFirebaseSessionHint(){return Boolean(localStorage.getItem('aroa_firebase_id_token'))}
 
 const $ = id => document.getElementById(id);
+const MONTH_NAMES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function canonicalCategory(value){const key=String(value||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('es');return key==='linea provisional hasta que se haga'||key==='línea provisional hasta que se haga'?'Línea provisional hasta que se haga':String(value||'').trim()}
+function canonicalOwner(value){const raw=String(value||'').trim().replace(/\s+/g,' ');const key=raw.toLocaleLowerCase('es').replace(/\s*\/\s*/g,'/');if(key==='responsable centro'||key==='responsable del centro')return 'Responsable del centro';if(key==='sc/ehs')return 'SC / EHS';if(key==='sc/ehs (carla macedo)')return 'SC / EHS (Carla Macedo)';return raw}
+function displayDate(value){const raw=String(value||'').trim().replace(/\s+VENCIDA$/i,'');if(!raw)return '';let m=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return`${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[3]}`;m=raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);if(m)return`${m[3].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[1]}`;m=raw.match(/^(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)[a-záéíóú]*[-\s\/]?(\d{2}|\d{4})$/i);if(m){const month=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'].indexOf(m[1].slice(0,3).toLowerCase())+1;const year=m[2].length===2?'20'+m[2]:m[2];return`${MONTH_NAMES[month-1]} ${year}`}return raw}
 document.body.classList.add('auth-locked');
 function unlockPrivateApp(){document.body.classList.remove('auth-locked')}
 function loadSavedData(){try{const current=JSON.parse(localStorage.getItem(KURRO_CACHE_KEY)||'null'),backup=JSON.parse(localStorage.getItem(KURRO_CACHE_BACKUP_KEY)||'null'),cached=current&&(current.center?.length||current.pending?.length)?current:backup;if(!cached)return false;centerRows.splice(0,centerRows.length,...(cached.center||[]));pendingRows.splice(0,pendingRows.length,...(cached.pending||[]));return centerRows.length>0||pendingRows.length>0}catch(e){return false}}
@@ -294,10 +298,6 @@ async function deleteClientEditor(){const i=clientEditorIndex,r=clientRows[i];if
 $('delete-client-editor')?.addEventListener('click',deleteClientEditor);
 
 // Presentación homogénea de datos heredados.
-const MONTH_NAMES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-function canonicalCategory(value){const key=String(value||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('es');return key==='linea provisional hasta que se haga'||key==='línea provisional hasta que se haga'?'Línea provisional hasta que se haga':String(value||'').trim()}
-function canonicalOwner(value){const raw=String(value||'').trim().replace(/\s+/g,' ');const key=raw.toLocaleLowerCase('es').replace(/\s*\/\s*/g,'/');if(key==='responsable centro'||key==='responsable del centro')return 'Responsable del centro';if(key==='sc/ehs')return 'SC / EHS';if(key==='sc/ehs (carla macedo)')return 'SC / EHS (Carla Macedo)';return raw}
-function displayDate(value){const raw=String(value||'').trim().replace(/\s+VENCIDA$/i,'');if(!raw)return '';let m=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return`${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[3]}`;m=raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);if(m)return`${m[3].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[1]}`;m=raw.match(/^(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)[a-záéíóú]*[-\s\/]?(\d{2}|\d{4})$/i);if(m){const month=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'].indexOf(m[1].slice(0,3).toLowerCase())+1;const year=m[2].length===2?'20'+m[2]:m[2];return`${MONTH_NAMES[month-1]} ${year}`}return raw}
 // Todas las tablas usan una única acción de fila: Editar.
 function removeExtraRowActions(){
   document.querySelectorAll('#center-table .done-btn,#pending-table .done-btn,#client-table .done-btn').forEach(button=>button.remove());
