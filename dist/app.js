@@ -350,7 +350,7 @@ function ensurePendingActionCells(){
   });
 }
 const renderPendingHomogeneous=renderPending;
-renderPending=function(){renderPendingHomogeneous();harmonizeTableRows('pending-table');ensurePendingActionCells()};
+renderPending=function(){renderPendingHomogeneous();harmonizeTableRows('pending-table');ensurePendingActionCells();setTimeout(ensurePendingActionCells,0)};
 const renderClientsHomogeneous=renderClients;
 renderClients=function(){renderClientsHomogeneous();harmonizeTableRows('client-table')};
 renderPending();
