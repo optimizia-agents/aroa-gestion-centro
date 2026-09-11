@@ -52,6 +52,18 @@ function refreshKurroPeopleOptions(){fillKurroSelect('edit-owner',kurroOptions('
 function addKurroOption(kind,selectId,label){const name=prompt(label);if(!name)return;const clean=name.trim();if(!clean)return;const lists=savedKurroLists();lists[kind]=[...(lists[kind]||[]),clean];saveKurroLists(lists);refreshKurroPeopleOptions();$(selectId).value=clean;showSyncToast(`${clean} añadido a la lista`)}
 function renderCenterWithoutDuplicateAction(){const originalCenterRows=[...centerRows];const q=($('center-search').value||'').toLowerCase(),cat=$('center-category').value,state=$('center-status').value,sort=$('center-sort').value;const rows=originalCenterRows.filter(r=>(cat==='all'||r.category===cat)&&(state==='all'||(state==='done'?effectiveStatus(r)==='done':state==='process'?effectiveStatus(r)==='process':effectiveStatus(r)==='open'))&&[r.activity,r.category,r.frequency,r.last,r.next,r.owner,r.action].join(' ').toLowerCase().includes(q)).sort((a,b)=>{const av=sortValue(a,sort),bv=sortValue(b,sort);return av>bv?1:av<bv?-1:0});$('center-table').innerHTML=rows.length?rows.map(r=>{const i=centerRows.indexOf(r),overdue=isOverdue(r);return `<tr class="${dueTone(r)}"><td>${r.activity}</td><td>${r.category}</td><td>${r.frequency||'<span class="muted">Sin periodicidad</span>'}</td><td class="date">${normalizeSheetDate(r.last)||'<span class="muted">Sin fecha</span>'}</td><td class="date">${normalizeSheetDate(r.next)||'<span class="muted">Sin fecha</span>'}${overdue?' <span class="overdue-label">VENCIDA</span>':''}</td><td>${r.owner||'<span class="muted">Sin asignar</span>'}</td><td>${statusTag(effectiveStatus(r))}</td><td>${r.action||'<span class="muted">Sin comentarios</span>'}</td><td><div class="row-actions"><button class="edit-btn" onclick="openCenterEditor(${i})">Editar</button></div></td></tr>`}).join(''):`<tr><td colspan="9" class="empty">No hay resultados con estos filtros.</td></tr>`;$('center-count').textContent=`${rows.length} registros`}
 renderCenter=renderCenterWithoutDuplicateAction;
+const renderCenterBeforeLabels=renderCenter;
+renderCenter=function(){
+  const category=canonicalCategory($('center-category')?.value),query=($('center-search')?.value||'').toLocaleLowerCase('es'),state=$('center-status')?.value||'all',sort=$('center-sort')?.value||'next';
+  const categories=[...new Set(centerRows.map(r=>canonicalCategory(r.category)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+  const categorySelect=$('center-category');
+  if(categorySelect){categorySelect.innerHTML='<option value="all">Todas las categorías</option>'+categories.map(v=>`<option value="${htmlEscape(v)}">${htmlEscape(v)}</option>`).join('');categorySelect.value=categories.includes(category)?category:'all'}
+  const ownerSelect=$('edit-owner');
+  if(ownerSelect){const current=canonicalOwner(ownerSelect.value),owners=[...new Set([...ownerSelect.options].map(o=>canonicalOwner(o.value)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));ownerSelect.innerHTML='<option value="">Sin asignar</option>'+owners.map(v=>`<option value="${htmlEscape(v)}">${htmlEscape(v)}</option>`).join('');ownerSelect.value=owners.includes(current)?current:''}
+  const rows=centerRows.filter(r=>(category==='all'||canonicalCategory(r.category)===category)&&(state==='all'||(state==='done'?effectiveStatus(r)==='done':state==='process'?effectiveStatus(r)==='process':effectiveStatus(r)==='open'))&&[r.activity,r.category,r.frequency,r.last,r.next,r.owner,r.action].join(' ').toLocaleLowerCase('es').includes(query)).sort((a,b)=>{const av=sortValue(a,sort),bv=sortValue(b,sort);return av>bv?1:av<bv?-1:0});
+  $('center-table').innerHTML=rows.length?rows.map(r=>{const i=centerRows.indexOf(r),overdue=isOverdue(r);return`<tr class="${dueTone(r)}"><td>${r.activity}</td><td>${canonicalCategory(r.category)}</td><td>${r.frequency||'<span class="muted">Sin periodicidad</span>'}</td><td class="date">${displayDate(r.last)||'<span class="muted">Sin fecha</span>'}</td><td class="date">${displayDate(r.next)||'<span class="muted">Sin fecha</span>'}${overdue?' <span class="overdue-label">VENCIDA</span>':''}</td><td>${canonicalOwner(r.owner)||'<span class="muted">Sin asignar</span>'}</td><td>${statusTag(effectiveStatus(r))}</td><td>${r.action||'<span class="muted">Sin comentarios</span>'}</td><td><div class="row-actions"><button class="edit-btn" onclick="openCenterEditor(${i})">Editar</button></div></td></tr>`}).join(''):`<tr><td colspan="9" class="empty">No hay resultados con estos filtros.</td></tr>`;$('center-count').textContent=`${rows.length} registros`;
+}
+renderCenter();
 refreshKurroPeopleOptions();
 document.querySelector('#add-owner')?.addEventListener('click',()=>addKurroOption('owner','edit-owner','Escribe el nuevo responsable'));
 document.querySelector('#add-pending-person')?.addEventListener('click',()=>addKurroOption('person','pending-edit-person','Escribe la nueva persona o empresa'));
@@ -281,6 +293,11 @@ loadRemoteData();
 async function deleteClientEditor(){const i=clientEditorIndex,r=clientRows[i];if(!r||!confirm('¿Quieres eliminar este pendiente?'))return;clientRows.splice(i,1);saveClientData();closeClientEditor();renderClients();if(r.serverRow){try{await remoteWrite(Promise.all(['status','client','contact','task','priority','target','updated','comments','closed'].map(field=>kurroRequest({api:'updateClient',fileId:CLIENTS_FILE_ID,row:r.serverRow,field,value:''}))))}catch(e){showSyncToast('Eliminado en esta vista; falta publicar la conexión')}}showSyncToast('Pendiente eliminado')}
 $('delete-client-editor')?.addEventListener('click',deleteClientEditor);
 
+// Presentación homogénea de datos heredados.
+const MONTH_NAMES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function canonicalCategory(value){const key=String(value||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('es');return key==='linea provisional hasta que se haga'||key==='línea provisional hasta que se haga'?'Línea provisional hasta que se haga':String(value||'').trim()}
+function canonicalOwner(value){const raw=String(value||'').trim().replace(/\s+/g,' ');const key=raw.toLocaleLowerCase('es').replace(/\s*\/\s*/g,'/');if(key==='responsable centro'||key==='responsable del centro')return 'Responsable del centro';if(key==='sc/ehs')return 'SC / EHS';if(key==='sc/ehs (carla macedo)')return 'SC / EHS (Carla Macedo)';return raw}
+function displayDate(value){const raw=String(value||'').trim().replace(/\s+VENCIDA$/i,'');if(!raw)return '';let m=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return`${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[3]}`;m=raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);if(m)return`${m[3].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[1]}`;m=raw.match(/^(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)[a-záéíóú]*[-\s\/]?(\d{2}|\d{4})$/i);if(m){const month=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'].indexOf(m[1].slice(0,3).toLowerCase())+1;const year=m[2].length===2?'20'+m[2]:m[2];return`${MONTH_NAMES[month-1]} ${year}`}return raw}
 // Todas las tablas usan una única acción de fila: Editar.
 function removeExtraRowActions(){
   document.querySelectorAll('#center-table .done-btn,#pending-table .done-btn,#client-table .done-btn').forEach(button=>button.remove());
@@ -292,6 +309,10 @@ const renderPendingWithSingleAction=renderPending;
 renderPending=()=>{renderPendingWithSingleAction();removeExtraRowActions()};
 const renderClientsWithSingleAction=renderClients;
 renderClients=()=>{renderClientsWithSingleAction();removeExtraRowActions()};
+const renderClientsWithConsistentCopy=renderClients;
+renderClients=function(){renderClientsWithConsistentCopy();const empty=$('client-table')?.querySelector('.empty');if(empty)empty.textContent='No hay gestiones con estos filtros. Pulsa «Nueva gestión» para añadir la primera.'};
+const openClientEditorWithConsistentCopy=openClientEditor;
+openClientEditor=function(index=-1){openClientEditorWithConsistentCopy(index);$('client-editor-title').textContent=index<0?'Nueva gestión':'Editar gestión';$('save-client-editor').textContent='Guardar gestión'};
 removeExtraRowActions();
 
 // Cada entrada en Centro parte de su configuración operativa habitual.
