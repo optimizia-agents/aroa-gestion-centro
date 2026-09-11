@@ -335,6 +335,35 @@ function exportCurrentWorkbook(){
 }
 document.querySelector('#download-workbook')?.addEventListener('click',exportCurrentWorkbook);
 
+// Estado de sincronización visible y verificable para evitar trabajar con una copia antigua.
+let lastSuccessfulSyncAt=null;
+function markSyncSuccess(source='Firebase'){
+  lastSuccessfulSyncAt=new Date();
+  const time=lastSuccessfulSyncAt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  if($('sync-label'))$('sync-label').textContent=`${source} · sincronizado`;
+  if($('top-sync-time'))$('top-sync-time').textContent=`Última comprobación: ${time}`;
+  if($('sync-time'))$('sync-time').textContent=`Última comprobación: ${time}`;
+}
+function markSyncFailure(){
+  if($('sync-label'))$('sync-label').textContent='Firebase · revisar conexión';
+  if($('top-sync-time'))$('top-sync-time').textContent='No se ha confirmado el último guardado';
+  if($('sync-time'))$('sync-time').textContent='No se ha confirmado el último guardado';
+}
+const auditedPersistSnapshot=firebasePersistSnapshot;
+firebasePersistSnapshot=async function(){
+  try{const result=await auditedPersistSnapshot();markSyncSuccess('Firebase');return result}
+  catch(error){markSyncFailure();throw error}
+};
+const auditedLoadRemoteData=loadRemoteData;
+loadRemoteData=async function(){
+  try{const result=await auditedLoadRemoteData();if(result&&firebaseUser)markSyncSuccess('Firebase');return result}
+  catch(error){markSyncFailure();throw error}
+};
+document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
+  document.querySelectorAll('.nav-item').forEach(item=>item.setAttribute('aria-current',item===button?'page':'false'));
+}));
+if(firebaseUser)markSyncSuccess('Firebase');
+
 // Recuperación puntual de la columna Responsable desde la exportación verificada de la hoja original.
 const RECOVERED_OWNERS=["Responsable centro","Responsable centro","SC / CVA","","Responsable centro","Responsable centro","Responsable centro","","Administración/Responsable centro","Administración/Responsable centro","Responsable centro","Responsable centro","Todo el personal","Responsable centro","Equipo de emergencia","Equipo de emergencia","EHS","EHS / SC","Responsable centro","Responsable centro","SC / Calidad","Responsable centro","Responsable centro","SC /EHS","Operador carretilla","SC / Calidad","SC / Calidad","SC / Dirección","Responsable del centro","Responsable del centro / EHS","SC /EHS","SC /EHS","SC /EHS","SC / CVA","SC / CVA","SC / CVA","SC /EHS","SC /EHS","SC /HR","EHS","Administración","SC /HR","SC /HR","SC /EHS","EHS / SC","SC / EHS (Carla Macedo)","SC / EHS (Carla Macedo)","SC / EHS (Carla Macedo)","SC / EHS (Carla Macedo)","","SC / EHS (Carla Macedo)","SC","SC","SC /EHS ","SC (Pavla Guznarova)","SC / Ingeniería, Antonio Espejo está trabajando en ello","SC /EHS","SC /EHS (Carla Compliance Management / SAP Javier Herreras)","SC /EHS (James Wolf)","SC / EHS / Ingeniería","","SC /EHS","SC /EHS","SC /EHS","SC /EHS","","","","","","","","","","","","Responsable centro"];
 const recoveryButton=$('restore-owners');
