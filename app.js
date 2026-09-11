@@ -323,7 +323,8 @@ function harmonizeTableRows(tableId){
 }
 function ensurePendingActionCells(){
   const clean=value=>String(value||'').replace(/\s+/g,' ').trim().toLocaleLowerCase('es');
-  document.querySelectorAll('#pending-table tr').forEach(row=>{
+  const visibleRows=[...document.querySelectorAll('#pending-table tr')];
+  visibleRows.forEach((row,rowPosition)=>{
     if(row.children.length===6){
       const comments=document.createElement('td');
       comments.innerHTML='<span class="muted">Sin comentarios</span>';
@@ -334,7 +335,11 @@ function ensurePendingActionCells(){
     if(!actionCell||actionCell.querySelector('.edit-btn'))return;
     const text=clean(row.children[1]?.textContent);
     const person=clean(row.children[2]?.textContent);
-    const index=pendingRows.findIndex(item=>clean(item.text)===text&&clean(item.person)===person);
+    let index=pendingRows.findIndex(item=>clean(item.text)===text&&clean(item.person)===person);
+    if(index<0){
+      const visible=pendingRows.filter(item=>(window.person==='all'||item.person===window.person)&&($('pending-priority')?.value==='all'||item.priority===$('pending-priority')?.value)&&($('pending-status')?.value==='all'||item.status===$('pending-status')?.value)&&[item.person,item.text,item.priority,item.comments].join(' ').toLowerCase().includes(($('pending-search')?.value||'').toLowerCase()));
+      index=pendingRows.indexOf(visible[rowPosition]);
+    }
     if(index<0)return;
     const button=document.createElement('button');
     button.className='edit-btn pending-edit-visible';
