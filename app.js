@@ -364,6 +364,23 @@ document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('
 }));
 if(firebaseUser)markSyncSuccess('Firebase');
 
+// Completa automáticamente responsables ausentes usando la recuperación verificada.
+// Solo escribe cuando encuentra un responsable vacío; nunca sustituye uno ya informado.
+async function repairMissingOwners(){
+  if(!firebaseUser||typeof RECOVERED_BY_KEY==='undefined'||!centerRows.length)return;
+  const normalize=value=>String(value||'').trim().replace(/\s+/g,' ').toLowerCase();
+  let repaired=0;
+  RECOVERED_BY_KEY.forEach(source=>{
+    const target=centerRows.find(item=>normalize(item.activity)===normalize(source.a)&&normalize(item.frequency)===normalize(source.f))||centerRows.find(item=>normalize(item.activity)===normalize(source.a));
+    const owner=String(source.o||'').trim();
+    if(target&&owner&&!String(target.owner||'').trim()){target.owner=owner;repaired++}
+  });
+  if(!repaired)return;
+  saveData();
+  try{await firebasePersistSnapshot();refreshKURROMetrics();renderCenter();showSyncToast(`Responsables recuperados: ${repaired}`)}catch(error){markSyncFailure();showSyncToast('No se pudo guardar la columna Responsable')}
+}
+setTimeout(repairMissingOwners,1800);
+
 // Recuperación puntual de la columna Responsable desde la exportación verificada de la hoja original.
 const RECOVERED_OWNERS=["Responsable centro","Responsable centro","SC / CVA","","Responsable centro","Responsable centro","Responsable centro","","Administración/Responsable centro","Administración/Responsable centro","Responsable centro","Responsable centro","Todo el personal","Responsable centro","Equipo de emergencia","Equipo de emergencia","EHS","EHS / SC","Responsable centro","Responsable centro","SC / Calidad","Responsable centro","Responsable centro","SC /EHS","Operador carretilla","SC / Calidad","SC / Calidad","SC / Dirección","Responsable del centro","Responsable del centro / EHS","SC /EHS","SC /EHS","SC /EHS","SC / CVA","SC / CVA","SC / CVA","SC /EHS","SC /EHS","SC /HR","EHS","Administración","SC /HR","SC /HR","SC /EHS","EHS / SC","SC / EHS (Carla Macedo)","SC / EHS (Carla Macedo)","SC / EHS (Carla Macedo)","SC / EHS (Carla Macedo)","","SC / EHS (Carla Macedo)","SC","SC","SC /EHS ","SC (Pavla Guznarova)","SC / Ingeniería, Antonio Espejo está trabajando en ello","SC /EHS","SC /EHS (Carla Compliance Management / SAP Javier Herreras)","SC /EHS (James Wolf)","SC / EHS / Ingeniería","","SC /EHS","SC /EHS","SC /EHS","SC /EHS","","","","","","","","","","","","Responsable centro"];
 const recoveryButton=$('restore-owners');
