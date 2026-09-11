@@ -115,7 +115,7 @@ async function loadGvizData(){
 function setDataAlert(message){const alert=$('data-alert');if(!alert)return;alert.textContent=message;alert.hidden=!message}
 function remotePlanningRow(row,index){const y=String(row[11]||'').trim().toUpperCase();let status=/REALIZADO|ACEPTADO|HECHO/.test(y)?'done':/EN PROCESO|PROCESO/.test(y)?'process':'open';return{activity:row[0]||'',category:row[1]||'Otros',frequency:row[2]||'',last:normalizeSheetDate(row[3]),next:normalizeSheetDate(row[4]),owner:row[5]||'',status,action:row[9]||'',serverRow:index+2}}
 function remotePendingRow(row,index,person,fileId){return{person,status:String(row[0]||'PENDIENTE').toUpperCase(),comments:row[1]||'',text:row[2]||'',priority:String(row[3]||'NORMAL').toUpperCase(),date:normalizeSheetDate(row[4]),updated:normalizeSheetDate(row[5]),closed:normalizeSheetDate(row[6]),serverRow:Number(row[7]||index+2),fileId}}
-async function loadRemoteData(){if(!firebaseUser&&hasFirebaseSessionHint())return false;let error=null;for(let attempt=0;attempt<3;attempt++){try{let data;try{data=await loadGvizData()}catch(readError){error=readError;data=await kurroRequest({api:'data'})}window.kurroLastData=data;const planningValues=data?.planning?.values||[],planningRows=planningValues.slice(1).map((row,index)=>({row,index})).filter(x=>x.row.some(Boolean)).map(x=>remotePlanningRow(x.row,x.index));if(planningValues.length<2||!planningRows.length)throw new Error('La fuente no devolvió registros');centerRows.splice(0,centerRows.length,...planningRows);const p=[];for(const source of [{data:data?.miguel,person:'Miguel'},{data:data?.properval,person:'Properval'}])if(source.data?.values?.length)source.data.values.slice(1).filter(r=>r.some(Boolean)).forEach((r,i)=>p.push(remotePendingRow(r,i,source.person,source.data.id)));pendingRows.splice(0,pendingRows.length,...p);saveData();refreshKURROMetrics();renderCenter();renderPending();if($('sync-label'))$('sync-label').textContent='Sincronizado';setDataAlert('');return true}catch(e){error=e;if(attempt<2)await new Promise(r=>setTimeout(r,1800))}}refreshKURROMetrics();renderCenter();renderPending();const hasCachedData=Boolean(centerRows.length||pendingRows.length);if($('sync-label'))$('sync-label').textContent=hasCachedData?'Sin conexión · últimos datos':'No se han podido cargar los datos';setDataAlert(hasCachedData?'Sin conexión: se muestran los últimos datos guardados en este dispositivo.':'No se pueden cargar los datos. Comprueba que la conexión esté disponible y pulsa «Actualizar».');if(!hasCachedData){showSyncToast('No se pudieron cargar los datos');setTimeout(()=>{if(!centerRows.length&&!pendingRows.length)loadRemoteData()},5000)}console.warn('No se pudo actualizar la vista',error);return false}
+async function loadRemoteData(){if(!firebaseUser&&hasFirebaseSessionHint())return false;let error=null;for(let attempt=0;attempt<3;attempt++){try{let data;try{data=await loadGvizData()}catch(readError){error=readError;data=await kurroRequest({api:'data'})}window.kurroLastData=data;const planningValues=data?.planning?.values||[],planningRows=planningValues.slice(1).map((row,index)=>({row,index})).filter(x=>x.row.some(Boolean)).map(x=>remotePlanningRow(x.row,x.index));if(planningValues.length<2||!planningRows.length)throw new Error('La fuente no devolvió registros');centerRows.splice(0,centerRows.length,...planningRows);const p=[];for(const source of [{data:data?.miguel,person:'Miguel'},{data:data?.properval,person:'Properval'}])if(source.data?.values?.length)source.data.values.slice(1).filter(r=>r.some(Boolean)).forEach((r,i)=>p.push(remotePendingRow(r,i,source.person,source.data.id)));pendingRows.splice(0,pendingRows.length,...p);saveData();refreshKURROMetrics();renderCenter();renderPending();markSyncSuccess('Firebase');setDataAlert('');return true}catch(e){error=e;if(attempt<2)await new Promise(r=>setTimeout(r,1800))}}refreshKURROMetrics();renderCenter();renderPending();const hasCachedData=Boolean(centerRows.length||pendingRows.length);if($('sync-label'))$('sync-label').textContent=hasCachedData?'Sin conexión · últimos datos':'No se han podido cargar los datos';markSyncFailure();setDataAlert(hasCachedData?'Sin conexión: se muestran los últimos datos guardados en este dispositivo.':'No se pueden cargar los datos. Comprueba la conexión y pulsa «Actualizar».');if(!hasCachedData){showSyncToast('No se pudieron cargar los datos');setTimeout(()=>{if(!centerRows.length&&!pendingRows.length)loadRemoteData()},5000)}console.warn('No se pudo actualizar la vista',error);return false}
 let kurroPendingWrites=0;
 let kurroRefreshInFlight=false;
 function remoteWrite(request){kurroPendingWrites++;return request.finally(()=>{kurroPendingWrites--})}
@@ -291,8 +291,30 @@ function harmonizeTableRows(tableId){
     row.querySelectorAll('.done-btn').forEach(button=>button.remove());
   });
 }
+function ensurePendingActionCells(){
+  document.querySelectorAll('#pending-table tr').forEach(row=>{
+    if(row.children.length===6){
+      const comments=document.createElement('td');
+      comments.innerHTML='<span class="muted">Sin comentarios</span>';
+      row.appendChild(comments);
+      row.appendChild(document.createElement('td'));
+    }
+    const actionCell=row.lastElementChild;
+    if(!actionCell||actionCell.querySelector('.edit-btn'))return;
+    const text=row.children[1]?.textContent.trim()||'';
+    const person=row.children[2]?.textContent.trim()||'';
+    const index=pendingRows.findIndex(item=>item.text===text&&item.person===person);
+    if(index<0)return;
+    const button=document.createElement('button');
+    button.className='edit-btn pending-edit-visible';
+    button.type='button';
+    button.textContent='Editar';
+    button.onclick=()=>openPendingEditor(index);
+    actionCell.appendChild(button);
+  });
+}
 const renderPendingHomogeneous=renderPending;
-renderPending=function(){renderPendingHomogeneous();harmonizeTableRows('pending-table')};
+renderPending=function(){renderPendingHomogeneous();harmonizeTableRows('pending-table');ensurePendingActionCells()};
 const renderClientsHomogeneous=renderClients;
 renderClients=function(){renderClientsHomogeneous();harmonizeTableRows('client-table')};
 renderPending();
