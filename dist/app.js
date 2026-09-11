@@ -201,7 +201,7 @@ async function loadDirectoryFromFirebase(){
     const meta=firebaseDb?((await firebaseDb.collection(DIRECTORY_META_COLLECTION).doc('main').get()).exists?(await firebaseDb.collection(DIRECTORY_META_COLLECTION).doc('main').get()).data():null):await restDirectoryGet(DIRECTORY_META_COLLECTION,'main');
     if(!meta||!meta.chunks){directoryLoaded=false;renderDirectory();return false}
     const chunks=[];
-    for(let i=1;i<=Number(meta.chunks);i++){const id=`chunk-${String(i).padStart(4,'0')}`;const value=firebaseDb?((await firebaseDb.collection(DIRECTORY_COLLECTION).doc(id).get()).data()||null):await restDirectoryGet(DIRECTORY_COLLECTION,id);if(value?.rows)chunks.push(...value.rows)}
+    for(let i=1;i<=Number(meta.chunks);i++){const id=`chunk-${String(i).padStart(4,'0')}`;const value=firebaseDb?((await firebaseDb.collection(DIRECTORY_COLLECTION).doc(id).get()).data()||null):await restDirectoryGet(DIRECTORY_COLLECTION,id);if(value?.payload){try{const parsed=JSON.parse(value.payload);if(Array.isArray(parsed))chunks.push(...parsed)}catch(e){console.warn('Bloque de directorio inválido',id,e)}}}
     directoryHeaders=Array.isArray(meta.headers)?meta.headers:[];directoryRows.splice(0,directoryRows.length,...chunks);directoryLoaded=true;renderDirectory();return true;
   }catch(error){directoryLoaded=false;renderDirectory();console.warn('No se pudo cargar el directorio de clientes',error);return false}
 }
@@ -213,7 +213,7 @@ async function importDirectoryWorkbook(file){
   const button=$('directory-import-button');button?.classList.add('busy');showSyncToast(`Cargando ${rows.length} clientes en Firebase…`);
   try{
     const chunks=[];for(let i=0;i<rows.length;i+=DIRECTORY_CHUNK_SIZE)chunks.push(rows.slice(i,i+DIRECTORY_CHUNK_SIZE));
-    await Promise.all(chunks.map((chunk,index)=>firebaseDb?firebaseDb.collection(DIRECTORY_COLLECTION).doc(`chunk-${String(index+1).padStart(4,'0')}`).set({rows:chunk},{merge:false}):restDirectoryWrite(DIRECTORY_COLLECTION,`chunk-${String(index+1).padStart(4,'0')}`,{rows:chunk})));
+    await Promise.all(chunks.map((chunk,index)=>{const value={payload:JSON.stringify(chunk)};return firebaseDb?firebaseDb.collection(DIRECTORY_COLLECTION).doc(`chunk-${String(index+1).padStart(4,'0')}`).set(value,{merge:false}):restDirectoryWrite(DIRECTORY_COLLECTION,`chunk-${String(index+1).padStart(4,'0')}`,value)}));
     await (firebaseDb?firebaseDb.collection(DIRECTORY_META_COLLECTION).doc('main').set({headers,count:rows.length,chunks:chunks.length,updated:new Date().toISOString()},{merge:false}):restDirectoryWrite(DIRECTORY_META_COLLECTION,'main',{headers,count:rows.length,chunks:chunks.length,updated:new Date().toISOString()}));
     directoryHeaders=headers;directoryRows.splice(0,directoryRows.length,...rows);directoryLoaded=true;renderDirectory();markSyncSuccess('Firebase');showSyncToast(`Directorio cargado: ${rows.length} clientes`);
   }catch(error){markSyncFailure();showSyncToast('No se pudo completar la carga. El directorio anterior se conserva.');console.warn('Error importando directorio',error)}finally{button?.classList.remove('busy')}
