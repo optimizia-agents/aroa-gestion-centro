@@ -285,7 +285,7 @@ renderPending();
 renderClients();
 
 // Conserva la configuración de cada vista al navegar por la aplicación.
-const VIEW_FILTERS_KEY='kurro-view-filters-v1';
+const VIEW_FILTERS_KEY='kurro-view-filters-v2';
 const VIEW_FILTER_FIELDS={
   center:['center-search','center-category','center-status','center-sort'],
   pending:['pending-search','pending-priority','pending-status'],
