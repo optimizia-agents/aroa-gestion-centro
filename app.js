@@ -413,6 +413,7 @@ function refreshClientFilterSelect(){
 }
 function renderClientsStable(){
   const table=$('client-table');if(!table)return;
+  ensureClientDemoRows();
   const q=String($('client-search')?.value||'').trim().toLocaleLowerCase('es');
   const client=$('client-filter-client')?.value||clientFilterValue||'all';
   const priority=$('client-priority')?.value||'all';
@@ -445,6 +446,15 @@ renderClients=()=>{ensureClientControls();refreshClientFilterSelect();renderClie
   replacement.addEventListener('input',handler);replacement.addEventListener('change',handler);
 });
 ensureClientControls();refreshClientFilterSelect();renderClients();
+
+const DEMO_CLIENT_ROWS=[
+  {demo:true,status:'PENDIENTE',client:'DEMO · Almacén',contact:'Contacto de prueba',text:'Gestión de demostración pendiente',priority:'NORMAL',date:'15/09/2026',updated:'12/09/2026',comments:'Registro DEMO: probar cliente, estado y edición.'},
+  {demo:true,status:'EN PROCESO',client:'DEMO · Calidad',contact:'Contacto de prueba',text:'Gestión de demostración en proceso',priority:'ALTA',date:'25/09/2026',updated:'12/09/2026',comments:'Registro DEMO: probar prioridad alta.'},
+  {demo:true,status:'REALIZADO',client:'DEMO · Agencia',contact:'Contacto de prueba',text:'Gestión de demostración realizada',priority:'NORMAL',date:'',updated:'12/09/2026',comments:'Registro DEMO: probar el estado realizado.'},
+  {demo:true,status:'PENDIENTE',client:'DEMO · Logística',contact:'Contacto de prueba',text:'Gestión de demostración sin fecha',priority:'ALTA',date:'',updated:'12/09/2026',comments:'Registro DEMO: probar búsqueda y sin fecha.'}
+];
+function ensureClientDemoRows(){if(!Array.isArray(DEMO_CLIENT_ROWS)||clientRows.some(row=>row.demo))return;clientRows.push(...DEMO_CLIENT_ROWS.map(row=>({...row})))}
+renderClients();
 
 function renderDynamicPeopleTabs(){const container=$('people-tabs');if(!container)return;const people=[...new Set(pendingRows.map(r=>String(r.person||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));const selected=people.includes(window.person)?window.person:'all';window.person=selected;container.innerHTML=['all',...people].map(p=>`<button class="person-tab ${p===selected?'active':''}" data-person="${htmlEscape(p)}">${p==='all'?'Todos':htmlEscape(p)}</button>`).join('');container.querySelectorAll('.person-tab').forEach(button=>button.addEventListener('click',()=>{container.querySelectorAll('.person-tab').forEach(item=>item.classList.remove('active'));button.classList.add('active');window.person=button.dataset.person;renderPending()}))}
 const renderPendingBeforeDynamicPeople=renderPending;renderPending=function(){renderDynamicPeopleTabs();renderPendingBeforeDynamicPeople()};renderDynamicPeopleTabs();renderPending();
