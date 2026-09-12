@@ -92,8 +92,14 @@ function renderAttention(){const panel=$('attention-panel');if(!panel)return;con
 function resetCenterFilters(){if($('center-search'))$('center-search').value='';if($('center-category'))$('center-category').value='all';if($('center-status'))$('center-status').value='all';if($('center-sort'))$('center-sort').value='next';window.centerQuickFilter=null;renderCenter();if(typeof saveViewFilters==='function')saveViewFilters('center')}
 function focusCenterState(kind){if(kind==='all'){resetCenterFilters();return}$('center-status').value='all';$('center-search').value='';window.centerQuickFilter=window.centerQuickFilter===kind?null:kind;renderCenter()}
 function applyCenterQuickFilter(){const kind=window.centerQuickFilter;document.querySelectorAll('[data-attention-kind]').forEach(button=>{const active=button.dataset.attentionKind===kind;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});if(!kind)return;const byActivity=new Map(centerRows.map(r=>[r.activity,r]));document.querySelectorAll('#center-table tr').forEach(row=>{const r=byActivity.get(row.children[0]?.textContent.trim());let show=true;if(r){if(kind==='overdue')show=isOverdue(r);else if(kind==='process')show=effectiveStatus(r)==='process';else if(kind==='nodate')show=!r.next&&effectiveStatus(r)!=='done';else if(kind==='soon')show=!!r.next&&!isOverdue(r)&&((new Date(r.next.split('/').reverse().join('-')+'T23:59:59')-new Date())<=30*86400000)}row.style.display=show?'':'none'});const visible=[...document.querySelectorAll('#center-table tr')].filter(r=>r.style.display!=='none').length;$('center-count').textContent=`${visible} registros`}
+// Los estados se eligen en pestañas; los criterios de fecha quedan separados.
+renderAttention=function(){const panel=$('attention-panel');if(!panel)return;const counts={all:centerRows.length,open:centerRows.filter(r=>effectiveStatus(r)==='open').length,process:centerRows.filter(r=>effectiveStatus(r)==='process').length,done:centerRows.filter(r=>effectiveStatus(r)==='done').length};panel.innerHTML=`<button class="state-tab" data-center-state="all" aria-pressed="false" onclick="setCenterStatus('all')">Todas <span>${counts.all}</span></button><button class="state-tab" data-center-state="open" aria-pressed="false" onclick="setCenterStatus('open')">Pendientes <span>${counts.open}</span></button><button class="state-tab" data-center-state="process" aria-pressed="false" onclick="setCenterStatus('process')">En proceso <span>${counts.process}</span></button><button class="state-tab" data-center-state="done" aria-pressed="false" onclick="setCenterStatus('done')">Realizadas <span>${counts.done}</span></button>`}
+function setCenterStatus(state){$('center-status').value=state;window.centerQuickFilter=null;renderCenter();if(typeof saveViewFilters==='function')saveViewFilters('center')}
+function setCenterDateFilter(kind){window.centerQuickFilter=kind==='all'?null:kind;renderCenter();if(typeof saveViewFilters==='function')saveViewFilters('center')}
 const renderCenterWithAttention=renderCenter;renderCenter=function(){renderCenterWithAttention();renderAttention();applyCenterQuickFilter()};renderCenter();
 
+resetCenterFilters=function(){$('center-search').value='';$('center-category').value='all';$('center-status').value='all';$('center-sort').value='next';if($('center-date-filter'))$('center-date-filter').value='all';window.centerQuickFilter=null;renderCenter();if(typeof saveViewFilters==='function')saveViewFilters('center')}
+applyCenterQuickFilter=function(){const kind=window.centerQuickFilter;document.querySelectorAll('[data-center-state]').forEach(button=>{const active=button.dataset.centerState===($('center-status')?.value||'all');button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});const dateSelect=$('center-date-filter');if(dateSelect)dateSelect.value=kind||'all';if(!kind)return;const byActivity=new Map(centerRows.map(r=>[r.activity,r]));document.querySelectorAll('#center-table tr').forEach(row=>{const r=byActivity.get(row.children[0]?.textContent.trim());let show=true;if(r){if(kind==='overdue')show=isOverdue(r);else if(kind==='soon')show=!!r.next&&!isOverdue(r)&&((new Date(r.next.split('/').reverse().join('-')+'T23:59:59')-new Date())<=30*86400000);else if(kind==='nodate')show=!r.next;else if(kind==='dated')show=!!r.next}row.style.display=show?'':'none'});const visible=[...document.querySelectorAll('#center-table tr')].filter(r=>r.style.display!=='none').length;$('center-count').textContent=`${visible} registros`}
 let pendingEditorIndex=-1;
 function pendingDateForEditor(value){const p=String(value||'').split('/');return p.length===3?`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`:''}
 function pendingDateFromEditor(value){const s=String(value||'').trim();if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s))return normalizeSheetDate(s);const p=s.split('-');return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:''}
@@ -326,7 +332,8 @@ document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('
   if(button.dataset.view!=='center')return;
   $('center-search').value='';
   $('center-category').value='all';
-  $('center-status').value='open';
+  $('center-status').value='all';
+  if($('center-date-filter'))$('center-date-filter').value='all';
   $('center-sort').value='next';
   window.centerQuickFilter=null;
   renderCenter();
@@ -387,7 +394,7 @@ renderClients();
 // Conserva la configuración de cada vista al navegar por la aplicación.
 const VIEW_FILTERS_KEY='kurro-view-filters-v2';
 const VIEW_FILTER_FIELDS={
-  center:['center-search','center-category','center-status','center-sort'],
+  center:['center-search','center-category','center-sort'],
   pending:['pending-search','pending-priority','pending-status'],
   clients:['client-search','client-priority','client-status']
 };
