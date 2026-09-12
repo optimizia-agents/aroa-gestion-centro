@@ -231,7 +231,7 @@ function saveClientData(){try{localStorage.setItem('kurro-clients-v1',JSON.strin
 function loadClientData(){try{const cached=JSON.parse(localStorage.getItem('kurro-clients-v1')||'null');if(!Array.isArray(cached))return false;clientRows.splice(0,clientRows.length,...cached.filter(r=>r&&typeof r==='object'));clientsLoading=clientRows.length===0;return clientRows.length>0}catch(e){return false}}
 function renderClientMetrics(){const open=clientRows.filter(r=>r.status!=='REALIZADO');$('client-metrics').innerHTML=metric('Pendientes activos',open.length,'Seguimiento con clientes',true)+metric('En proceso',open.filter(r=>r.status==='EN PROCESO').length,'Gestiones abiertas')+metric('Alta prioridad',open.filter(r=>r.priority==='ALTA').length,'Para atender')+metric('Con fecha objetivo',open.filter(r=>r.date).length,'Para organizar')}
 function updateClientField(i,f,v){const r=clientRows[i];if(!r)return;r[f]=v;r.updated=formatDate(new Date());saveClientData();renderClients();if(r.serverRow)remoteWrite(kurroRequest({api:'updateClient',fileId:CLIENTS_FILE_ID,row:r.serverRow,field:f==='date'?'target':f,value:v}).catch(reportRemoteWriteFailure))}
-function renderClients(){const q=($('client-search')?.value||'').toLowerCase(),pr=$('client-priority')?.value||'all',st=$('client-status')?.value||'PENDIENTE',rows=clientRows.filter(r=>(pr==='all'||r.priority===pr)&&(st==='all'||r.status===st)&&[r.client,r.contact,r.text,r.comments].join(' ').toLowerCase().includes(q));if(clientsLoading&&!clientRows.length){$('client-table').innerHTML='<tr><td colspan="9" class="empty">Cargando clientes desde Google Sheets…</td></tr>';$('client-count').textContent='Cargando…';return}$('client-table').innerHTML=rows.length?rows.map(r=>{const i=clientRows.indexOf(r);return '<tr><td><select class="status-select" onchange="updateClientField('+i+',\'status\',this.value)"><option '+(r.status==='PENDIENTE'?'selected':'')+'>PENDIENTE</option><option '+(r.status==='EN PROCESO'?'selected':'')+'>EN PROCESO</option><option '+(r.status==='REALIZADO'?'selected':'')+'>REALIZADO</option></select></td><td><strong>'+(r.client||'<span class=muted>Sin asignar</span>')+'</strong></td><td>'+(r.contact||'<span class=muted>Sin contacto</span>')+'</td><td>'+(r.text||'')+'</td><td><select class="status-select" onchange="updateClientField('+i+',\'priority\',this.value)"><option '+(r.priority==='NORMAL'?'selected':'')+'>NORMAL</option><option '+(r.priority==='ALTA'?'selected':'')+'>ALTA</option></select></td><td class="date"><input class="pending-date" type="date" value="'+clientDateForEditor(r.date)+'" onchange="updateClientField('+i+',\'date\',clientDateFromEditor(this.value))"></td><td class="date">'+(r.updated||'<span class=muted>Sin fecha</span>')+'</td><td><textarea class="comment-input" rows="2" placeholder="Añadir comentario" onchange="updateClientField('+i+',\'comments\',this.value)">'+(r.comments||'')+'</textarea></td><td><button class="done-btn" onclick="updateClientField('+i+',\'status\',\'REALIZADO\')" '+(r.status==='REALIZADO'?'disabled':'')+'>Hecho</button> <button class="edit-btn" onclick="openClientEditor('+i+')">Editar</button></td></tr>'}).join(''):'<tr><td colspan="9" class="empty">No hay pendientes con estos filtros. Pulsa «Nuevo pendiente» para añadir el primero.</td></tr>';$('client-count').textContent=rows.length+' registros';renderClientMetrics()}
+function renderClients(){const q=($('client-search')?.value||'').toLowerCase(),pr=$('client-priority')?.value||'all',st=$('client-status')?.value||'PENDIENTE',rows=clientRows.filter(r=>(pr==='all'||r.priority===pr)&&(st==='all'||r.status===st)&&[r.client,r.contact,r.text,r.comments].join(' ').toLowerCase().includes(q));if(clientsLoading&&!clientRows.length){$('client-table').innerHTML='<tr><td colspan="9" class="empty">Cargando gestiones reales desde Firebase…</td></tr>';$('client-count').textContent='Cargando…';return}$('client-table').innerHTML=rows.length?rows.map(r=>{const i=clientRows.indexOf(r);return '<tr><td><select class="status-select" onchange="updateClientField('+i+',\'status\',this.value)"><option '+(r.status==='PENDIENTE'?'selected':'')+'>PENDIENTE</option><option '+(r.status==='EN PROCESO'?'selected':'')+'>EN PROCESO</option><option '+(r.status==='REALIZADO'?'selected':'')+'>REALIZADO</option></select></td><td><strong>'+(r.client||'<span class=muted>Sin asignar</span>')+'</strong></td><td>'+(r.contact||'<span class=muted>Sin contacto</span>')+'</td><td>'+(r.text||'')+'</td><td><select class="status-select" onchange="updateClientField('+i+',\'priority\',this.value)"><option '+(r.priority==='NORMAL'?'selected':'')+'>NORMAL</option><option '+(r.priority==='ALTA'?'selected':'')+'>ALTA</option></select></td><td class="date"><input class="pending-date" type="date" value="'+clientDateForEditor(r.date)+'" onchange="updateClientField('+i+',\'date\',clientDateFromEditor(this.value))"></td><td class="date">'+(r.updated||'<span class=muted>Sin fecha</span>')+'</td><td><textarea class="comment-input" rows="2" placeholder="Añadir comentario" onchange="updateClientField('+i+',\'comments\',this.value)">'+(r.comments||'')+'</textarea></td><td><button class="done-btn" onclick="updateClientField('+i+',\'status\',\'REALIZADO\')" '+(r.status==='REALIZADO'?'disabled':'')+'>Hecho</button> <button class="edit-btn" onclick="openClientEditor('+i+')">Editar</button></td></tr>'}).join(''):'<tr><td colspan="9" class="empty">No hay gestiones con estos filtros. Pulsa «Nueva gestión» para añadir la primera.</td></tr>';$('client-count').textContent=rows.length+' registros';renderClientMetrics()}
 function openClientEditor(i=-1){clientEditorIndex=i;const r=i<0?{}:clientRows[i];refreshClientOptions();$('client-edit-client').value=r.client||'';$('client-edit-contact').value=r.contact||'';$('client-edit-text').value=r.text||'';$('client-edit-priority').value=r.priority||'NORMAL';$('client-edit-status').value=r.status||'PENDIENTE';$('client-edit-date').value=clientDateForEditor(r.date);$('client-edit-comments').value=r.comments||'';$('client-editor-title').textContent=i<0?'Nuevo pendiente':'Editar pendiente';$('client-editor').classList.add('open');$('client-editor').setAttribute('aria-hidden','false')}
 function closeClientEditor(){$('client-editor').classList.remove('open');$('client-editor').setAttribute('aria-hidden','true');clientEditorIndex=-1}
 async function saveClientEditor(){const text=$('client-edit-text').value.trim();if(!text){showSyncToast('Escribe el pendiente');return}const n=clientEditorIndex<0,r=n?{}:clientRows[clientEditorIndex];Object.assign(r,{client:$('client-edit-client').value.trim(),contact:$('client-edit-contact').value.trim(),text,priority:$('client-edit-priority').value,status:$('client-edit-status').value,date:$('client-edit-date').value?clientDateFromEditor($('client-edit-date').value):'',updated:formatDate(new Date()),comments:$('client-edit-comments').value});if(n){r.serverRow=Math.max(1,...clientRows.map(x=>x.serverRow||1))+1;r.fileId=CLIENTS_FILE_ID;clientRows.push(r)}saveClientData();renderClients();closeClientEditor();showSyncToast(n?'Añadiendo pendiente…':'Guardando pendiente…');try{await remoteWrite(Promise.all(Object.entries({status:r.status,client:r.client,contact:r.contact,task:r.text,priority:r.priority,target:r.date,updated:r.updated,comments:r.comments}).map(([field,value])=>kurroRequest({api:'updateClient',fileId:CLIENTS_FILE_ID,row:r.serverRow,field,value}))));showSyncToast(n?'Pendiente añadido':'Pendiente guardado')}catch(e){showSyncToast('Guardado local; falta publicar la conexión de clientes')}}
@@ -395,6 +395,25 @@ renderPending=function(){renderPendingHomogeneous();harmonizeTableRows('pending-
 const renderClientsHomogeneous=renderClients;
 renderClients=function(){renderClientsHomogeneous();harmonizeTableRows('client-table')};
 renderPending();
+
+// Última capa de seguridad para Gestiones de clientes.
+// Se define al final para que ninguna compatibilidad antigua vuelva a
+// sustituir las celdas de datos o quite la acción Editar.
+if(typeof renderClientsStable==='function'){
+  const finalClientRender=renderClientsStable;
+  renderClients=function(){
+    ensureClientControls();
+    refreshClientFilterSelect();
+    finalClientRender();
+  };
+  ['client-search','client-filter-client','client-priority','client-status'].forEach(id=>{
+    const node=$(id);if(!node)return;
+    const replacement=node.cloneNode(true);node.replaceWith(replacement);
+    replacement.addEventListener('input',()=>renderClients());
+    replacement.addEventListener('change',()=>renderClients());
+  });
+  renderClients();
+}
 renderClients();
 
 function renderDynamicPeopleTabs(){const container=$('people-tabs');if(!container)return;const people=[...new Set(pendingRows.map(r=>String(r.person||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));const selected=people.includes(window.person)?window.person:'all';window.person=selected;container.innerHTML=['all',...people].map(p=>`<button class="person-tab ${p===selected?'active':''}" data-person="${htmlEscape(p)}">${p==='all'?'Todos':htmlEscape(p)}</button>`).join('');container.querySelectorAll('.person-tab').forEach(button=>button.addEventListener('click',()=>{container.querySelectorAll('.person-tab').forEach(item=>item.classList.remove('active'));button.classList.add('active');window.person=button.dataset.person;renderPending()}))}
@@ -677,6 +696,20 @@ renderPending();
 });
 ensurePendingControls();
 renderPending();
+
+// Reconciliación final: la vista de clientes siempre se pinta con datos,
+// filtros y edición después de cualquier carga o redibujado.
+if(typeof renderClientsStable==='function'){
+  const auditedClientRender=renderClientsStable;
+  renderClients=function(){ensureClientControls();refreshClientFilterSelect();auditedClientRender()};
+  ['client-search','client-filter-client','client-priority','client-status'].forEach(id=>{
+    const node=$(id);if(!node)return;
+    const replacement=node.cloneNode(true);node.replaceWith(replacement);
+    replacement.addEventListener('input',renderClients);
+    replacement.addEventListener('change',renderClients);
+  });
+  renderClients();
+}
 // Vista estable de Gestiones de clientes: filtros dinámicos y edición siempre visible.
 let clientFilterValue='all';
 function ensureClientControls(){
