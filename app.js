@@ -401,7 +401,7 @@ function ensureClientControls(){
   let clientSelect=$('client-filter-client');
   if(!clientSelect){clientSelect=document.createElement('select');clientSelect.id='client-filter-client';clientSelect.setAttribute('aria-label','Cliente');toolbar.insertBefore(clientSelect,$('client-priority')||null)}
   const status=$('client-status');
-  if(status){const value=status.value||'PENDIENTE';status.innerHTML='<option value="PENDIENTE">Pendientes</option><option value="EN PROCESO">En proceso</option><option value="REALIZADO">Realizadas</option>';status.value=['PENDIENTE','EN PROCESO','REALIZADO'].includes(value)?value:'PENDIENTE'}
+  if(status){const value=status.value||'all';status.innerHTML='<option value="all">Todos los estados</option><option value="PENDIENTE">Pendientes</option><option value="EN PROCESO">En proceso</option><option value="REALIZADO">Realizadas</option>';status.value=['all','PENDIENTE','EN PROCESO','REALIZADO'].includes(value)?value:'all'}
   if(!toolbar.querySelector('[data-client-reset]')){const button=document.createElement('button');button.type='button';button.className='secondary filter-reset';button.dataset.clientReset='true';button.textContent='Limpiar filtros';button.addEventListener('click',resetClientFilters);toolbar.appendChild(button)}
 }
 function refreshClientFilterSelect(){
@@ -416,7 +416,7 @@ function renderClientsStable(){
   const q=String($('client-search')?.value||'').trim().toLocaleLowerCase('es');
   const client=$('client-filter-client')?.value||clientFilterValue||'all';
   const priority=$('client-priority')?.value||'all';
-  const status=$('client-status')?.value||'PENDIENTE';
+  const status=$('client-status')?.value||'all';
   clientFilterValue=client;
   if(clientsLoading&&!clientRows.length){table.innerHTML='<tr><td colspan="9" class="empty">Cargando gestiones desde Google Sheets…</td></tr>';if($('client-count'))$('client-count').textContent='Cargando…';return}
   const rows=clientRows.filter(row=>(client==='all'||String(row.client||'')===client)&&(priority==='all'||row.priority===priority)&&(status==='all'||row.status===status)&&[row.client,row.contact,row.text,row.priority,row.status,row.comments].join(' ').toLocaleLowerCase('es').includes(q));
@@ -433,7 +433,7 @@ function resetClientFilters(){
   if($('client-search'))$('client-search').value='';
   if($('client-filter-client'))$('client-filter-client').value='all';
   if($('client-priority'))$('client-priority').value='all';
-  if($('client-status'))$('client-status').value='PENDIENTE';
+  if($('client-status'))$('client-status').value='all';
   renderClients();
   if(typeof saveViewFilters==='function')saveViewFilters('clients');
 }
