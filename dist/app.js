@@ -611,3 +611,27 @@ document.querySelector('#pending-metrics')?.remove();
 function ensurePendingControls(){const view=$('pending-view'),toolbar=view?.querySelector('.toolbar');if(!view||!toolbar)return;let person=$('pending-person');if(!person){person=document.createElement('select');person.id='pending-person';person.setAttribute('aria-label','Persona o empresa');toolbar.insertBefore(person,toolbar.querySelector('#pending-priority')||null);person.addEventListener('change',event=>{window.person=event.target.value;renderPending()})}view.querySelectorAll('.panel-heading p').forEach(node=>{if(/^Fuentes:/i.test(node.textContent||''))node.remove()});if(!toolbar.querySelector('[data-pending-reset]')){const button=document.createElement('button');button.type='button';button.className='secondary filter-reset';button.dataset.pendingReset='true';button.textContent='Limpiar filtros';button.addEventListener('click',resetPendingFilters);toolbar.appendChild(button)}}
 ensurePendingControls();refreshPendingPersonSelect();renderPending();
 const refreshCenterMetricsOriginal=refreshKURROMetrics;refreshKURROMetrics=function(){refreshCenterMetricsOriginal();renderSimpleCenterSummary()};
+
+// Pintado final y estable de Seguimientos. Las capas antiguas se conservan
+// por compatibilidad con datos guardados, pero esta es la única presentación
+// que se usa: filtros arriba y una acción Editar en todas las filas.
+function renderPendingStable(){
+  const table=$('pending-table');
+  if(!table)return;
+  const q=String($('pending-search')?.value||'').trim().toLocaleLowerCase('es');
+  const person=$('pending-person')?.value||window.person||'all';
+  const priority=$('pending-priority')?.value||'all';
+  const state=$('pending-status')?.value||'all';
+  window.person=person;
+  const rows=pendingRows.filter(r=>(person==='all'||String(r.person||'')===person)&&(priority==='all'||r.priority===priority)&&(state==='all'||r.status===state)&&[r.person,r.text,r.priority,r.comments].join(' ').toLocaleLowerCase('es').includes(q));
+  table.innerHTML=rows.length?rows.map(r=>{
+    const i=pendingRows.indexOf(r);
+    const status=r.status==='REALIZADO'?'<span class="status done">REALIZADO</span>':'<span class="status open"><span class="status-dot"></span>PENDIENTE</span>';
+    return `<tr><td>${status}</td><td>${htmlEscape(r.text||'')}</td><td><strong>${htmlEscape(r.person||'Sin asignar')}</strong></td><td><span class="priority">${htmlEscape(r.priority||'NORMAL')}</span></td><td class="date">${htmlEscape(r.date||'Sin fecha')}</td><td class="date">${htmlEscape(r.updated||'Sin fecha')}</td><td>${htmlEscape(r.comments||'Sin comentarios')}</td><td><button type="button" class="edit-btn" onclick="openPendingEditor(${i})">Editar</button></td></tr>`;
+  }).join(''):'<tr><td colspan="8" class="empty">No hay resultados con estos filtros.</td></tr>';
+  if($('pending-heading'))$('pending-heading').textContent=person==='all'?'Todos mis pendientes':`Pendientes con ${htmlEscape(person)}`;
+  if($('pending-count'))$('pending-count').textContent=`${rows.length} registros`;
+}
+renderPending=()=>{refreshPendingPersonSelect();renderPendingStable()};
+document.querySelector('#pending-person')?.addEventListener('change',event=>{window.person=event.target.value;renderPendingStable()});
+renderPending();
