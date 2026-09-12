@@ -628,6 +628,10 @@ const refreshCenterMetricsOriginal=refreshKURROMetrics;refreshKURROMetrics=funct
 function renderPendingStable(){
   const table=$('pending-table');
   if(!table)return;
+  const peopleTabs=$('people-tabs');
+  if(peopleTabs){peopleTabs.hidden=true;peopleTabs.setAttribute('aria-hidden','true');peopleTabs.innerHTML=''}
+  const statusSelect=$('pending-status');
+  if(statusSelect){statusSelect.innerHTML='<option value="PENDIENTE">Pendientes</option>';statusSelect.value='PENDIENTE'}
   const q=String($('pending-search')?.value||'').trim().toLocaleLowerCase('es');
   const person=$('pending-person')?.value||window.person||'all';
   const priority=$('pending-priority')?.value||'all';
@@ -642,6 +646,6 @@ function renderPendingStable(){
   if($('pending-heading'))$('pending-heading').textContent=person==='all'?'Todos mis pendientes':`Pendientes con ${htmlEscape(person)}`;
   if($('pending-count'))$('pending-count').textContent=`${rows.length} registros`;
 }
-renderPending=()=>{refreshPendingPersonSelect();renderPendingStable()};
+renderPending=()=>{ensurePendingControls();refreshPendingPersonSelect();renderPendingStable()};
 document.querySelector('#pending-person')?.addEventListener('change',event=>{window.person=event.target.value;renderPendingStable()});
 renderPending();
