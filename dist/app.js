@@ -711,7 +711,7 @@ if(typeof renderClientsStable==='function'){
   renderClients();
 }
 // Vista estable de Gestiones de clientes: filtros dinámicos y edición siempre visible.
-let clientFilterValue='all';
+var clientFilterValue='all';
 function ensureClientControls(){
   const view=$('clients-view'),toolbar=view?.querySelector('.toolbar');
   if(!view||!toolbar)return;
