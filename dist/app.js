@@ -293,6 +293,13 @@ async function importDirectoryWorkbook(file){
   if(typeof XLSX==='undefined'){showSyncToast('No se puede leer el Excel en este momento');return}
   const buffer=await file.arrayBuffer();const workbook=XLSX.read(buffer,{type:'array',cellDates:false});const sheet=workbook.Sheets[workbook.SheetNames[0]];const values=XLSX.utils.sheet_to_json(sheet,{header:1,defval:'',raw:false});const headers=(values.shift()||[]).map(v=>String(v??'').trim());const rows=values.filter(row=>row.some(v=>String(v??'').trim())).map(row=>headers.map((_,i)=>String(row[i]??'').trim()));
   if(headers.length!==30||rows.length<1){showSyncToast('El Excel no tiene la estructura esperada');return}
+  const sameHeaders=directoryHeaders.length===headers.length&&headers.every((header,index)=>header===directoryHeaders[index]);
+  const currentKeys=new Set(directoryRows.map(row=>String(row?.[0]??'').trim()).filter(Boolean));
+  const importedKeys=new Set(rows.map(row=>String(row?.[0]??'').trim()).filter(Boolean));
+  const nuevos=[...importedKeys].filter(key=>!currentKeys.has(key)).length;
+  const ausentes=[...currentKeys].filter(key=>!importedKeys.has(key)).length;
+  const resumen=`Archivo: ${file.name}\nClientes en el archivo: ${rows.length}\nClientes nuevos: ${nuevos}\nClientes que ya no aparecen: ${ausentes}\nEstructura de columnas: ${sameHeaders?'igual':'diferente'}\n\n¿Quieres importar este archivo y convertirlo en la nueva copia de Firebase?`;
+  if(!window.confirm(resumen)){showSyncToast('Importación cancelada. Se mantienen los datos actuales.');return}
   const button=$('directory-import-button');button?.classList.add('busy');showSyncToast(`Cargando ${rows.length} clientes en Firebase…`);
   try{
     const chunks=[];for(let i=0;i<rows.length;i+=DIRECTORY_CHUNK_SIZE)chunks.push(rows.slice(i,i+DIRECTORY_CHUNK_SIZE));
