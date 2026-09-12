@@ -670,3 +670,64 @@ renderPending();
 });
 ensurePendingControls();
 renderPending();
+// Vista estable de Gestiones de clientes: filtros dinámicos y edición siempre visible.
+let clientFilterValue='all';
+function ensureClientControls(){
+  const view=$('clients-view'),toolbar=view?.querySelector('.toolbar');
+  if(!view||!toolbar)return;
+  const metrics=$('client-metrics');
+  if(metrics){metrics.hidden=true;metrics.innerHTML=''}
+  view.querySelectorAll('.panel-heading p').forEach(node=>{if(/^Fuente:/i.test(node.textContent||''))node.remove()});
+  let clientSelect=$('client-filter-client');
+  if(!clientSelect){clientSelect=document.createElement('select');clientSelect.id='client-filter-client';clientSelect.setAttribute('aria-label','Cliente');toolbar.insertBefore(clientSelect,$('client-priority')||null)}
+  const status=$('client-status');
+  if(status){const value=status.value||'PENDIENTE';status.innerHTML='<option value="PENDIENTE">Pendientes</option><option value="EN PROCESO">En proceso</option><option value="REALIZADO">Realizadas</option>';status.value=['PENDIENTE','EN PROCESO','REALIZADO'].includes(value)?value:'PENDIENTE'}
+  if(!toolbar.querySelector('[data-client-reset]')){const button=document.createElement('button');button.type='button';button.className='secondary filter-reset';button.dataset.clientReset='true';button.textContent='Limpiar filtros';button.addEventListener('click',resetClientFilters);toolbar.appendChild(button)}
+}
+function refreshClientFilterSelect(){
+  const select=$('client-filter-client');if(!select)return;
+  const values=[...new Set(clientRows.map(row=>String(row.client||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+  select.innerHTML='<option value="all">Todos los clientes</option>'+values.map(value=>`<option value="${htmlEscape(value)}">${htmlEscape(value)}</option>`).join('');
+  if(!values.includes(clientFilterValue))clientFilterValue='all';
+  select.value=clientFilterValue;
+}
+function renderClientsStable(){
+  const table=$('client-table');if(!table)return;
+  const q=String($('client-search')?.value||'').trim().toLocaleLowerCase('es');
+  const client=$('client-filter-client')?.value||clientFilterValue||'all';
+  const priority=$('client-priority')?.value||'all';
+  const status=$('client-status')?.value||'PENDIENTE';
+  clientFilterValue=client;
+  if(clientsLoading&&!clientRows.length){table.innerHTML='<tr><td colspan="9" class="empty">Cargando gestiones desde Google Sheets…</td></tr>';if($('client-count'))$('client-count').textContent='Cargando…';return}
+  const rows=clientRows.filter(row=>(client==='all'||String(row.client||'')===client)&&(priority==='all'||row.priority===priority)&&(status==='all'||row.status===status)&&[row.client,row.contact,row.text,row.priority,row.status,row.comments].join(' ').toLocaleLowerCase('es').includes(q));
+  table.innerHTML=rows.length?rows.map(row=>{
+    const index=clientRows.indexOf(row);
+    const statusHtml=row.status==='REALIZADO'?'<span class="status done">REALIZADO</span>':row.status==='EN PROCESO'?'<span class="status process">EN PROCESO</span>':'<span class="status open"><span class="status-dot"></span>PENDIENTE</span>';
+    return `<tr><td>${statusHtml}</td><td><strong>${htmlEscape(row.client||'Sin asignar')}</strong></td><td>${htmlEscape(row.contact||'Sin contacto')}</td><td>${htmlEscape(row.text||'')}</td><td><span class="priority">${htmlEscape(row.priority||'NORMAL')}</span></td><td class="date">${htmlEscape(row.date||'Sin fecha')}</td><td class="date">${htmlEscape(row.updated||'Sin fecha')}</td><td>${htmlEscape(row.comments||'Sin comentarios')}</td><td><button type="button" class="edit-btn" onclick="openClientEditor(${index})">Editar</button></td></tr>`;
+  }).join(''):'<tr><td colspan="9" class="empty">No hay gestiones con estos filtros. Pulsa «Nueva gestión» para añadir la primera.</td></tr>';
+  if($('client-heading'))$('client-heading').textContent=client==='all'?'Todas las gestiones':`Gestiones con ${htmlEscape(client)}`;
+  if($('client-count'))$('client-count').textContent=`${rows.length} registros`;
+}
+function resetClientFilters(){
+  clientFilterValue='all';
+  if($('client-search'))$('client-search').value='';
+  if($('client-filter-client'))$('client-filter-client').value='all';
+  if($('client-priority'))$('client-priority').value='all';
+  if($('client-status'))$('client-status').value='PENDIENTE';
+  renderClients();
+  if(typeof saveViewFilters==='function')saveViewFilters('clients');
+}
+renderClients=()=>{ensureClientControls();refreshClientFilterSelect();renderClientsStable()};
+['client-search','client-filter-client','client-priority','client-status'].forEach(id=>{
+  const node=$(id);if(!node)return;
+  const replacement=node.cloneNode(true);node.replaceWith(replacement);
+  const handler=event=>{if(id==='client-filter-client')clientFilterValue=event.target.value||'all';renderClients()};
+  replacement.addEventListener('input',handler);replacement.addEventListener('change',handler);
+});
+ensureClientControls();refreshClientFilterSelect();renderClients();
+
+function renderDynamicPeopleTabs(){const container=$('people-tabs');if(!container)return;const people=[...new Set(pendingRows.map(r=>String(r.person||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));const selected=people.includes(window.person)?window.person:'all';window.person=selected;container.innerHTML=['all',...people].map(p=>`<button class="person-tab ${p===selected?'active':''}" data-person="${htmlEscape(p)}">${p==='all'?'Todos':htmlEscape(p)}</button>`).join('');container.querySelectorAll('.person-tab').forEach(button=>button.addEventListener('click',()=>{container.querySelectorAll('.person-tab').forEach(item=>item.classList.remove('active'));button.classList.add('active');window.person=button.dataset.person;renderPending()}))}
+const renderPendingBeforeDynamicPeople=renderPending;renderPending=function(){renderDynamicPeopleTabs();renderPendingBeforeDynamicPeople()};renderDynamicPeopleTabs();renderPending();
+
+function refreshPendingPersonSelect(){const select=$('pending-person');if(!select)return;const people=[...new Set(pendingRows.map(r=>String(r.person||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));const selected=people.includes(window.person)?window.person:'all';select.innerHTML='<option value="all">Todas las personas</option>'+people.map(p=>`<option value="${htmlEscape(p)}">${htmlEscape(p)}</option>`).join('');select.value=selected}
+const renderPendingWithPersonSelect=renderPending;renderPending=function(){refreshPendingPersonSelect();renderPendingWithPersonSelect()};document.querySelector('#pending-person')?.addEventListener('change',event=>{window.person=event.target.value;renderPending()});function resetPendingFilters(){pendingPersonFilter='all';window.person='all';if($('pending-search'))$('pending-search').value='';if($('pending-person'))$('pending-person').value='all';if($('pending-priority'))$('pending-priority').value='all';if($('pending-status'))$('pending-status').value='PENDIENTE';renderPending();if(typeof saveViewFilters==='function')saveViewFilters('pending')};refreshPendingPersonSelect();renderPending();
