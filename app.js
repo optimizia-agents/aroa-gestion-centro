@@ -600,6 +600,5 @@ separateCenterFilters();
 const renderCenterStable=renderCenter;
 renderCenter=function(){const selected=$('center-category')?.value||'all';renderCenterStable();const select=$('center-category');if(select&&[...select.options].some(option=>option.value===selected))select.value=selected};
 document.querySelector('#center-category')?.addEventListener('change',()=>renderCenter());
-document.querySelector('#center-sort option[value="activity"]')?.remove();
-document.querySelector('#center-sort option[value="frequency"]')?.remove();
+document.querySelector('#center-sort')?.remove();
 const refreshCenterMetricsOriginal=refreshKURROMetrics;refreshKURROMetrics=function(){refreshCenterMetricsOriginal();renderSimpleCenterSummary()};
