@@ -59,7 +59,7 @@ function renderCenterWithoutDuplicateAction(){const originalCenterRows=[...cente
 renderCenter=renderCenterWithoutDuplicateAction;
 const renderCenterBeforeLabels=renderCenter;
 renderCenter=function(){
-  const category=canonicalCategory($('center-category')?.value),query=($('center-search')?.value||'').toLocaleLowerCase('es'),state=$('center-status')?.value||'all',sort=$('center-sort')?.value||'next';
+  const category=canonicalCategory($('center-category')?.value),query=($('center-search')?.value||'').toLocaleLowerCase('es'),state=$('center-status')?.value||'all',sort='next';
   const categories=[...new Set(centerRows.map(r=>canonicalCategory(r.category)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
   const categorySelect=$('center-category');
   if(categorySelect){categorySelect.innerHTML='<option value="all">Todas las categorías</option>'+categories.map(v=>`<option value="${htmlEscape(v)}">${htmlEscape(v)}</option>`).join('');categorySelect.value=categories.includes(category)?category:'all'}
@@ -89,7 +89,7 @@ function saveCenterEditorFlexible(){const index=centerEditorIndex,isNew=index===
 const saveButton=$('save-center-editor');if(saveButton){const replacement=saveButton.cloneNode(true);saveButton.replaceWith(replacement);replacement.addEventListener('click',saveCenterEditorFlexible)}
 const frequencyField=$('edit-frequency');frequencyField?.addEventListener('change',()=>{$('edit-next').dataset.manual='false';legacyNextPreview()});$('edit-last')?.addEventListener('change',()=>{$('edit-next').dataset.manual='false';legacyNextPreview()});
 function renderAttention(){const panel=$('attention-panel');if(!panel)return;const overdue=centerRows.filter(isOverdue).length,soon=centerRows.filter(r=>{if(!r.next||isOverdue(r))return false;const p=r.next.split('/');return (new Date(`${p[2]}-${p[1]}-${p[0]}T23:59:59`)-new Date())<=30*86400000}).length,process=centerRows.filter(r=>effectiveStatus(r)==='process').length,noDate=centerRows.filter(r=>!r.next&&effectiveStatus(r)!=='done').length;panel.innerHTML=`<button class="attention-card" data-attention-kind="all" aria-pressed="false" onclick="focusCenterState('all')"><strong>${centerRows.length}</strong><small>☷ Todas las actividades</small></button><button class="attention-card alert" data-attention-kind="overdue" aria-pressed="false" onclick="focusCenterState('overdue')"><strong>${overdue}</strong><small>☷ Vencidas · revisar</small></button><button class="attention-card" data-attention-kind="soon" aria-pressed="false" onclick="focusCenterState('soon')"><strong>${soon}</strong><small>☷ Próximas en 30 días</small></button><button class="attention-card" data-attention-kind="process" aria-pressed="false" onclick="focusCenterState('process')"><strong>${process}</strong><small>☷ En proceso</small></button><button class="attention-card" data-attention-kind="nodate" aria-pressed="false" onclick="focusCenterState('nodate')"><strong>${noDate}</strong><small>☷ Sin fecha definida</small></button>`}
-function resetCenterFilters(){if($('center-search'))$('center-search').value='';if($('center-category'))$('center-category').value='all';if($('center-status'))$('center-status').value='all';if($('center-sort'))$('center-sort').value='next';window.centerQuickFilter=null;renderCenter();if(typeof saveViewFilters==='function')saveViewFilters('center')}
+function resetCenterFilters(){if($('center-search'))$('center-search').value='';if($('center-category'))$('center-category').value='all';if($('center-status'))$('center-status').value='all';window.centerQuickFilter=null;renderCenter();if(typeof saveViewFilters==='function')saveViewFilters('center')}
 function focusCenterState(kind){if(kind==='all'){resetCenterFilters();return}$('center-status').value='all';$('center-search').value='';window.centerQuickFilter=window.centerQuickFilter===kind?null:kind;renderCenter()}
 function applyCenterQuickFilter(){const kind=window.centerQuickFilter;document.querySelectorAll('[data-attention-kind]').forEach(button=>{const active=button.dataset.attentionKind===kind;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});if(!kind)return;const byActivity=new Map(centerRows.map(r=>[r.activity,r]));document.querySelectorAll('#center-table tr').forEach(row=>{const r=byActivity.get(row.children[0]?.textContent.trim());let show=true;if(r){if(kind==='overdue')show=isOverdue(r);else if(kind==='process')show=effectiveStatus(r)==='process';else if(kind==='nodate')show=!r.next&&effectiveStatus(r)!=='done';else if(kind==='soon')show=!!r.next&&!isOverdue(r)&&((new Date(r.next.split('/').reverse().join('-')+'T23:59:59')-new Date())<=30*86400000)}row.style.display=show?'':'none'});const visible=[...document.querySelectorAll('#center-table tr')].filter(r=>r.style.display!=='none').length;$('center-count').textContent=`${visible} registros`}
 // Los estados se eligen en pestañas; los criterios de fecha quedan separados.
@@ -334,7 +334,6 @@ document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('
   $('center-category').value='all';
   $('center-status').value='all';
   if($('center-date-filter'))$('center-date-filter').value='all';
-  $('center-sort').value='next';
   window.centerQuickFilter=null;
   renderCenter();
 }));
@@ -394,7 +393,7 @@ renderClients();
 // Conserva la configuración de cada vista al navegar por la aplicación.
 const VIEW_FILTERS_KEY='kurro-view-filters-v2';
 const VIEW_FILTER_FIELDS={
-  center:['center-search','center-category','center-sort'],
+  center:['center-search','center-category'],
   pending:['pending-search','pending-priority','pending-status'],
   clients:['client-search','client-priority','client-status']
 };
