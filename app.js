@@ -451,8 +451,11 @@ const DEMO_CLIENT_ROWS=[
   {demo:true,status:'REALIZADO',client:'DEMO · Agencia',contact:'Contacto de prueba',text:'Gestión de demostración realizada',priority:'NORMAL',date:'',updated:'12/09/2026',comments:'Registro DEMO: probar el estado realizado.'},
   {demo:true,status:'PENDIENTE',client:'DEMO · Logística',contact:'Contacto de prueba',text:'Gestión de demostración sin fecha',priority:'ALTA',date:'',updated:'12/09/2026',comments:'Registro DEMO: probar búsqueda y sin fecha.'}
 ];
-function ensureClientDemoRows(){if(!Array.isArray(DEMO_CLIENT_ROWS)||clientRows.some(row=>row.demo))return;clientRows.push(...DEMO_CLIENT_ROWS.map(row=>({...row})))}
+function ensureClientDemoRows(){if(!Array.isArray(DEMO_CLIENT_ROWS)||clientRows.some(row=>row.demo)||localStorage.getItem('aroa-client-demo-dismissed')==='1')return;clientRows.push(...DEMO_CLIENT_ROWS.map(row=>({...row})))}
 renderClients();
+setTimeout(()=>{ensureClientDemoRows();renderClients()},1800);
+const realDeleteClientEditor=deleteClientEditor;
+deleteClientEditor=async function(){const row=clientRows[clientEditorIndex];if(row?.demo)localStorage.setItem('aroa-client-demo-dismissed','1');return realDeleteClientEditor()};
 
 function renderDynamicPeopleTabs(){const container=$('people-tabs');if(!container)return;const people=[...new Set(pendingRows.map(r=>String(r.person||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));const selected=people.includes(window.person)?window.person:'all';window.person=selected;container.innerHTML=['all',...people].map(p=>`<button class="person-tab ${p===selected?'active':''}" data-person="${htmlEscape(p)}">${p==='all'?'Todos':htmlEscape(p)}</button>`).join('');container.querySelectorAll('.person-tab').forEach(button=>button.addEventListener('click',()=>{container.querySelectorAll('.person-tab').forEach(item=>item.classList.remove('active'));button.classList.add('active');window.person=button.dataset.person;renderPending()}))}
 const renderPendingBeforeDynamicPeople=renderPending;renderPending=function(){renderDynamicPeopleTabs();renderPendingBeforeDynamicPeople()};renderDynamicPeopleTabs();renderPending();
