@@ -444,7 +444,7 @@ function renderClientsStable(){
   const priority=$('client-priority')?.value||'all';
   const status=$('client-status')?.value||'all';
   clientFilterValue=client;
-  if(clientsLoading&&!clientRows.length){table.innerHTML='<tr><td colspan="9" class="empty">Cargando gestiones desde Google Sheets…</td></tr>';if($('client-count'))$('client-count').textContent='Cargando…';return}
+  if(clientsLoading&&!clientRows.length){table.innerHTML='<tr><td colspan="9" class="empty">Cargando gestiones reales desde Firebase…</td></tr>';if($('client-count'))$('client-count').textContent='Cargando…';return}
   const rows=clientRows.filter(row=>(client==='all'||String(row.client||'')===client)&&(priority==='all'||row.priority===priority)&&(status==='all'||row.status===status)&&[row.client,row.contact,row.text,row.priority,row.status,row.comments].join(' ').toLocaleLowerCase('es').includes(q));
   table.innerHTML=rows.length?rows.map(row=>{
     const index=clientRows.indexOf(row);
