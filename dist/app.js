@@ -646,7 +646,8 @@ function renderPendingStable(){
   if($('pending-heading'))$('pending-heading').textContent=person==='all'?'Todos mis pendientes':`Pendientes con ${htmlEscape(person)}`;
   if($('pending-count'))$('pending-count').textContent=`${rows.length} registros`;
 }
-renderPending=()=>{ensurePendingControls();refreshPendingPersonSelect();renderPendingStable()};
+let pendingPersonFilter=$('pending-person')?.value||window.person||'all';
+renderPending=()=>{window.person=pendingPersonFilter;ensurePendingControls();refreshPendingPersonSelect();const personSelect=$('pending-person');if(personSelect)personSelect.value=pendingPersonFilter;renderPendingStable()};
 document.querySelector('#pending-person')?.addEventListener('change',event=>{window.person=event.target.value;renderPendingStable()});
 renderPending();
 
@@ -655,7 +656,15 @@ renderPending();
 ['pending-search','pending-person','pending-priority','pending-status'].forEach(id=>{
   const node=$(id); if(!node)return;
   const replacement=node.cloneNode(true); node.replaceWith(replacement);
-  const onPendingFilterChange=event=>{if(id==='pending-person')window.person=event.target.value;renderPending()};
+  const onPendingFilterChange=event=>{
+    if(id==='pending-person'){
+      pendingPersonFilter=event.target.value||'all';
+      window.person=pendingPersonFilter;
+      renderPendingStable();
+      return;
+    }
+    renderPending();
+  };
   replacement.addEventListener('input',onPendingFilterChange);
   replacement.addEventListener('change',onPendingFilterChange);
 });
