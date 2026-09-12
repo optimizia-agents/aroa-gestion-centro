@@ -655,8 +655,9 @@ renderPending();
 ['pending-search','pending-person','pending-priority','pending-status'].forEach(id=>{
   const node=$(id); if(!node)return;
   const replacement=node.cloneNode(true); node.replaceWith(replacement);
-  replacement.addEventListener('input',renderPending);
-  replacement.addEventListener('change',renderPending);
+  const onPendingFilterChange=event=>{if(id==='pending-person')window.person=event.target.value;renderPending()};
+  replacement.addEventListener('input',onPendingFilterChange);
+  replacement.addEventListener('change',onPendingFilterChange);
 });
 ensurePendingControls();
 renderPending();
