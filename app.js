@@ -649,3 +649,14 @@ function renderPendingStable(){
 renderPending=()=>{ensurePendingControls();refreshPendingPersonSelect();renderPendingStable()};
 document.querySelector('#pending-person')?.addEventListener('change',event=>{window.person=event.target.value;renderPendingStable()});
 renderPending();
+
+// Sustituye los listeners antiguos de los filtros para que cada cambio use
+// siempre el pintado estable, incluida la columna «Editar».
+['pending-search','pending-person','pending-priority','pending-status'].forEach(id=>{
+  const node=$(id); if(!node)return;
+  const replacement=node.cloneNode(true); node.replaceWith(replacement);
+  replacement.addEventListener('input',renderPending);
+  replacement.addEventListener('change',renderPending);
+});
+ensurePendingControls();
+renderPending();
