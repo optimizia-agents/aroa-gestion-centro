@@ -12,6 +12,9 @@
       .danger-button{border:1px solid #efcaca;background:#fff4f4;color:#b24c4c;border-radius:8px;padding:10px 14px;font:inherit;font-weight:700;cursor:pointer}.danger-button:hover{background:#ffe6e6}.modal-spacer{flex:1}
       #center-table .done-btn{white-space:nowrap;font-size:11px;padding:7px 6px}
       #center-table .done-btn,#pending-table .done-btn,#client-table .done-btn{display:none!important}
+      .attention-panel{grid-template-columns:repeat(5,1fr)}
+      @media(max-width:1100px){.attention-panel{grid-template-columns:repeat(3,1fr)}}
+      @media(max-width:900px){.attention-panel{grid-template-columns:repeat(2,1fr)}}
     </style>
     <style>
       html,body{max-width:100%;overflow-x:hidden}.main{width:calc(100vw - 248px);overflow:hidden}.table-wrap{width:100%;max-width:100%;overflow-x:auto;overflow-y:visible}.comment-input{width:320px;min-height:78px;resize:vertical;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.4}.status-select,.comment-input{border:1px solid #dbe7e4;background:#fff;border-radius:7px;padding:7px;color:#42626b;font:inherit;font-size:12px}.status-select:focus,.comment-input:focus{outline:2px solid #b9ded0;outline-offset:1px}.done-btn:disabled{opacity:.45;cursor:not-allowed}
@@ -139,5 +142,8 @@
 <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore-compat.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="app.js?v=20260911-firebase42"></script>
+    <script>
+      document.querySelector('#center-status')?.addEventListener('change',()=>{window.centerQuickFilter=null;window.renderCenter?.();window.saveViewFilters?.('center')});
+    </script>
   </body>
 </html>
