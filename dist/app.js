@@ -725,8 +725,6 @@ renderClients=()=>{ensureClientControls();refreshClientFilterSelect();renderClie
   const handler=event=>{if(id==='client-filter-client')clientFilterValue=event.target.value||'all';renderClients()};
   replacement.addEventListener('input',handler);replacement.addEventListener('change',handler);
 });
-ensureClientControls();refreshClientFilterSelect();renderClients();
-
 const DEMO_CLIENT_ROWS=[
   {demo:true,status:'PENDIENTE',client:'DEMO · Almacén',contact:'Contacto de prueba',text:'Gestión de demostración pendiente',priority:'NORMAL',date:'15/09/2026',updated:'12/09/2026',comments:'Registro DEMO: probar cliente, estado y edición.'},
   {demo:true,status:'EN PROCESO',client:'DEMO · Calidad',contact:'Contacto de prueba',text:'Gestión de demostración en proceso',priority:'ALTA',date:'25/09/2026',updated:'12/09/2026',comments:'Registro DEMO: probar prioridad alta.'},
