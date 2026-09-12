@@ -110,9 +110,9 @@
 
         <section id="pending-view" class="view">
           <div class="hero-row"><div><h2>Seguimientos</h2><p>Tareas y decisiones agrupadas por persona o empresa.</p></div><button class="primary" data-new-pending>＋ Nuevo seguimiento</button></div>
-          <div class="people-tabs" id="people-tabs" hidden></div>
+          <div class="people-tabs" id="people-tabs" hidden aria-hidden="true"></div>
           <div id="pending-metrics" hidden></div>
-          <div class="toolbar"><div class="search"><span>⌕</span><input id="pending-search" placeholder="Buscar en mis pendientes" /></div><select id="pending-person" aria-label="Persona o empresa"><option value="all">Todas las personas</option></select><select id="pending-priority"><option value="all">Todas las prioridades</option><option value="NORMAL">Normal</option><option value="ALTA">Alta</option></select><select id="pending-status"><option value="PENDIENTE">Pendientes</option><option value="all">Todos los estados</option><option value="REALIZADO">Realizados</option></select><button type="button" class="secondary filter-reset" onclick="resetPendingFilters()">Limpiar filtros</button></div>
+          <div class="toolbar"><div class="search"><span>⌕</span><input id="pending-search" placeholder="Buscar en mis pendientes" /></div><select id="pending-person" aria-label="Persona o empresa"><option value="all">Todas las personas</option></select><select id="pending-priority"><option value="all">Todas las prioridades</option><option value="NORMAL">Normal</option><option value="ALTA">Alta</option></select><select id="pending-status"><option value="PENDIENTE">Pendientes</option><option value="all">Todos los estados</option><option value="REALIZADO">Realizados</option></select><button type="button" class="secondary filter-reset" data-pending-reset="true" onclick="resetPendingFilters()">Limpiar filtros</button></div>
           <div class="panel"><div class="panel-heading"><div><h3 id="pending-heading">Todos los seguimientos</h3></div><span class="count-pill" id="pending-count"></span></div><div class="table-wrap"><table><thead><tr><th>Estado</th><th>Pendiente / decisión</th><th>Persona o empresa</th><th>Prioridad</th><th>Fecha objetivo</th><th>Actualización</th><th>Comentarios</th><th>Acción</th></tr></thead><tbody id="pending-table"></tbody></table></div></div>
         </section>
 

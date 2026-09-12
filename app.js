@@ -411,6 +411,16 @@ function saveViewFilters(view){
 }
 function restoreViewFilters(view){
   const fields=VIEW_FILTER_FIELDS[view],saved=readViewFilters()[view]; if(!fields||!saved)return;
+  // Seguimientos siempre abre en una vista completa y predecible. Un filtro
+  // antiguo guardado en el navegador no debe dejar la tabla aparentemente vacía.
+  if(view==='pending'){
+    if($('pending-search'))$('pending-search').value='';
+    if($('pending-person'))$('pending-person').value='all';
+    if($('pending-priority'))$('pending-priority').value='all';
+    if($('pending-status'))$('pending-status').value='PENDIENTE';
+    window.person='all';
+    return;
+  }
   fields.forEach(id=>{if($(id)&&saved[id]!==undefined)$(id).value=saved[id]});
   if(view==='pending')renderPending();
   if(view==='clients')renderClients();
