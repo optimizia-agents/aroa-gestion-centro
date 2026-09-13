@@ -519,8 +519,17 @@ function init(){
 function groupColorStyle(name){
  const key=String(name||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('es');
  if(!key)return '--group-bg:#f4f6f7;--group-accent:#687980;--group-chip:#e8edef';
- let hash=2166136261;
- for(const char of key){hash=Math.imul(hash^char.codePointAt(0),16777619)>>>0}
- const hue=hash%360;
- return `--group-bg:hsl(${hue} 48% 96%);--group-accent:hsl(${hue} 48% 35%);--group-chip:hsl(${hue} 52% 88%)`;
+ const names=[...new Set([...pendingRows.map(r=>r.person),...clientRows.map(r=>r.client)]
+  .map(v=>String(v||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('es')).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+ // Persist presentation preferences only; no business records are changed.
+ let assigned={};try{assigned=JSON.parse(localStorage.getItem('kurro-group-colors-v2')||'{}')}catch(e){}
+ if(!assigned||typeof assigned!=='object'||Array.isArray(assigned))assigned={};
+ let next=Math.max(-1,...Object.values(assigned).filter(Number.isInteger))+1;
+ for(const person of names)if(!Number.isInteger(assigned[person]))assigned[person]=next++;
+ if(!Number.isInteger(assigned[key]))assigned[key]=next;
+ try{localStorage.setItem('kurro-group-colors-v2',JSON.stringify(assigned))}catch(e){}
+ const hues=[210,25,145,280,48,180,335,245,85,0,305,165];
+ const index=assigned[key],hue=hues[index%hues.length];
+ const light=89-Math.floor(index/hues.length)%3*4;
+ return `--group-bg:hsl(${hue} 65% ${light}%);--group-accent:hsl(${hue} 68% 32%);--group-chip:hsl(${hue} 65% 80%)`;
 }

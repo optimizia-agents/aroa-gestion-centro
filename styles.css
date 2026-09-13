@@ -13,4 +13,4 @@
 #pending-table tr.group-colored td,#client-table tr.group-colored td{background:var(--group-bg)}
 #pending-table tr.group-colored td:first-child,#client-table tr.group-colored td:first-child{border-left:4px solid var(--group-accent)}
 .group-colored .group-label{display:inline-block;padding:5px 9px;border-radius:7px;background:var(--group-chip);color:#183442;border-left:3px solid var(--group-accent);line-height:1.4}
-#pending-table tr.group-colored:hover td,#client-table tr.group-colored:hover td{background:var(--group-chip)}
+#pending-table tr.group-colored:hover td,#client-table tr.group-colored:hover td{background:var(--group-chip)!important}
