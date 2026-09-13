@@ -270,7 +270,7 @@ function renderClients(){
   table.innerHTML=rows.length?rows.map(row=>{
     const index=clientRows.indexOf(row);
     const statusHtml=row.status==='REALIZADO'?'<span class="status done">REALIZADO</span>':row.status==='EN PROCESO'?'<span class="status process">EN PROCESO</span>':'<span class="status open"><span class="status-dot"></span>PENDIENTE</span>';
-    return `<tr><td>${statusHtml}</td><td><strong>${htmlEscape(row.client||'Sin asignar')}</strong></td><td>${htmlEscape(row.contact||'Sin contacto')}</td><td>${htmlEscape(row.text||'')}</td><td><span class="priority">${htmlEscape(row.priority||'NORMAL')}</span></td><td class="date">${htmlEscape(row.date||'Sin fecha')}</td><td class="date">${htmlEscape(row.updated||'Sin fecha')}</td><td>${htmlEscape(row.comments||'Sin comentarios')}</td><td><button type="button" class="edit-btn" onclick="openClientEditor(${index})">Editar</button></td></tr>`;
+    return `<tr class="group-colored" style="${groupColorStyle(row.client)}"><td>${statusHtml}</td><td><strong class="group-label">${htmlEscape(row.client||'Sin asignar')}</strong></td><td>${htmlEscape(row.contact||'Sin contacto')}</td><td>${htmlEscape(row.text||'')}</td><td><span class="priority">${htmlEscape(row.priority||'NORMAL')}</span></td><td class="date">${htmlEscape(row.date||'Sin fecha')}</td><td class="date">${htmlEscape(row.updated||'Sin fecha')}</td><td>${htmlEscape(row.comments||'Sin comentarios')}</td><td><button type="button" class="edit-btn" onclick="openClientEditor(${index})">Editar</button></td></tr>`;
   }).join(''):'<tr><td colspan="9" class="empty">No hay gestiones con estos filtros. Pulsa «Nueva gestión» para añadir la primera.</td></tr>';
   if($('client-heading'))$('client-heading').textContent=client==='all'?'Todas las gestiones':`Gestiones con ${htmlEscape(client)}`;
   if($('client-count'))$('client-count').textContent=`${rows.length} registros`;
@@ -420,7 +420,7 @@ function renderPending(){
   table.innerHTML=rows.length?rows.map(r=>{
     const i=pendingRows.indexOf(r);
     const status=r.status==='REALIZADO'?'<span class="status done">REALIZADO</span>':'<span class="status open"><span class="status-dot"></span>PENDIENTE</span>';
-    return `<tr><td>${status}</td><td>${htmlEscape(r.text||'')}</td><td><strong>${htmlEscape(r.person||'Sin asignar')}</strong></td><td><span class="priority">${htmlEscape(r.priority||'NORMAL')}</span></td><td class="date">${htmlEscape(r.date||'Sin fecha')}</td><td class="date">${htmlEscape(r.updated||'Sin fecha')}</td><td>${htmlEscape(r.comments||'Sin comentarios')}</td><td><button type="button" class="edit-btn" onclick="openPendingEditor(${i})">Editar</button></td></tr>`;
+    return `<tr class="group-colored" style="${groupColorStyle(r.person)}"><td>${status}</td><td>${htmlEscape(r.text||'')}</td><td><strong class="group-label">${htmlEscape(r.person||'Sin asignar')}</strong></td><td><span class="priority">${htmlEscape(r.priority||'NORMAL')}</span></td><td class="date">${htmlEscape(r.date||'Sin fecha')}</td><td class="date">${htmlEscape(r.updated||'Sin fecha')}</td><td>${htmlEscape(r.comments||'Sin comentarios')}</td><td><button type="button" class="edit-btn" onclick="openPendingEditor(${i})">Editar</button></td></tr>`;
   }).join(''):'<tr><td colspan="8" class="empty">No hay resultados con estos filtros.</td></tr>';
   if($('pending-heading'))$('pending-heading').textContent=person==='all'?'Todos mis pendientes':`Pendientes con ${person}`;
   if($('pending-count'))$('pending-count').textContent=`${rows.length} registros`;
@@ -513,4 +513,14 @@ function init(){
  ['center-search','center-category','center-status'].forEach(id=>$(id)?.addEventListener('input',renderCenter));
  ['pending-search','pending-priority','pending-status'].forEach(id=>$(id)?.addEventListener('input',renderPending));
  renderCenter();renderPending();renderDirectory();
+}
+
+// Derive the color from the name so it remains stable across filters and devices.
+function groupColorStyle(name){
+ const key=String(name||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('es');
+ if(!key)return '--group-bg:#f4f6f7;--group-accent:#687980;--group-chip:#e8edef';
+ let hash=2166136261;
+ for(const char of key){hash=Math.imul(hash^char.codePointAt(0),16777619)>>>0}
+ const hue=hash%360;
+ return `--group-bg:hsl(${hue} 48% 96%);--group-accent:hsl(${hue} 48% 35%);--group-chip:hsl(${hue} 52% 88%)`;
 }
