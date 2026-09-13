@@ -3,6 +3,8 @@ const pendingRows = [];
 const directoryRows = [];
 let directoryHeaders = [];
 let directoryLoaded = false;
+let directoryLoading = false;
+let directoryError = "";
 let directoryLoadInFlight = null;
 let directoryPage = 1;
 const DIRECTORY_PAGE_SIZE = 100;
@@ -23,7 +25,6 @@ function canonicalOwner(value){const raw=String(value||'').trim().replace(/\s+/g
 function displayDate(value){const raw=String(value||'').trim().replace(/\s+VENCIDA$/i,'');if(!raw)return '';let m=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return`${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[3]}`;m=raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);if(m)return`${m[3].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[1]}`;m=raw.match(/^(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)[a-záéíóú]*[-\s\/]?(\d{2}|\d{4})$/i);if(m){const month=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'].indexOf(m[1].slice(0,3).toLowerCase())+1;const year=m[2].length===2?'20'+m[2]:m[2];return`${MONTH_NAMES[month-1]} ${year}`}return raw}
 document.body.classList.add('auth-locked');
 function unlockPrivateApp(){document.body.classList.remove('auth-locked')}
-function loadSavedData(){return false}
 function saveData(){try{const snapshot={center:centerRows.map(r=>({...r})),pending:pendingRows.map(r=>({...r})),updated:new Date().toISOString()};const current=localStorage.getItem(KURRO_CACHE_KEY);if(current)try{const parsed=JSON.parse(current);if((parsed.center?.length||parsed.pending?.length)&&JSON.stringify(parsed)!==JSON.stringify(snapshot))localStorage.setItem(KURRO_CACHE_BACKUP_KEY,current)}catch(e){}localStorage.setItem(KURRO_CACHE_KEY,JSON.stringify(snapshot))}catch(e){}}
 function metric(label,value,note,alert=false){return `<div class="metric ${alert?'alert':''}"><div class="metric-label">${label}</div><div class="metric-value">${value}</div><div class="metric-note">${note}</div></div>`}
 function statusTag(s){const label=s==='done'?'REALIZADO':s==='process'?'EN PROCESO':'PENDIENTE';return `<span class="status ${s==='done'?'done':s==='process'?'process':'open'}"><span class="status-dot"></span>${label}</span>`}
@@ -37,68 +38,41 @@ function effectiveStatus(r){return isOverdue(r)&&r.status==='done'?'open':r.stat
 function markCenterDone(index){const input=$(`done-date-${index}`);if(!input||!input.value){$('toast').textContent='Elige primero la fecha en la que se ha hecho';$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2800);return}const r=centerRows[index];if(isOverdue(r)){r.status='process';saveData();$('toast').textContent='Esta actividad está vencida y no puede marcarse como realizada. Déjala pendiente o en proceso.';$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),3600);renderCenter();return}r.last=formatDate(new Date(input.value+'T12:00:00'));const next=nextDate(input.value,r.frequency);r.next=formatDate(next);r.status='done';r.action='REALIZADO';saveData();renderCenter();$('toast').textContent=next?`Marcado como hecho. Próxima revisión: ${r.next}`:'Marcado como hecho. Esta actividad no tiene periodicidad calculable.';$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),3200)}
 function updateCenterField(index,field,value){const r=centerRows[index];if(field==='status'&&value==='done'&&isOverdue(r)){r.status='process';$('toast').textContent='Una actividad vencida solo puede estar pendiente o en proceso';$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),3000);renderCenter();return}r[field]=value;saveData();}
 function sortValue(r,key){if(key==='category')return r.category;if(key==='last')return r.last?new Date(r.last.split('/').reverse().join('-')):new Date(0);if(key==='next')return r.next?new Date(r.next.split('/').reverse().join('-')):new Date(8640000000000000);if(key==='frequency')return r.frequency||'zzzz';if(key==='status')return r.status;return r.activity}
-function renderCenter(){const q=($('center-search').value||'').toLowerCase(), cat=$('center-category').value, state=$('center-status').value, sort=$('center-sort').value;const rows=centerRows.filter(r=>(cat==='all'||r.category===cat)&&(state==='all'||(state==='done'?effectiveStatus(r)==='done':state==='process'?effectiveStatus(r)==='process':effectiveStatus(r)==='open'))&&[r.activity,r.category,r.frequency,r.last,r.next,r.owner,r.action].join(' ').toLowerCase().includes(q)).sort((a,b)=>{const av=sortValue(a,sort),bv=sortValue(b,sort);return av>bv?1:av<bv?-1:0});$('center-table').innerHTML=rows.length?rows.map(r=>{const i=centerRows.indexOf(r),st=effectiveStatus(r),overdue=isOverdue(r);return `<tr class="${dueTone(r)}"><td>${r.activity}</td><td>${r.category}</td><td>${r.frequency||'<span class="muted">Sin periodicidad</span>'}</td><td class="date">${normalizeSheetDate(r.last)||'<span class="muted">Sin fecha</span>'}</td><td class="date">${normalizeSheetDate(r.next)||'<span class="muted">Sin fecha</span>'}${overdue?' <span class="overdue-label">VENCIDA</span>':''}</td><td>${r.owner||'<span class="muted">Sin asignar</span>'}</td><td>${statusTag(st)}</td><td>${r.action||'<span class="muted">Sin comentarios</span>'}</td><td><div class="row-actions"><input id="done-date-${i}" type="date" aria-label="Fecha de la actuación para ${r.activity}" ${overdue?'disabled':''}/><button class="done-btn" onclick="${overdue?`openCenterEditor(${i})`:`markCenterDone(${i})`}">${overdue?'Registrar seguimiento':'Registrar revisión'}</button><button class="edit-btn" onclick="openCenterEditor(${i})">Editar</button></div></td></tr>`}).join(''):`<tr><td colspan="9" class="empty">No hay resultados con estos filtros.</td></tr>`;$('center-count').textContent=`${rows.length} registros`;}
-function renderPending(){const q=($('pending-search').value||'').toLowerCase(), person=window.person||'all', priority=$('pending-priority').value,state=$('pending-status').value;const rows=pendingRows.filter(r=>(person==='all'||r.person===person)&&(priority==='all'||r.priority===priority)&&(state==='all'||r.status===state)&&[r.person,r.text,r.priority].join(' ').toLowerCase().includes(q));$('pending-table').innerHTML=rows.length?rows.map(r=>`<tr><td>${r.status==='PENDIENTE'?'<span class="status open"><span class="status-dot"></span>PENDIENTE</span>':'<span class="status done">REALIZADO</span>'}</td><td>${r.text}</td><td><strong>${r.person}</strong></td><td><span class="priority">${r.priority}</span></td><td class="date">${r.date||'<span class="muted">Sin fecha</span>'}</td><td class="date">${r.updated}</td></tr>`).join(''):`<tr><td colspan="6" class="empty">No hay resultados con estos filtros.</td></tr>`;$('pending-heading').textContent=person==='all'?'Todos mis pendientes':`Pendientes con ${person}`;$('pending-count').textContent=`${rows.length} registros`;}
-function init(){const cats=[...new Set(centerRows.map(r=>r.category))].sort();$('center-category').innerHTML='<option value="all">Todas las categorías</option>'+cats.map(c=>`<option>${c}</option>`).join('');$('center-metrics').innerHTML=metric('Actividades registradas',centerRows.length,'Registro maestro')+metric('Pendientes de centro',centerRows.filter(r=>r.status==='open').length,'Requieren seguimiento',true)+metric('En proceso',centerRows.filter(r=>r.status==='process').length,'Acciones abiertas')+metric('Próximas revisiones',centerRows.filter(r=>r.next).length,'Con fecha definida');$('pending-metrics').innerHTML=metric('Pendientes totales',pendingRows.length,'Miguel + Properval')+metric('Con Miguel',pendingRows.filter(r=>r.person==='Miguel').length,'Seguimiento activo')+metric('Con Properval',pendingRows.filter(r=>r.person==='Properval').length,'Seguimiento activo')+metric('Con fecha objetivo',pendingRows.filter(r=>r.date).length,'Para priorizar');$('people-tabs').innerHTML=['all','Miguel','Properval'].map(p=>`<button class="person-tab ${p==='all'?'active':''}" data-person="${p}">${p==='all'?'Todos':p}</button>`).join('');document.querySelectorAll('.nav-item').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.view').forEach(v=>v.classList.remove('active-view'));$(`${b.dataset.view}-view`).classList.add('active-view');$('page-title').textContent=b.dataset.view==='center'?'Control del centro':b.dataset.view==='pending'?'Seguimientos':b.dataset.view==='clients'?'Pendientes con clientes':'Directorio de clientes';if(b.dataset.view==='directory'){renderDirectory();if(!directoryLoaded)loadDirectoryFromFirebase()}}));document.querySelectorAll('.person-tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.person-tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');window.person=b.dataset.person;renderPending()}));['center-search','center-category','center-status','center-sort'].forEach(id=>$(id).addEventListener('input',renderCenter));['pending-search','pending-priority','pending-status'].forEach(id=>$(id).addEventListener('input',renderPending));document.querySelectorAll('[data-toast]').forEach(b=>b.addEventListener('click',()=>{ $('toast').textContent=b.dataset.toast;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2800)}));renderCenter();renderPending();renderDirectory();}loadSavedData();window.person='all';init();
 function updatePendingField(index,field,value){pendingRows[index][field]=value;saveData()}
 function markPendingDone(index){pendingRows[index].status='REALIZADO';pendingRows[index].updated=formatDate(new Date());saveData();renderPending()}
 setTimeout(()=>renderPending(),0);
 
 // Opciones ampliables para que los nuevos responsables y contactos sigan disponibles.
 const KURRO_LISTS_KEY='kurro-lists-v1';
-function savedKurroLists(){try{return JSON.parse(localStorage.getItem(KURRO_LISTS_KEY)||'{}')}catch(e){return {}}}
+function savedKurroLists(){return structuredClone(remoteKurroLists)}
 let remoteKurroLists={};
-function mergedKurroLists(){const local=savedKurroLists();const merged={};Object.keys({...local,...remoteKurroLists}).forEach(k=>{merged[k]=[...new Set([...(remoteKurroLists[k]||[]),...(local[k]||[])].map(v=>String(v||'').trim()).filter(Boolean))]});return merged}
+function mergedKurroLists(){const local={};const merged={};Object.keys({...local,...remoteKurroLists}).forEach(k=>{merged[k]=[...new Set([...(remoteKurroLists[k]||[]),...(local[k]||[])].map(v=>String(v||'').trim()).filter(Boolean))]});return merged}
 function saveRemoteKurroLists(rows){const out={};(rows||[]).slice(1).forEach(row=>{const type=String(row[0]||'').trim().toLowerCase(),value=String(row[1]||'').trim(),active=String(row[2]||'TRUE').toUpperCase();if(type&&value&&active!=='FALSE') (out[type]||(out[type]=[])).push(value)});remoteKurroLists=out}
-function saveKurroLists(lists){try{localStorage.setItem(KURRO_LISTS_KEY,JSON.stringify(lists))}catch(e){}}
+function saveKurroLists(lists){remoteKurroLists=structuredClone(lists)}
 function kurroOptions(kind){const lists=mergedKurroLists(),source=kind==='owner'?centerRows.map(r=>r.owner):pendingRows.map(r=>r.person);return [...new Set([...(lists[kind]||[]),...source].map(v=>String(v||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'))}
 function fillKurroSelect(id,values,current=''){const select=$(id);if(!select)return;const value=current||select.value;select.innerHTML=(id==='edit-owner'?'<option value="">Sin asignar</option>':'')+values.map(v=>`<option value="${String(v).replaceAll('&','&amp;').replaceAll('"','&quot;')}">${String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')}</option>`).join('');if(value&&values.includes(value))select.value=value}
 function refreshKurroPeopleOptions(){fillKurroSelect('edit-owner',kurroOptions('owner'));fillKurroSelect('pending-edit-person',kurroOptions('person'))}
 function addKurroOption(kind,selectId,label){const name=prompt(label);if(!name)return;const clean=name.trim();if(!clean)return;const lists=savedKurroLists();lists[kind]=[...(lists[kind]||[]),clean];saveKurroLists(lists);refreshKurroPeopleOptions();$(selectId).value=clean;showSyncToast(`${clean} añadido a la lista`)}
-function renderCenterWithoutDuplicateAction(){const originalCenterRows=[...centerRows];const q=($('center-search').value||'').toLowerCase(),cat=$('center-category').value,state=$('center-status').value,sort=$('center-sort').value;const rows=originalCenterRows.filter(r=>(cat==='all'||r.category===cat)&&(state==='all'||(state==='done'?effectiveStatus(r)==='done':state==='process'?effectiveStatus(r)==='process':effectiveStatus(r)==='open'))&&[r.activity,r.category,r.frequency,r.last,r.next,r.owner,r.action].join(' ').toLowerCase().includes(q)).sort((a,b)=>{const av=sortValue(a,sort),bv=sortValue(b,sort);return av>bv?1:av<bv?-1:0});$('center-table').innerHTML=rows.length?rows.map(r=>{const i=centerRows.indexOf(r),overdue=isOverdue(r);return `<tr class="${dueTone(r)}"><td>${r.activity}</td><td>${r.category}</td><td>${r.frequency||'<span class="muted">Sin periodicidad</span>'}</td><td class="date">${normalizeSheetDate(r.last)||'<span class="muted">Sin fecha</span>'}</td><td class="date">${normalizeSheetDate(r.next)||'<span class="muted">Sin fecha</span>'}${overdue?' <span class="overdue-label">VENCIDA</span>':''}</td><td>${r.owner||'<span class="muted">Sin asignar</span>'}</td><td>${statusTag(effectiveStatus(r))}</td><td>${r.action||'<span class="muted">Sin comentarios</span>'}</td><td><div class="row-actions"><button class="edit-btn" onclick="openCenterEditor(${i})">Editar</button></div></td></tr>`}).join(''):`<tr><td colspan="9" class="empty">No hay resultados con estos filtros.</td></tr>`;$('center-count').textContent=`${rows.length} registros`}
-renderCenter=renderCenterWithoutDuplicateAction;
-const renderCenterBeforeLabels=renderCenter;
-renderCenter=function(){
-  const category=canonicalCategory($('center-category')?.value),query=($('center-search')?.value||'').toLocaleLowerCase('es'),state=$('center-status')?.value||'all',dateFilter=$('center-date-filter')?.value||'all',sort='next';
-  const categories=[...new Set(centerRows.map(r=>canonicalCategory(r.category)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
-  const categorySelect=$('center-category');
-  if(categorySelect){categorySelect.innerHTML='<option value="all">Todas las categorías</option>'+categories.map(v=>`<option value="${htmlEscape(v)}">${htmlEscape(v)}</option>`).join('');categorySelect.value=categories.includes(category)?category:'all'}
-  const ownerSelect=$('edit-owner');
-  if(ownerSelect){const current=canonicalOwner(ownerSelect.value),owners=[...new Set([...ownerSelect.options].map(o=>canonicalOwner(o.value)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));ownerSelect.innerHTML='<option value="">Sin asignar</option>'+owners.map(v=>`<option value="${htmlEscape(v)}">${htmlEscape(v)}</option>`).join('');ownerSelect.value=owners.includes(current)?current:''}
-  const rows=centerRows.filter(r=>(category==='all'||canonicalCategory(r.category)===category)&&(state==='all'||(state==='done'?effectiveStatus(r)==='done':state==='process'?effectiveStatus(r)==='process':effectiveStatus(r)==='open'))&&(dateFilter==='all'||(dateFilter==='overdue'&&isOverdue(r))||(dateFilter==='soon'&&dueTone(r)==='row-soon')||(dateFilter==='nodate'&&!r.next))&&[r.activity,r.category,r.frequency,r.last,r.next,r.owner,r.action].join(' ').toLocaleLowerCase('es').includes(query)).sort((a,b)=>{const av=sortValue(a,sort),bv=sortValue(b,sort);return av>bv?1:av<bv?-1:0});
-  $('center-table').innerHTML=rows.length?rows.map(r=>{const i=centerRows.indexOf(r),overdue=isOverdue(r);return`<tr class="${dueTone(r)}"><td>${r.activity}</td><td>${canonicalCategory(r.category)}</td><td>${r.frequency||'<span class="muted">Sin periodicidad</span>'}</td><td class="date">${displayDate(r.last)||'<span class="muted">Sin fecha</span>'}</td><td class="date">${displayDate(r.next)||'<span class="muted">Sin fecha</span>'}${overdue?' <span class="overdue-label">VENCIDA</span>':''}</td><td>${canonicalOwner(r.owner)||'<span class="muted">Sin asignar</span>'}</td><td>${statusTag(effectiveStatus(r))}</td><td>${r.action||'<span class="muted">Sin comentarios</span>'}</td><td><div class="row-actions"><button class="edit-btn" onclick="openCenterEditor(${i})">Editar</button></div></td></tr>`}).join(''):`<tr><td colspan="9" class="empty">No hay resultados con estos filtros.</td></tr>`;$('center-count').textContent=`${rows.length} registros`;
-}
-renderCenter();
-refreshKurroPeopleOptions();
 document.querySelector('#add-owner')?.addEventListener('click',()=>addKurroOption('owner','edit-owner','Escribe el nuevo responsable'));
 document.querySelector('#add-pending-person')?.addEventListener('click',()=>addKurroOption('person','pending-edit-person','Escribe la nueva persona o empresa'));
 const originalOpenCenterEditor=openCenterEditor;openCenterEditor=function(index){refreshKurroPeopleOptions();originalOpenCenterEditor(index)};
 const originalOpenNewCenterEditor=openNewCenterEditor;openNewCenterEditor=function(){refreshKurroPeopleOptions();originalOpenNewCenterEditor()};
 const originalOpenPendingEditor=openPendingEditor;openPendingEditor=function(index=-1){refreshKurroPeopleOptions();originalOpenPendingEditor(index)};
 const originalSavePendingEditor=savePendingEditor;savePendingEditor=async function(){const person=$('pending-edit-person')?.value;const previous=window.person;const sourcePerson=previous==='Properval'?'Properval':'Miguel';window.kurroPendingSource=sourcePerson;await originalSavePendingEditor();window.person=previous;};
-renderPending=function(){const q=($('pending-search').value||'').toLowerCase(),person=window.person||'all',priority=$('pending-priority').value,state=$('pending-status').value;const rows=pendingRows.filter(r=>(person==='all'||r.person===person)&&(priority==='all'||r.priority===priority)&&(state==='all'||r.status===state)&&[r.person,r.text,r.priority,r.comments].join(' ').toLowerCase().includes(q));$('pending-table').innerHTML=rows.length?rows.map(r=>{const i=pendingRows.indexOf(r);return `<tr><td><select class="status-select" aria-label="Estado de ${r.text}" onchange="updatePendingField(${i},'status',this.value)"><option ${r.status==='PENDIENTE'?'selected':''}>PENDIENTE</option><option ${r.status==='REALIZADO'?'selected':''}>REALIZADO</option></select></td><td>${r.text}</td><td><strong>${r.person}</strong></td><td><select class="status-select" aria-label="Prioridad de ${r.text}" onchange="updatePendingField(${i},'priority',this.value)"><option ${r.priority==='NORMAL'?'selected':''}>NORMAL</option><option ${r.priority==='ALTA'?'selected':''}>ALTA</option></select></td><td class="date"><input class="pending-date" type="date" aria-label="Fecha objetivo de ${r.text}" value="${pendingDateForEditor(r.date)}" onchange="updatePendingField(${i},'date',pendingDateFromEditor(this.value))"></td><td class="date">${r.updated||'<span class="muted">Sin fecha</span>'}</td><td><textarea class="comment-input" rows="2" placeholder="Añadir comentario" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'" onchange="updatePendingField(${i},'comments',this.value)">${r.comments||''}</textarea></td><td><div class="pending-person"><button class="done-btn" onclick="updatePendingField(${i},'status','REALIZADO')" ${r.status==='REALIZADO'?'disabled':''}>Hecho</button><button class="edit-btn" onclick="openPendingEditor(${i})">Editar</button></div></td></tr>`}).join(''):`<tr><td colspan="8" class="empty">No hay resultados con estos filtros.</td></tr>`;$('pending-heading').textContent=person==='all'?'Todos mis pendientes':`Pendientes con ${person}`;$('pending-count').textContent=`${rows.length} registros`};
 renderCenter();renderPending();
 
 // La próxima revisión se calcula por defecto, pero admite una fecha manual.
 const legacyOpenCenterEditor= openCenterEditor, legacyOpenNewCenterEditor=openNewCenterEditor;
-openCenterEditor=function(index){legacyOpenCenterEditor(index);if($('edit-next'))$('edit-next').dataset.manual='false'};
-openNewCenterEditor=function(){legacyOpenNewCenterEditor();if($('edit-next'))$('edit-next').dataset.manual='false'};
+openCenterEditor=function(index){legacyOpenCenterEditor(index);if($('edit-next'))$('edit-next').dataset.manual='true'};
+openNewCenterEditor=function(){legacyOpenNewCenterEditor();if($('edit-next'))$('edit-next').dataset.manual='true'};
 const legacyNextPreview=updateEditorNextPreview;
 $('edit-next')?.addEventListener('input',()=>{$('edit-next').dataset.manual='true'});
 function saveCenterEditorFlexible(){const index=centerEditorIndex,isNew=index===-1,r=isNew?{}:centerRows[index];if(!r)return;const frequency=$('edit-frequency').value==='custom'?$('edit-frequency-custom').value.trim():$('edit-frequency').value;const last=$('edit-last').value?dateFromEditor($('edit-last').value):'';const manualNext=$('edit-next').dataset.manual==='true';const calculated=last&&frequency?nextDate($('edit-last').value,frequency):null;const next=manualNext?($('edit-next').value?dateFromEditor($('edit-next').value):''):(calculated?formatDate(calculated):'');const changes={activity:$('edit-activity').value.trim(),category:$('edit-category').value.trim()||'Otros',frequency,last,next,owner:$('edit-owner').value.trim(),action:$('edit-action').value,status:$('edit-status').value};if(!changes.activity){showSyncToast('Escribe una actividad');return}if(changes.status==='done'&&!changes.last){showSyncToast('Para marcarla como realizada indica la fecha');return}const check={...r,next:changes.next,status:changes.status};if(changes.status==='done'&&isOverdue(check)){showSyncToast('Una actividad vencida solo puede estar pendiente o en proceso');return}const columns={activity:1,category:2,frequency:3,last:4,next:5,owner:7,action:10,status:12};if(isNew){r.serverRow=Math.max(1,...centerRows.map(row=>row.serverRow||1))+1;centerRows.push(r)}const requests=[];Object.entries(changes).forEach(([field,value])=>{if(!isNew&&r[field]===value)return;r[field]=value;if(r.serverRow)requests.push(kurroRequest({api:'updateCell',fileId:'1AiIsFZCyZVp4ERTi0ExreV10StjayEw9tLWv4W21foQ',sheetName:'Registro Maestro',row:r.serverRow,column:columns[field],value:field==='status'?(value==='done'?'REALIZADO':value==='process'?'EN PROCESO':'PENDIENTE'):value}))});saveData();renderCenter();closeCenterEditor();if(requests.length){showSyncToast(isNew?'Añadiendo acción…':'Guardando cambios…');remoteWrite(Promise.all(requests)).then(()=>loadRemoteData()).then(()=>showSyncToast(isNew?'Acción añadida':'Cambios guardados')).catch(()=>showSyncToast('No se pudo guardar el cambio'))}}
 const saveButton=$('save-center-editor');if(saveButton){const replacement=saveButton.cloneNode(true);saveButton.replaceWith(replacement);replacement.addEventListener('click',saveCenterEditorFlexible)}
 const frequencyField=$('edit-frequency');frequencyField?.addEventListener('change',()=>{$('edit-next').dataset.manual='false';legacyNextPreview()});$('edit-last')?.addEventListener('change',()=>{$('edit-next').dataset.manual='false';legacyNextPreview()});
-function renderAttention(){const panel=$('attention-panel');if(!panel)return;const overdue=centerRows.filter(isOverdue).length,soon=centerRows.filter(r=>{if(!r.next||isOverdue(r))return false;const p=r.next.split('/');return (new Date(`${p[2]}-${p[1]}-${p[0]}T23:59:59`)-new Date())<=30*86400000}).length,process=centerRows.filter(r=>effectiveStatus(r)==='process').length,noDate=centerRows.filter(r=>!r.next&&effectiveStatus(r)!=='done').length;panel.innerHTML=`<button class="attention-card" data-attention-kind="all" aria-pressed="false" onclick="focusCenterState('all')"><strong>${centerRows.length}</strong><small>☷ Todas las actividades</small></button><button class="attention-card alert" data-attention-kind="overdue" aria-pressed="false" onclick="focusCenterState('overdue')"><strong>${overdue}</strong><small>☷ Vencidas · revisar</small></button><button class="attention-card" data-attention-kind="soon" aria-pressed="false" onclick="focusCenterState('soon')"><strong>${soon}</strong><small>☷ Próximas en 30 días</small></button><button class="attention-card" data-attention-kind="process" aria-pressed="false" onclick="focusCenterState('process')"><strong>${process}</strong><small>☷ En proceso</small></button><button class="attention-card" data-attention-kind="nodate" aria-pressed="false" onclick="focusCenterState('nodate')"><strong>${noDate}</strong><small>☷ Sin fecha definida</small></button>`}
-function resetCenterFilters(){if($('center-search'))$('center-search').value='';if($('center-category'))$('center-category').value='all';if($('center-status'))$('center-status').value='all';window.centerQuickFilter=null;renderCenter();if(typeof saveViewFilters==='function')saveViewFilters('center')}
-function focusCenterState(kind){if(kind==='all'){resetCenterFilters();return}$('center-status').value='all';$('center-search').value='';window.centerQuickFilter=window.centerQuickFilter===kind?null:kind;renderCenter()}
-function applyCenterQuickFilter(){const kind=window.centerQuickFilter;document.querySelectorAll('[data-attention-kind]').forEach(button=>{const active=button.dataset.attentionKind===kind;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});if(!kind)return;const byActivity=new Map(centerRows.map(r=>[r.activity,r]));document.querySelectorAll('#center-table tr').forEach(row=>{const r=byActivity.get(row.children[0]?.textContent.trim());let show=true;if(r){if(kind==='overdue')show=isOverdue(r);else if(kind==='process')show=effectiveStatus(r)==='process';else if(kind==='nodate')show=!r.next&&effectiveStatus(r)!=='done';else if(kind==='soon')show=!!r.next&&!isOverdue(r)&&((new Date(r.next.split('/').reverse().join('-')+'T23:59:59')-new Date())<=30*86400000)}row.style.display=show?'':'none'});const visible=[...document.querySelectorAll('#center-table tr')].filter(r=>r.style.display!=='none').length;$('center-count').textContent=`${visible} registros`}
-// Los estados se eligen en pestañas; los criterios de fecha quedan separados.
-renderAttention=function(){const panel=$('attention-panel');if(!panel)return;const counts={all:centerRows.length,open:centerRows.filter(r=>effectiveStatus(r)==='open').length,process:centerRows.filter(r=>effectiveStatus(r)==='process').length,done:centerRows.filter(r=>effectiveStatus(r)==='done').length};panel.innerHTML=`<button class="state-tab" data-center-state="all" aria-pressed="false" onclick="setCenterStatus('all')">Todas <span>${counts.all}</span></button><button class="state-tab" data-center-state="open" aria-pressed="false" onclick="setCenterStatus('open')">Pendientes <span>${counts.open}</span></button><button class="state-tab" data-center-state="process" aria-pressed="false" onclick="setCenterStatus('process')">En proceso <span>${counts.process}</span></button><button class="state-tab" data-center-state="done" aria-pressed="false" onclick="setCenterStatus('done')">Realizadas <span>${counts.done}</span></button>`}
 function setCenterStatus(state){$('center-status').value=state;window.centerQuickFilter=null;renderCenter();if(typeof saveViewFilters==='function')saveViewFilters('center')}
 function setCenterDateFilter(kind){window.centerQuickFilter=kind==='all'?null:kind;renderCenter();if(typeof saveViewFilters==='function')saveViewFilters('center')}
-const renderCenterWithAttention=renderCenter;renderCenter=function(){renderCenterWithAttention();renderAttention();applyCenterQuickFilter()};renderCenter();
 
-resetCenterFilters=function(){$('center-search').value='';$('center-category').value='all';$('center-status').value='all';$('center-sort').value='next';if($('center-date-filter'))$('center-date-filter').value='all';window.centerQuickFilter=null;renderCenter();if(typeof saveViewFilters==='function')saveViewFilters('center')}
 applyCenterQuickFilter=function(){const kind=window.centerQuickFilter;document.querySelectorAll('[data-center-state]').forEach(button=>{const active=button.dataset.centerState===($('center-status')?.value||'all');button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});const dateSelect=$('center-date-filter');if(dateSelect)dateSelect.value=kind||'all';if(!kind)return;const byActivity=new Map(centerRows.map(r=>[r.activity,r]));document.querySelectorAll('#center-table tr').forEach(row=>{const r=byActivity.get(row.children[0]?.textContent.trim());let show=true;if(r){if(kind==='overdue')show=isOverdue(r);else if(kind==='soon')show=!!r.next&&!isOverdue(r)&&((new Date(r.next.split('/').reverse().join('-')+'T23:59:59')-new Date())<=30*86400000);else if(kind==='nodate')show=!r.next;else if(kind==='dated')show=!!r.next}row.style.display=show?'':'none'});const visible=[...document.querySelectorAll('#center-table tr')].filter(r=>r.style.display!=='none').length;$('center-count').textContent=`${visible} registros`}
 let pendingEditorIndex=-1;
 function pendingDateForEditor(value){const p=String(value||'').split('/');return p.length===3?`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`:''}
@@ -109,32 +83,10 @@ function openPendingEditor(index=-1){pendingEditorIndex=index;$('pending-edit-te
 function closePendingEditor(){$('pending-editor').classList.remove('open');$('pending-editor').setAttribute('aria-hidden','true');pendingEditorIndex=-1}
 async function savePendingEditor(){const text=$('pending-edit-text').value.trim();if(!text){showSyncToast('Escribe el pendiente');return}const person=$('pending-edit-person').value,priority=$('pending-edit-priority').value,status=$('pending-edit-status').value,date=$('pending-edit-date').value?pendingDateFromEditor($('pending-edit-date').value):'',comments=$('pending-edit-comments').value;const isNew=pendingEditorIndex<0;let r=isNew?{person,status,text,priority,date,updated:formatDate(new Date()),comments}:pendingRows[pendingEditorIndex];if(isNew){const fileId=KURRO_SOURCE_ID;r.fileId=fileId;r.serverRow=Math.max(1,...pendingRows.filter(x=>x.fileId===fileId).map(x=>x.serverRow||1))+1;pendingRows.push(r)}Object.assign(r,{person,status,text,priority,date,comments,updated:formatDate(new Date())});saveData();renderPending();closePendingEditor();showSyncToast(isNew?'Añadiendo pendiente…':'Guardando pendiente…');const fields={person,status,task:text,priority,target:date,updated:r.updated,comments};try{await remoteWrite(Promise.all(Object.entries(fields).map(([field,value])=>kurroRequest({api:'updatePending',fileId:r.fileId,row:r.serverRow,field,value}))));await loadRemoteData();showSyncToast(isNew?'Pendiente añadido':'Pendiente guardado')}catch(e){showSyncToast('No se pudo guardar el pendiente')}}
 const basePendingFieldHandler=updatePendingField;updatePendingField=function(index,field,value){const r=pendingRows[index];if(!r)return;const serverField=field==='date'?'target':field;r[field]=value;if(field==='status'&&value==='REALIZADO')r.closed=formatDate(new Date());r.updated=formatDate(new Date());saveData();if(r.fileId&&r.serverRow){remoteWrite(Promise.all([kurroRequest({api:'updatePending',fileId:r.fileId,row:r.serverRow,field:serverField,value}),serverField!=='updated'?kurroRequest({api:'updatePending',fileId:r.fileId,row:r.serverRow,field:'updated',value:r.updated}):Promise.resolve()]).catch(()=>{}))}renderPending()};
-renderPending=function(){const q=($('pending-search').value||'').toLowerCase(),person=window.person||'all',priority=$('pending-priority').value,state=$('pending-status').value;const rows=pendingRows.filter(r=>(person==='all'||r.person===person)&&(priority==='all'||r.priority===priority)&&(state==='all'||r.status===state)&&[r.person,r.text,r.priority,r.comments].join(' ').toLowerCase().includes(q));$('pending-table').innerHTML=rows.length?rows.map(r=>{const i=pendingRows.indexOf(r);return `<tr><td><select class="status-select" aria-label="Estado de ${r.text}" onchange="updatePendingField(${i},'status',this.value)"><option ${r.status==='PENDIENTE'?'selected':''}>PENDIENTE</option><option ${r.status==='REALIZADO'?'selected':''}>REALIZADO</option></select></td><td>${r.text}</td><td><strong>${r.person}</strong></td><td><select class="status-select" aria-label="Prioridad de ${r.text}" onchange="updatePendingField(${i},'priority',this.value)"><option ${r.priority==='NORMAL'?'selected':''}>NORMAL</option><option ${r.priority==='ALTA'?'selected':''}>ALTA</option></select></td><td class="date"><input class="pending-date" type="date" aria-label="Fecha objetivo de ${r.text}" value="${pendingDateForEditor(r.date)}" onchange="updatePendingField(${i},'date',pendingDateFromEditor(this.value))"></td><td class="date">${r.updated||'<span class="muted">Sin fecha</span>'}</td><td><textarea class="comment-input" rows="2" placeholder="Añadir comentario" onchange="updatePendingField(${i},'comments',this.value)">${r.comments||''}</textarea></td><td><div class="pending-person"><button class="done-btn" onclick="updatePendingField(${i},'status','REALIZADO')" ${r.status==='REALIZADO'?'disabled':''}>Hecho</button><button class="edit-btn" onclick="openPendingEditor(${i})">Editar</button></div></td></tr>`}).join(''):`<tr><td colspan="8" class="empty">No hay resultados con estos filtros.</td></tr>`;$('pending-heading').textContent=person==='all'?'Todos mis pendientes':`Pendientes con ${person}`;$('pending-count').textContent=`${rows.length} registros`};
 function updateEditorNextPreview(){const date=$('edit-last')?.value,frequency=$('edit-frequency')?.value==='custom'?$('edit-frequency-custom')?.value:$('edit-frequency')?.value;const next=date&&frequency?nextDate(date,frequency):null;if($('edit-next'))$('edit-next').value=next?dateForEditor(formatDate(next)):''}
 document.querySelector('[data-new-pending]')?.addEventListener('click',()=>openPendingEditor());document.querySelectorAll('[data-close-pending]').forEach(b=>b.addEventListener('click',closePendingEditor));$('save-pending-editor')?.addEventListener('click',savePendingEditor);$('edit-last')?.addEventListener('change',updateEditorNextPreview);$('edit-frequency')?.addEventListener('change',updateEditorNextPreview);$('edit-frequency-custom')?.addEventListener('input',updateEditorNextPreview);renderPending();
-// Sincronización con Google Sheets para la versión web pública.
-const KURRO_SOURCE_ID='1AiIsFZCyZVp4ERTi0ExreV10StjayEw9tLWv4W21foQ';
-const KURRO_API_PRIMARY=(window.location.hostname==='script.google.com'||window.location.hostname.endsWith('.googleusercontent.com'))?window.location.origin+window.location.pathname:'https://script.google.com/macros/s/AKfycbxIwfEjyxlOcSMq9ZPKc-Sm0EBPKErkjGPqPiKDfRGZ-OYEsB6_JCHpTcc1krNi1ac87Q/exec';
-// Se conservan las publicaciones anteriores como rutas de recuperación. Han
-// funcionado desde equipos con políticas de navegador distintas y todas leen
-// el mismo archivo maestro. Las escrituras siempre se intentan primero en la
-// publicación principal.
-const KURRO_API_FALLBACKS=[
-  'https://script.google.com/macros/s/AKfycbz9CHAxNnfG0PBYIO1CHcUlbOLXh6noYYYOc6P6coo7576GKreW0qMdkZJecbdT1SwMOw/exec',
-  'https://script.google.com/macros/s/AKfycbx0xQnQHVHTxcMmc-ZFH7-qEFkTY5bNRo_2kGPdpu0nFGXpOMxw_2MazHic7bBaBMq02A/exec'
-];
-const KURRO_APIS=[KURRO_API_PRIMARY,...KURRO_API_FALLBACKS.filter(url=>url!==KURRO_API_PRIMARY)];
-// Firebase es la única fuente de datos de la aplicación. La hoja original se
-// conserva fuera de este flujo y no se consulta desde el navegador.
-function kurroRequestOne(api,params){return new Promise((resolve,reject)=>{const callback='kurro_'+Date.now()+'_'+Math.random().toString(36).slice(2),script=document.createElement('script');let settled=false;const finish=(fn,value)=>{if(settled)return;settled=true;clearTimeout(timer);delete window[callback];script.remove();fn(value)};const timer=setTimeout(()=>finish(reject,new Error('Tiempo de espera agotado')),15000);window[callback]=data=>data?.ok?finish(resolve,data.result):finish(reject,new Error('Respuesta no válida'));script.onerror=()=>finish(reject,new Error('No se pudo conectar'));script.src=api+'?'+new URLSearchParams({...params,callback,_:Date.now()}).toString();document.body.appendChild(script)})}
-async function kurroRequest(params){let lastError=null;for(const api of KURRO_APIS){try{return await kurroRequestOne(api,params)}catch(error){lastError=error}}throw lastError||new Error('No se pudo conectar')}
-function gvizRequest(){return Promise.reject(new Error('La lectura directa no está disponible; usa Firebase'))}
-async function loadGvizData(){
-  // Google devuelve el JSONP mediante un callback global. Las peticiones
-  // simultáneas pueden pisarse en algunos navegadores, así que se leen una
-  // detrás de otra para que cada respuesta llegue a su callback correcto.
-  throw new Error('La lectura de datos requiere Firebase');
-  const planning=[planningRaw[0],...planningRaw.slice(1).map(row=>[row[0],row[1],row[2],row[3],row[4],row[6],row[7],row[8],row[9],row[9],row[10],row[11]||row[10]])];const header=pendingRaw[0]||[],personCol=header.indexOf('Persona o empresa');const forPerson=person=>[['Estado','Comentarios','Pendiente / decisión','Prioridad','Fecha objetivo','Actualización','Cerrado','Fila'],...pendingRaw.slice(1).filter(row=>String(row[personCol]||'').trim()===person).map((row,index)=>[row[1]||'PENDIENTE',row[2]||'',row[3]||'',row[4]||'NORMAL',row[5]||'',row[6]||'',row[7]||'',index+2])];return{planning:{id:KURRO_SOURCE_ID,name:'Registro Maestro',values:planning},miguel:{id:KURRO_SOURCE_ID,name:'Seguimientos',values:forPerson('Miguel')},properval:{id:KURRO_SOURCE_ID,name:'Seguimientos',values:forPerson('Properval')},clients:{id:KURRO_SOURCE_ID,name:'Clientes',values:clients}}}
+// Identificador conservado para los formularios de edición.
+const KURRO_SOURCE_ID='firebase';
 function setDataAlert(message){const alert=$('data-alert');if(!alert)return;alert.textContent=message;alert.hidden=!message}
 function activateMetricCard(card,action){
   if(!card)return;
@@ -157,33 +109,19 @@ function decorateActionableMetrics(){
   if(clients&&!clients.dataset.decorated){
     clients.dataset.decorated='true';
     const cards=[...clients.children];
-    activateMetricCard(cards[0],()=>{$('client-status').value='PENDIENTE';renderClients()});
-    activateMetricCard(cards[1],()=>{$('client-status').value='EN PROCESO';renderClients()});
-    activateMetricCard(cards[2],()=>{$('client-priority').value='ALTA';renderClients()});
   }
 }
-const renderMetricsWithActions=refreshKURROMetrics;
-refreshKURROMetrics=function(){renderMetricsWithActions();decorateActionableMetrics()};
-const renderClientMetricsWithActions=renderClientMetrics;
-renderClientMetrics=function(){renderClientMetricsWithActions();decorateActionableMetrics()};
-function remotePlanningRow(row,index){const y=String(row[11]||'').trim().toUpperCase();let status=/REALIZADO|ACEPTADO|HECHO/.test(y)?'done':/EN PROCESO|PROCESO/.test(y)?'process':'open';return{activity:row[0]||'',category:row[1]||'Otros',frequency:row[2]||'',last:normalizeSheetDate(row[3]),next:normalizeSheetDate(row[4]),owner:row[5]||'',status,action:row[9]||'',serverRow:index+2}}
-function remotePendingRow(row,index,person,fileId){return{person,status:String(row[0]||'PENDIENTE').toUpperCase(),comments:row[1]||'',text:row[2]||'',priority:String(row[3]||'NORMAL').toUpperCase(),date:normalizeSheetDate(row[4]),updated:normalizeSheetDate(row[5]),closed:normalizeSheetDate(row[6]),serverRow:Number(row[7]||index+2),fileId}}
-async function loadRemoteData(){if(!firebaseUser&&hasFirebaseSessionHint())return false;let error=null;for(let attempt=0;attempt<3;attempt++){try{let data;try{data=await loadGvizData()}catch(readError){error=readError;data=await kurroRequest({api:'data'})}window.kurroLastData=data;const planningValues=data?.planning?.values||[],planningRows=planningValues.slice(1).map((row,index)=>({row,index})).filter(x=>x.row.some(Boolean)).map(x=>remotePlanningRow(x.row,x.index));if(planningValues.length<2||!planningRows.length)throw new Error('La fuente no devolvió registros');centerRows.splice(0,centerRows.length,...planningRows);const p=[];for(const source of [{data:data?.miguel,person:'Miguel'},{data:data?.properval,person:'Properval'}])if(source.data?.values?.length)source.data.values.slice(1).filter(r=>r.some(Boolean)).forEach((r,i)=>p.push(remotePendingRow(r,i,source.person,source.data.id)));pendingRows.splice(0,pendingRows.length,...p);saveData();refreshKURROMetrics();renderCenter();renderPending();markSyncSuccess('Firebase');setDataAlert('');return true}catch(e){error=e;if(attempt<2)await new Promise(r=>setTimeout(r,1800))}}refreshKURROMetrics();renderCenter();renderPending();const hasCachedData=Boolean(centerRows.length||pendingRows.length);if($('sync-label'))$('sync-label').textContent=hasCachedData?'Sin conexión · últimos datos':'No se han podido cargar los datos';markSyncFailure();setDataAlert(hasCachedData?'Sin conexión: se muestran los últimos datos guardados en este dispositivo.':'No se pueden cargar los datos. Comprueba la conexión y pulsa «Actualizar».');if(!hasCachedData){showSyncToast('No se pudieron cargar los datos');setTimeout(()=>{if(!centerRows.length&&!pendingRows.length)loadRemoteData()},5000)}console.warn('No se pudo actualizar la vista',error);return false}
 let kurroPendingWrites=0;
 let kurroRefreshInFlight=false;
 function remoteWrite(request){kurroPendingWrites++;return request.finally(()=>{kurroPendingWrites--})}
 function reportRemoteWriteFailure(){if($('sync-label'))$('sync-label').textContent='Guardado local · pendiente de sincronizar';setDataAlert('El cambio está guardado en este dispositivo, pero todavía no se ha podido enviar a Firebase. Pulsa «Actualizar» cuando haya conexión.');showSyncToast('Guardado local; falta sincronizar con Firebase')}
 function isEditingKURRO(){const active=document.activeElement;return active&&(['INPUT','TEXTAREA','SELECT'].includes(active.tagName)||active.isContentEditable)}
 function showSyncToast(message){const toast=$('toast');if(!toast)return;toast.textContent=message;toast.classList.add('show');clearTimeout(window.kurroToastTimer);window.kurroToastTimer=setTimeout(()=>toast.classList.remove('show'),2200)}
-function refreshKURROMetrics(){if($('center-metrics'))$('center-metrics').innerHTML=metric('Actividades registradas',centerRows.length,'Registro maestro')+metric('Pendientes de centro',centerRows.filter(r=>effectiveStatus(r)==='open').length,'Requieren seguimiento',true)+metric('En proceso',centerRows.filter(r=>effectiveStatus(r)==='process').length,'Acciones abiertas')+metric('Próximas revisiones',centerRows.filter(r=>r.next).length,'Con fecha definida');if($('pending-metrics'))$('pending-metrics').innerHTML=metric('Pendientes totales',pendingRows.filter(r=>r.status!=='REALIZADO').length,'Miguel + Properval')+metric('Con Miguel',pendingRows.filter(r=>r.person==='Miguel'&&r.status!=='REALIZADO').length,'Seguimiento activo')+metric('Con Properval',pendingRows.filter(r=>r.person==='Properval'&&r.status!=='REALIZADO').length,'Seguimiento activo')+metric('Con fecha objetivo',pendingRows.filter(r=>r.date&&r.status!=='REALIZADO').length,'Para priorizar')}
-async function refreshKURROFromSheets(silent=false){if(kurroRefreshInFlight||kurroPendingWrites||isEditingKURRO()||!firebaseUser)return false;kurroRefreshInFlight=true;try{const ok=await loadRemoteData();if(!silent&&ok)showSyncToast('Datos actualizados desde Firebase');return ok}finally{kurroRefreshInFlight=false}}
 // Mantiene abiertas las sesiones en otros equipos al día sin volver a depender de Google Sheets.
 // El intervalo corto permite que un cambio guardado en Firebase aparezca normalmente en pocos segundos.
-setInterval(()=>{if(document.visibilityState==='visible')refreshKURROFromSheets(true)},5000);
-window.addEventListener('focus',()=>refreshKURROFromSheets(true));
-document.querySelector('[data-refresh]')?.addEventListener('click',async()=>{const button=document.querySelector('[data-refresh]');button?.classList.add('busy');if($('sync-label'))$('sync-label').textContent='Actualizando…';const ok=await refreshKURROFromSheets(false);if($('sync-label'))$('sync-label').textContent=ok?'Sincronizado':'Sin conexión · últimos datos';button?.classList.remove('busy')});
-async function restoreResponsibleColumn(){const button=$('restore-owners');if(!firebaseUser){showSyncToast('Entra primero en el acceso privado');return}button?.classList.add('busy');showSyncToast('Recuperando responsables…');try{const data=await legacyKurroRequest({api:'data'});const rows=data?.planning?.values||[];let restored=0;rows.slice(1).forEach((row,index)=>{const target=centerRows.find(item=>Number(item.serverRow)===index+2);const owner=String(row[5]||'').trim();if(target&&target.owner!==owner){target.owner=owner;restored++}});saveData();await firebasePersistSnapshot();refreshKURROMetrics();renderCenter();showSyncToast(restored?`Responsables recuperados: ${restored}`:'Los responsables ya estaban completos');}catch(error){showSyncToast('No se pudo recuperar la columna Responsable')}finally{button?.classList.remove('busy')}}
-document.querySelector('#restore-owners')?.addEventListener('click',restoreResponsibleColumn);
+setInterval(()=>{if(document.visibilityState==='visible')refreshKURROFromFirebase(true)},5000);
+window.addEventListener('focus',()=>refreshKURROFromFirebase(true));
+document.querySelector('[data-refresh]')?.addEventListener('click',async()=>{const button=document.querySelector('[data-refresh]');button?.classList.add('busy');if($('sync-label'))$('sync-label').textContent='Actualizando…';const ok=await refreshKURROFromFirebase(false);button?.classList.remove('busy')});
 const localUpdateCenterField=updateCenterField;updateCenterField=function(index,field,value){const r=centerRows[index];if(field==='status'&&value==='done'&&isOverdue(r)){r.status='process';renderCenter();return}r[field]=value;saveData();if(r.serverRow){const col=field==='owner'?7:field==='action'?10:field==='status'?12:null;if(col)remoteWrite(kurroRequest({api:'updateCell',fileId:'1AiIsFZCyZVp4ERTi0ExreV10StjayEw9tLWv4W21foQ',sheetName:'Registro Maestro',row:r.serverRow,column:col,value:field==='status'?(value==='done'?'REALIZADO':value==='process'?'EN PROCESO':'PENDIENTE'):value}).catch(reportRemoteWriteFailure))}renderCenter()};
 let centerEditorIndex=null;
 function dateForEditor(value){const p=String(value||'').split('/');return p.length===3?`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`:''}
@@ -192,34 +130,12 @@ function frequencyChoice(value){const f=String(value||'').toLowerCase();if(f.inc
 function openCenterEditor(index){const r=centerRows[index];if(!r)return;centerEditorIndex=index;[['activity',r.activity],['category',r.category],['owner',r.owner],['action',r.action]].forEach(([key,value])=>{const field=$(`edit-${key}`);if(field)field.value=value||''});const choice=frequencyChoice(r.frequency);$('edit-frequency').value=choice;$('edit-frequency-custom').value=choice==='custom'?(r.frequency||''):'';$('edit-frequency-custom').hidden=choice!=='custom';$('edit-last').value=dateForEditor(r.last);$('edit-next').value=dateForEditor(r.next);$('edit-status').value=effectiveStatus(r);$('delete-center-editor').hidden=false;$('editor-title').textContent=isOverdue(r)?'Registrar seguimiento':'Editar actividad';$('edit-last-label').textContent=isOverdue(r)?'Fecha de actuación':'Última revisión';$('save-center-editor').textContent=isOverdue(r)?'Guardar seguimiento':'Guardar cambios';$('center-editor').classList.add('open');$('center-editor').setAttribute('aria-hidden','false')}
 function openNewCenterEditor(){centerEditorIndex=-1;[['activity',''],['category',''],['owner',''],['action','']].forEach(([key,value])=>{$(`edit-${key}`).value=value});$('edit-frequency').value='Sin periodicidad';$('edit-frequency-custom').value='';$('edit-frequency-custom').hidden=true;$('edit-last').value='';$('edit-next').value='';$('edit-status').value='open';$('delete-center-editor').hidden=true;$('editor-title').textContent='Nueva acción';$('edit-last-label').textContent='Última revisión';$('save-center-editor').textContent='Guardar cambios';$('center-editor').classList.add('open');$('center-editor').setAttribute('aria-hidden','false')}
 function closeCenterEditor(){$('center-editor').classList.remove('open');$('center-editor').setAttribute('aria-hidden','true');centerEditorIndex=null}
-async function saveCenterEditor(){const index=centerEditorIndex,isNew=index===-1,r=isNew?{}:centerRows[index];if(!r)return;const frequency=$('edit-frequency').value==='custom'?$('edit-frequency-custom').value.trim():$('edit-frequency').value;const last=$('edit-last').value?dateFromEditor($('edit-last').value):'';const calculated=last&&frequency?nextDate($('edit-last').value,frequency):null;const changes={activity:$('edit-activity').value.trim(),category:$('edit-category').value.trim()||'Otros',frequency,last,next:calculated?formatDate(calculated):'',owner:$('edit-owner').value.trim(),action:$('edit-action').value,status:$('edit-status').value};if(!changes.activity){showSyncToast('Escribe una actividad');return}if(changes.status==='done'&&!changes.last){showSyncToast('Para marcarla como realizada indica la fecha');return}const check={...r,next:changes.next,status:changes.status};if(changes.status==='done'&&isOverdue(check)){showSyncToast('Una actividad vencida solo puede estar pendiente o en proceso');return}const columns={activity:1,category:2,frequency:3,last:4,next:5,owner:7,action:10,status:12};if(isNew){r.serverRow=Math.max(1,...centerRows.map(row=>row.serverRow||1))+1;centerRows.push(r)}const requests=[];Object.entries(changes).forEach(([field,value])=>{if(!isNew&&r[field]===value)return;r[field]=value;if(r.serverRow)requests.push(kurroRequest({api:'updateCell',fileId:'1AiIsFZCyZVp4ERTi0ExreV10StjayEw9tLWv4W21foQ',sheetName:'Registro Maestro',row:r.serverRow,column:columns[field],value:field==='status'?(value==='done'?'REALIZADO':value==='process'?'EN PROCESO':'PENDIENTE'):value}))});saveData();renderCenter();closeCenterEditor();if(requests.length){showSyncToast(isNew?'Añadiendo acción…':'Guardando cambios…');try{await remoteWrite(Promise.all(requests));await loadRemoteData();showSyncToast(isNew?'Acción añadida':'Cambios guardados')}catch(e){showSyncToast('No se pudo guardar el cambio')}}}
-document.querySelectorAll('[data-close-editor]').forEach(button=>button.addEventListener('click',closeCenterEditor));$('edit-frequency')?.addEventListener('change',()=>{$('edit-frequency-custom').hidden=$('edit-frequency').value!=='custom'});$('save-center-editor')?.addEventListener('click',saveCenterEditor);
+document.querySelectorAll('[data-close-editor]').forEach(button=>button.addEventListener('click',closeCenterEditor));$('edit-frequency')?.addEventListener('change',()=>{$('edit-frequency-custom').hidden=$('edit-frequency').value!=='custom'});
 async function deleteCenterEditor(){const index=centerEditorIndex,r=centerRows[index];if(!r||!r.serverRow||!confirm('¿Quieres eliminar esta actividad?'))return;const requests=[];for(let column=1;column<=12;column++)requests.push(kurroRequest({api:'updateCell',fileId:'1AiIsFZCyZVp4ERTi0ExreV10StjayEw9tLWv4W21foQ',sheetName:'Registro Maestro',row:r.serverRow,column,value:''}));try{await remoteWrite(Promise.all(requests));closeCenterEditor();await loadRemoteData();showSyncToast('Actividad eliminada')}catch(e){showSyncToast('No se pudo eliminar la actividad')}}
 $('[data-new-center]')?.addEventListener('click',openNewCenterEditor);$('delete-center-editor')?.addEventListener('click',deleteCenterEditor);
 const localMarkCenterDone=markCenterDone;markCenterDone=function(index){const r=centerRows[index],input=$(`done-date-${index}`);if(!input?.value||isOverdue(r)){localMarkCenterDone(index);return}if(r.serverRow)remoteWrite(kurroRequest({api:'markPlanningDone',row:r.serverRow,dateText:input.value})).then(()=>loadRemoteData()).catch(()=>{localMarkCenterDone(index);reportRemoteWriteFailure()});else localMarkCenterDone(index)};
 const localUpdatePendingField=updatePendingField;updatePendingField=function(index,field,value){const r=pendingRows[index];r[field]=value;saveData();if(r.fileId&&r.serverRow){remoteWrite(kurroRequest({api:'updatePending',fileId:r.fileId,row:r.serverRow,field,value}).catch(reportRemoteWriteFailure))}renderPending()};
 const localMarkPendingDone=markPendingDone;markPendingDone=function(index){const r=pendingRows[index];r.status='REALIZADO';r.updated=new Date().toLocaleDateString('es-ES');saveData();renderPending();if(r.fileId&&r.serverRow)remoteWrite(kurroRequest({api:'updatePending',fileId:r.fileId,row:r.serverRow,field:'status',value:'REALIZADO'})).then(()=>loadRemoteData()).catch(reportRemoteWriteFailure)};
-// Garantiza que la acción Editar permanezca visible aunque otra rutina
-// vuelva a pintar la tabla de pendientes.
-const kurroRenderPendingWithEdit = renderPending;
-renderPending = function(){
-  kurroRenderPendingWithEdit();
-  document.querySelectorAll('#pending-table tr').forEach(row=>{
-    const actionCell=row.lastElementChild;
-    if(!actionCell || actionCell.querySelector('.edit-btn')) return;
-    const text=row.children[1]?.textContent.trim()||'';
-    const person=row.children[2]?.textContent.trim()||'';
-    const index=pendingRows.findIndex(item=>item.text===text&&item.person===person);
-    if(index<0) return;
-    const button=document.createElement('button');
-    button.className='edit-btn pending-edit-visible';
-    button.type='button';
-    button.textContent='Editar';
-    button.onclick=()=>openPendingEditor(index);
-    actionCell.appendChild(button);
-  });
-};
-// Pendientes con clientes (la pestaña existente). El directorio maestro se mantiene separado.
 const CLIENTS_FILE_ID=KURRO_SOURCE_ID;
 let clientRows=[],clientEditorIndex=-1,clientsLoading=true;
 function clientDateForEditor(v){const normalized=normalizeSheetDate(v),p=normalized.split('/');return p.length===3?p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0'):''}
@@ -227,16 +143,11 @@ function clientDateFromEditor(v){const s=String(v||'').trim();if(/^\d{1,2}\/\d{1
 function clientOptions(){const l=mergedKurroLists();return [...new Set([...(l.client||[]),...clientRows.map(r=>r.client)].map(v=>String(v||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'))}
 function refreshClientOptions(){const s=$('client-edit-client');if(!s)return;const v=s.value;s.innerHTML='<option value="">Sin asignar</option>'+clientOptions().map(x=>'<option>'+x+'</option>').join('');if(v)s.value=v}
 function saveClientData(){try{localStorage.setItem('kurro-clients-v1',JSON.stringify(clientRows))}catch(e){}}
-function loadClientData(){return false}
 function renderClientMetrics(){const open=clientRows.filter(r=>r.status!=='REALIZADO');$('client-metrics').innerHTML=metric('Pendientes activos',open.length,'Seguimiento con clientes',true)+metric('En proceso',open.filter(r=>r.status==='EN PROCESO').length,'Gestiones abiertas')+metric('Alta prioridad',open.filter(r=>r.priority==='ALTA').length,'Para atender')+metric('Con fecha objetivo',open.filter(r=>r.date).length,'Para organizar')}
-function updateClientField(i,f,v){const r=clientRows[i];if(!r)return;r[f]=v;r.updated=formatDate(new Date());saveClientData();renderClients();if(r.serverRow)remoteWrite(kurroRequest({api:'updateClient',fileId:CLIENTS_FILE_ID,row:r.serverRow,field:f==='date'?'target':f,value:v}).catch(reportRemoteWriteFailure))}
-function renderClients(){const q=($('client-search')?.value||'').toLowerCase(),pr=$('client-priority')?.value||'all',st=$('client-status')?.value||'PENDIENTE',rows=clientRows.filter(r=>(pr==='all'||r.priority===pr)&&(st==='all'||r.status===st)&&[r.client,r.contact,r.text,r.comments].join(' ').toLowerCase().includes(q));if(clientsLoading&&!clientRows.length){$('client-table').innerHTML='<tr><td colspan="9" class="empty">Cargando gestiones reales desde Firebase…</td></tr>';$('client-count').textContent='Cargando…';return}$('client-table').innerHTML=rows.length?rows.map(r=>{const i=clientRows.indexOf(r);return '<tr><td><select class="status-select" onchange="updateClientField('+i+',\'status\',this.value)"><option '+(r.status==='PENDIENTE'?'selected':'')+'>PENDIENTE</option><option '+(r.status==='EN PROCESO'?'selected':'')+'>EN PROCESO</option><option '+(r.status==='REALIZADO'?'selected':'')+'>REALIZADO</option></select></td><td><strong>'+(r.client||'<span class=muted>Sin asignar</span>')+'</strong></td><td>'+(r.contact||'<span class=muted>Sin contacto</span>')+'</td><td>'+(r.text||'')+'</td><td><select class="status-select" onchange="updateClientField('+i+',\'priority\',this.value)"><option '+(r.priority==='NORMAL'?'selected':'')+'>NORMAL</option><option '+(r.priority==='ALTA'?'selected':'')+'>ALTA</option></select></td><td class="date"><input class="pending-date" type="date" value="'+clientDateForEditor(r.date)+'" onchange="updateClientField('+i+',\'date\',clientDateFromEditor(this.value))"></td><td class="date">'+(r.updated||'<span class=muted>Sin fecha</span>')+'</td><td><textarea class="comment-input" rows="2" placeholder="Añadir comentario" onchange="updateClientField('+i+',\'comments\',this.value)">'+(r.comments||'')+'</textarea></td><td><button class="done-btn" onclick="updateClientField('+i+',\'status\',\'REALIZADO\')" '+(r.status==='REALIZADO'?'disabled':'')+'>Hecho</button> <button class="edit-btn" onclick="openClientEditor('+i+')">Editar</button></td></tr>'}).join(''):'<tr><td colspan="9" class="empty">No hay gestiones con estos filtros. Pulsa «Nueva gestión» para añadir la primera.</td></tr>';$('client-count').textContent=rows.length+' registros';renderClientMetrics()}
 function openClientEditor(i=-1){clientEditorIndex=i;const r=i<0?{}:clientRows[i];refreshClientOptions();$('client-edit-client').value=r.client||'';$('client-edit-contact').value=r.contact||'';$('client-edit-text').value=r.text||'';$('client-edit-priority').value=r.priority||'NORMAL';$('client-edit-status').value=r.status||'PENDIENTE';$('client-edit-date').value=clientDateForEditor(r.date);$('client-edit-comments').value=r.comments||'';$('client-editor-title').textContent=i<0?'Nuevo pendiente':'Editar pendiente';$('client-editor').classList.add('open');$('client-editor').setAttribute('aria-hidden','false')}
 function closeClientEditor(){$('client-editor').classList.remove('open');$('client-editor').setAttribute('aria-hidden','true');clientEditorIndex=-1}
 async function saveClientEditor(){const text=$('client-edit-text').value.trim();if(!text){showSyncToast('Escribe el pendiente');return}const n=clientEditorIndex<0,r=n?{}:clientRows[clientEditorIndex];Object.assign(r,{client:$('client-edit-client').value.trim(),contact:$('client-edit-contact').value.trim(),text,priority:$('client-edit-priority').value,status:$('client-edit-status').value,date:$('client-edit-date').value?clientDateFromEditor($('client-edit-date').value):'',updated:formatDate(new Date()),comments:$('client-edit-comments').value});if(n){r.serverRow=Math.max(1,...clientRows.map(x=>x.serverRow||1))+1;r.fileId=CLIENTS_FILE_ID;clientRows.push(r)}saveClientData();renderClients();closeClientEditor();showSyncToast(n?'Añadiendo pendiente…':'Guardando pendiente…');try{await remoteWrite(Promise.all(Object.entries({status:r.status,client:r.client,contact:r.contact,task:r.text,priority:r.priority,target:r.date,updated:r.updated,comments:r.comments}).map(([field,value])=>kurroRequest({api:'updateClient',fileId:CLIENTS_FILE_ID,row:r.serverRow,field,value}))));showSyncToast(n?'Pendiente añadido':'Pendiente guardado')}catch(e){showSyncToast('Guardado local; falta publicar la conexión de clientes')}}
-function remoteClientRow(row,i){return{status:String(row[0]||'PENDIENTE').toUpperCase(),client:row[1]||'',contact:row[2]||'',text:row[3]||'',priority:String(row[4]||'NORMAL').toUpperCase(),date:normalizeSheetDate(row[5]),updated:normalizeSheetDate(row[6]),comments:row[7]||'',closed:normalizeSheetDate(row[8]),serverRow:i+2,fileId:CLIENTS_FILE_ID}}
-function loadRemoteClients(d){if(!d?.values?.length)return;clientRows=d.values.slice(1).filter(r=>r.some(Boolean)).map((r,i)=>remoteClientRow(r,i));clientsLoading=false;saveClientData();renderClients()}
-document.querySelector('[data-new-client]')?.addEventListener('click',()=>openClientEditor());document.querySelectorAll('[data-close-client]').forEach(b=>b.addEventListener('click',closeClientEditor));$('save-client-editor')?.addEventListener('click',saveClientEditor);$('add-client-option')?.addEventListener('click',()=>{const v=prompt('Nombre del nuevo cliente');if(!v?.trim())return;const l=savedKurroLists();l.client=[...(l.client||[]),v.trim()];saveKurroLists(l);refreshClientOptions();$('client-edit-client').value=v.trim()});['client-search','client-priority','client-status'].forEach(id=>$(id)?.addEventListener('input',renderClients));loadClientData();refreshClientOptions();renderClients();
+document.querySelector('[data-new-client]')?.addEventListener('click',()=>openClientEditor());document.querySelectorAll('[data-close-client]').forEach(b=>b.addEventListener('click',closeClientEditor));$('save-client-editor')?.addEventListener('click',saveClientEditor);$('add-client-option')?.addEventListener('click',()=>{const v=prompt('Nombre del nuevo cliente');if(!v?.trim())return;const l=savedKurroLists();l.client=[...(l.client||[]),v.trim()];saveKurroLists(l);refreshClientOptions();$('client-edit-client').value=v.trim()});['client-search','client-priority','client-status'].forEach(id=>$(id)?.addEventListener('input',renderClients));refreshClientOptions();renderClients();
 
 function htmlEscape(value){return String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;')}
 function directoryText(row){return row.map(v=>String(v??'').trim()).join(' ').toLocaleLowerCase('es')}
@@ -255,7 +166,7 @@ function renderDirectory(){
   const body=$('directory-body'); if(!body)return;
   const query=String($('directory-search')?.value||'').trim().toLocaleLowerCase('es');
   const rows=query?directoryRows.filter(row=>directoryText(row).includes(query)):directoryRows;
-  if(!directoryLoaded&&!directoryRows.length){body.innerHTML='<tr><td colspan="10" class="empty">El directorio se cargará al abrir esta vista.</td></tr>';$('directory-count').textContent='Sin cargar';return}
+  if(!directoryLoaded&&!directoryRows.length){body.innerHTML='<tr><td colspan="10" class="empty">'+htmlEscape(directoryError||(directoryLoading?'Cargando directorio desde Firebase…':'El directorio se cargará al abrir esta vista.'))+'</td></tr>';$('directory-count').textContent=directoryLoading?'Cargando…':directoryError?'Error de carga':'Sin cargar';return}
   const pageCount=Math.max(1,Math.ceil(rows.length/DIRECTORY_PAGE_SIZE));
   directoryPage=Math.min(directoryPage,pageCount);
   const start=(directoryPage-1)*DIRECTORY_PAGE_SIZE;
@@ -269,23 +180,33 @@ function renderDirectory(){
     pagination.querySelectorAll('[data-directory-page]').forEach(button=>button.addEventListener('click',()=>{directoryPage=Number(button.dataset.directoryPage);renderDirectory()}));
   }
   if($('directory-source'))$('directory-source').textContent=directoryRows.length?`Directorio guardado en Firebase · ${directoryRows.length} clientes · solo lectura`:'Directorio guardado en Firebase · solo lectura';
-  if($('directory-metrics'))$('directory-metrics').innerHTML=metric('Clientes cargados',directoryRows.length,'Directorio completo')+metric('Campos de búsqueda',directoryHeaders.length,'Se revisan todos')+metric('Resultados',rows.length,'Coincidencias actuales')+metric('Fuente','Firebase','Datos sincronizados');
+  if($('directory-metrics'))$('directory-metrics').innerHTML=metric('Clientes cargados',directoryRows.length,'Directorio completo')+metric('Campos de búsqueda',directoryHeaders.length,'Se revisan todos')+metric('Resultados',rows.length,'Coincidencias actuales')+metric('Fuente','Firebase','Sin Google Sheets');
   document.querySelectorAll('.directory-detail-button').forEach(button=>button.addEventListener('click',()=>openDirectoryDetail(button.dataset.directoryIndex)));
 }
 async function restDirectoryGet(collection,docId){const r=await restFetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents/${collection}/${docId}`);if(r.status===404)return null;if(!r.ok)throw new Error(`FIRESTORE_${collection}_${r.status}`);const doc=await r.json();return fsDecode({mapValue:{fields:doc.fields||{}}})}
 async function restDirectoryWrite(collection,docId,value){const r=await restFetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents/${collection}/${docId}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:Object.fromEntries(Object.entries(value).map(([k,v])=>[k,fsEncode(v)]))})});if(!r.ok)throw new Error(`FIRESTORE_WRITE_${collection}_${r.status}`)}
 async function loadDirectoryFromFirebase(){
-  if(!firebaseUser)return false;
-  if(directoryLoaded)return true;
-  if(directoryLoadInFlight)return directoryLoadInFlight;
-  directoryLoadInFlight=(async()=>{try{
-    const meta=firebaseDb?((await firebaseDb.collection(DIRECTORY_META_COLLECTION).doc('main').get()).exists?(await firebaseDb.collection(DIRECTORY_META_COLLECTION).doc('main').get()).data():null):await restDirectoryGet(DIRECTORY_META_COLLECTION,'main');
-    if(!meta||!meta.chunks){directoryLoaded=false;renderDirectory();return false}
-    const chunks=[];
-    for(let i=1;i<=Number(meta.chunks);i++){const id=`chunk-${String(i).padStart(4,'0')}`;const value=firebaseDb?((await firebaseDb.collection(DIRECTORY_COLLECTION).doc(id).get()).data()||null):await restDirectoryGet(DIRECTORY_COLLECTION,id);if(value?.payload){try{const parsed=JSON.parse(value.payload);if(Array.isArray(parsed))chunks.push(...parsed)}catch(e){console.warn('Bloque de directorio inválido',id,e)}}}
-    directoryHeaders=Array.isArray(meta.headers)?meta.headers:[];directoryRows.splice(0,directoryRows.length,...chunks);directoryLoaded=true;renderDirectory();return true;
-  }catch(error){directoryLoaded=false;renderDirectory();console.warn('No se pudo cargar el directorio de clientes',error);return false}finally{directoryLoadInFlight=null}})();
-  return directoryLoadInFlight;
+ if(!firebaseUser)return false;
+ if(directoryLoaded)return true;
+ if(directoryLoadInFlight)return directoryLoadInFlight;
+ directoryLoading=true;directoryError='';renderDirectory();
+ directoryLoadInFlight=(async()=>{
+  try{
+   const meta=await restDirectoryGet(DIRECTORY_META_COLLECTION,'main');
+   if(!meta||!Number.isInteger(Number(meta.chunks))||Number(meta.chunks)<0)throw new Error('Directorio no disponible');
+   const rows=[];
+   for(let i=1;i<=Number(meta.chunks);i++){
+    const value=await restDirectoryGet(DIRECTORY_COLLECTION,`chunk-${String(i).padStart(4,'0')}`);
+    if(!value?.payload)throw new Error('Falta un bloque del directorio');
+    const parsed=JSON.parse(value.payload);
+    if(!Array.isArray(parsed))throw new Error('Bloque inválido');
+    rows.push(...parsed);
+   }
+   directoryHeaders=Array.isArray(meta.headers)?meta.headers:[];
+   directoryRows.splice(0,directoryRows.length,...rows);directoryLoaded=true;return true;
+  }catch(error){directoryError='No se ha podido cargar el directorio completo. Pulsa Actualizar para reintentarlo.';return false}
+  finally{directoryLoading=false;directoryLoadInFlight=null;renderDirectory()}
+ })();return directoryLoadInFlight;
 }
 async function importDirectoryWorkbook(file){
   if(!firebaseUser){showSyncToast('Entra primero en el acceso privado');return}
@@ -308,119 +229,61 @@ async function importDirectoryWorkbook(file){
   }catch(error){markSyncFailure();showSyncToast('No se pudo completar la carga. El directorio anterior se conserva.');console.warn('Error importando directorio',error)}finally{button?.classList.remove('busy')}
 }
 document.querySelector('#directory-import-button')?.addEventListener('click',()=>{if(!firebaseUser){openFirebaseAuth();return}$('directory-file')?.click()});$('directory-file')?.addEventListener('change',event=>{const file=event.target.files?.[0];if(file)importDirectoryWorkbook(file);event.target.value=''});$('directory-search')?.addEventListener('input',()=>{directoryPage=1;renderDirectory()});$('directory-clear')?.addEventListener('click',()=>{$('directory-search').value='';directoryPage=1;renderDirectory()});$('directory-detail-close')?.addEventListener('click',closeDirectoryDetail);$('directory-detail-cancel')?.addEventListener('click',closeDirectoryDetail);
-const previousClientAwareLoad=loadRemoteData;loadRemoteData=async function(){if(!firebaseUser&&hasFirebaseSessionHint())return false;const useLegacySource=!firebaseUser;const directClients=useLegacySource?gvizRequest('Clientes').catch(()=>null):Promise.resolve(null);await previousClientAwareLoad();try{const d=window.kurroLastData||await kurroRequest({api:'data'});const clientValues=d?.clients?.values||[];const hasClientRows=clientValues.slice(1).some(row=>row.some(Boolean));const clients=hasClientRows?d.clients:(await directClients)||{id:KURRO_SOURCE_ID,name:'Clientes',values:[]};loadRemoteClients(clients);if(useLegacySource){const c=await kurroRequest({api:'config'});saveRemoteKurroLists(c.values)}refreshKurroPeopleOptions();refreshClientOptions()}catch(e){}};
-document.querySelectorAll('.nav-item').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.view==='clients')$('page-title').textContent='Pendientes con clientes'}));
-// La carga inicial se inicia exclusivamente después de autenticar en Firebase.
-if(firebaseUser)loadRemoteData();
 async function deleteClientEditor(){const i=clientEditorIndex,r=clientRows[i];if(!r||!confirm('¿Quieres eliminar este pendiente?'))return;clientRows.splice(i,1);saveClientData();closeClientEditor();renderClients();if(r.serverRow){try{await remoteWrite(Promise.all(['status','client','contact','task','priority','target','updated','comments','closed'].map(field=>kurroRequest({api:'updateClient',fileId:CLIENTS_FILE_ID,row:r.serverRow,field,value:''}))))}catch(e){showSyncToast('Eliminado en esta vista; falta publicar la conexión')}}showSyncToast('Pendiente eliminado')}
 $('delete-client-editor')?.addEventListener('click',deleteClientEditor);
 
-// Presentación homogénea de datos heredados.
-// Todas las tablas usan una única acción de fila: Editar.
-function removeExtraRowActions(){
-  document.querySelectorAll('#center-table .done-btn,#pending-table .done-btn,#client-table .done-btn').forEach(button=>button.remove());
-  document.querySelectorAll('table .row-actions input[type="date"]').forEach(input=>input.remove());
-}
-const renderCenterWithSingleAction=renderCenter;
-renderCenter=()=>{renderCenterWithSingleAction();removeExtraRowActions()};
-const renderPendingWithSingleAction=renderPending;
-renderPending=()=>{renderPendingWithSingleAction();removeExtraRowActions()};
-const renderClientsWithSingleAction=renderClients;
-renderClients=()=>{renderClientsWithSingleAction();removeExtraRowActions()};
-const renderClientsWithConsistentCopy=renderClients;
-renderClients=function(){renderClientsWithConsistentCopy();const empty=$('client-table')?.querySelector('.empty');if(empty)empty.textContent='No hay gestiones con estos filtros. Pulsa «Nueva gestión» para añadir la primera.'};
 const openClientEditorWithConsistentCopy=openClientEditor;
 openClientEditor=function(index=-1){openClientEditorWithConsistentCopy(index);$('client-editor-title').textContent=index<0?'Nueva gestión':'Editar gestión';$('save-client-editor').textContent='Guardar gestión'};
-removeExtraRowActions();
-
-// Cada entrada en Centro parte de su configuración operativa habitual.
-// El estado elegido filtra la tabla, pero no debe quedarse pegado al cambiar de vista.
-document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
-  if(button.dataset.view!=='center')return;
-  $('center-search').value='';
-  $('center-category').value='all';
-  $('center-status').value='all';
-  if($('center-date-filter'))$('center-date-filter').value='all';
-  window.centerQuickFilter=null;
-  renderCenter();
-}));
-
-// Las tablas se consultan en modo lectura; los cambios se hacen desde Editar.
-function harmonizeTableRows(tableId){
-  const table=$(tableId); if(!table)return;
-  table.querySelectorAll('tr').forEach(row=>{
-    row.querySelectorAll('select,input[type="date"],textarea').forEach(control=>{
-      const cell=control.closest('td'); if(!cell)return;
-      const isDate=control.matches('input[type="date"]');
-      const isComment=control.matches('textarea');
-      const value=control.tagName==='SELECT'?control.options[control.selectedIndex]?.text:(isDate?normalizeSheetDate(control.value):(control.value||''));
-      const text=document.createElement('span');
-      text.className='table-value';
-      text.textContent=value||(isComment?'Sin comentarios':isDate?'Sin fecha':'Sin dato');
-      control.replaceWith(text);
-    });
-    row.querySelectorAll('.done-btn').forEach(button=>button.remove());
-  });
+// Vista estable de Gestiones de clientes: filtros dinámicos y edición siempre visible.
+var clientFilterValue='all';
+function ensureClientControls(){
+  const view=$('clients-view'),toolbar=view?.querySelector('.toolbar');
+  if(!view||!toolbar)return;
+  const metrics=$('client-metrics');
+  if(metrics){metrics.hidden=true;metrics.innerHTML=''}
+  view.querySelectorAll('.panel-heading p').forEach(node=>{if(/^Fuente:/i.test(node.textContent||''))node.remove()});
+  let clientSelect=$('client-filter-client');
+  if(!clientSelect){clientSelect=document.createElement('select');clientSelect.id='client-filter-client';clientSelect.setAttribute('aria-label','Cliente');toolbar.insertBefore(clientSelect,$('client-priority')||null)}
+  const status=$('client-status');
+  if(status){const value=status.value||'all';status.innerHTML='<option value="all">Todos los estados</option><option value="PENDIENTE">Pendientes</option><option value="EN PROCESO">En proceso</option><option value="REALIZADO">Realizadas</option>';status.value=['all','PENDIENTE','EN PROCESO','REALIZADO'].includes(value)?value:'all'}
+  if(!toolbar.querySelector('[data-client-reset]')){const button=document.createElement('button');button.type='button';button.className='secondary filter-reset';button.dataset.clientReset='true';button.textContent='Limpiar filtros';button.addEventListener('click',resetClientFilters);toolbar.appendChild(button)}
 }
-function ensurePendingActionCells(){
-  const clean=value=>String(value||'').replace(/\s+/g,' ').trim().toLocaleLowerCase('es');
-  const visibleRows=[...document.querySelectorAll('#pending-table tr')];
-  visibleRows.forEach((row,rowPosition)=>{
-    if(row.children.length===6){
-      const comments=document.createElement('td');
-      comments.innerHTML='<span class="muted">Sin comentarios</span>';
-      row.appendChild(comments);
-      row.appendChild(document.createElement('td'));
-    }
-    const actionCell=row.lastElementChild;
-    if(!actionCell||actionCell.querySelector('.edit-btn'))return;
-    const text=clean(row.children[1]?.textContent);
-    const person=clean(row.children[2]?.textContent);
-    let index=pendingRows.findIndex(item=>clean(item.text)===text&&clean(item.person)===person);
-    if(index<0){
-      const visible=pendingRows.filter(item=>(window.person==='all'||item.person===window.person)&&($('pending-priority')?.value==='all'||item.priority===$('pending-priority')?.value)&&($('pending-status')?.value==='all'||item.status===$('pending-status')?.value)&&[item.person,item.text,item.priority,item.comments].join(' ').toLowerCase().includes(($('pending-search')?.value||'').toLowerCase()));
-      index=pendingRows.indexOf(visible[rowPosition]);
-    }
-    if(index<0)return;
-    const button=document.createElement('button');
-    button.className='edit-btn pending-edit-visible';
-    button.type='button';
-    button.textContent='Editar';
-    button.onclick=()=>openPendingEditor(index);
-    actionCell.appendChild(button);
-  });
+function refreshClientFilterSelect(){
+  const select=$('client-filter-client');if(!select)return;
+  const values=[...new Set(clientRows.map(row=>String(row.client||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+  select.innerHTML='<option value="all">Todos los clientes</option>'+values.map(value=>`<option value="${htmlEscape(value)}">${htmlEscape(value)}</option>`).join('');
+  if(!values.includes(clientFilterValue))clientFilterValue='all';
+  select.value=clientFilterValue;
 }
-const renderPendingHomogeneous=renderPending;
-renderPending=function(){renderPendingHomogeneous();harmonizeTableRows('pending-table');ensurePendingActionCells();setTimeout(ensurePendingActionCells,0)};
-const renderClientsHomogeneous=renderClients;
-renderClients=function(){renderClientsHomogeneous();harmonizeTableRows('client-table')};
-renderPending();
-
-// Última capa de seguridad para Gestiones de clientes.
-// Se define al final para que ninguna compatibilidad antigua vuelva a
-// sustituir las celdas de datos o quite la acción Editar.
-if(typeof renderClientsStable==='function'){
-  const finalClientRender=renderClientsStable;
-  renderClients=function(){
-    ensureClientControls();
-    refreshClientFilterSelect();
-    finalClientRender();
-  };
-  ['client-search','client-filter-client','client-priority','client-status'].forEach(id=>{
-    const node=$(id);if(!node)return;
-    const replacement=node.cloneNode(true);node.replaceWith(replacement);
-    replacement.addEventListener('input',()=>renderClients());
-    replacement.addEventListener('change',()=>renderClients());
-  });
+function renderClients(){
+  ensureClientControls();
+  const selected=$('client-filter-client')?.value||'all';
+  clientFilterValue=selected;refreshClientFilterSelect();
+  const table=$('client-table');if(!table)return;
+  const q=String($('client-search')?.value||'').trim().toLocaleLowerCase('es');
+  const client=$('client-filter-client')?.value||clientFilterValue||'all';
+  const priority=$('client-priority')?.value||'all';
+  const status=$('client-status')?.value||'all';
+  clientFilterValue=client;
+  if(clientsLoading&&!clientRows.length){table.innerHTML='<tr><td colspan="9" class="empty">Cargando gestiones reales desde Firebase…</td></tr>';if($('client-count'))$('client-count').textContent='Cargando…';return}
+  const rows=clientRows.filter(row=>(client==='all'||String(row.client||'')===client)&&(priority==='all'||row.priority===priority)&&(status==='all'||row.status===status)&&[row.client,row.contact,row.text,row.priority,row.status,row.comments].join(' ').toLocaleLowerCase('es').includes(q));
+  table.innerHTML=rows.length?rows.map(row=>{
+    const index=clientRows.indexOf(row);
+    const statusHtml=row.status==='REALIZADO'?'<span class="status done">REALIZADO</span>':row.status==='EN PROCESO'?'<span class="status process">EN PROCESO</span>':'<span class="status open"><span class="status-dot"></span>PENDIENTE</span>';
+    return `<tr><td>${statusHtml}</td><td><strong>${htmlEscape(row.client||'Sin asignar')}</strong></td><td>${htmlEscape(row.contact||'Sin contacto')}</td><td>${htmlEscape(row.text||'')}</td><td><span class="priority">${htmlEscape(row.priority||'NORMAL')}</span></td><td class="date">${htmlEscape(row.date||'Sin fecha')}</td><td class="date">${htmlEscape(row.updated||'Sin fecha')}</td><td>${htmlEscape(row.comments||'Sin comentarios')}</td><td><button type="button" class="edit-btn" onclick="openClientEditor(${index})">Editar</button></td></tr>`;
+  }).join(''):'<tr><td colspan="9" class="empty">No hay gestiones con estos filtros. Pulsa «Nueva gestión» para añadir la primera.</td></tr>';
+  if($('client-heading'))$('client-heading').textContent=client==='all'?'Todas las gestiones':`Gestiones con ${htmlEscape(client)}`;
+  if($('client-count'))$('client-count').textContent=`${rows.length} registros`;
+}
+function resetClientFilters(){
+  clientFilterValue='all';
+  if($('client-search'))$('client-search').value='';
+  if($('client-filter-client'))$('client-filter-client').value='all';
+  if($('client-priority'))$('client-priority').value='all';
+  if($('client-status'))$('client-status').value='all';
   renderClients();
+  if(typeof saveViewFilters==='function')saveViewFilters('clients');
 }
-renderClients();
-
-function renderDynamicPeopleTabs(){const container=$('people-tabs');if(!container)return;const people=[...new Set(pendingRows.map(r=>String(r.person||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));const selected=people.includes(window.person)?window.person:'all';window.person=selected;container.innerHTML=['all',...people].map(p=>`<button class="person-tab ${p===selected?'active':''}" data-person="${htmlEscape(p)}">${p==='all'?'Todos':htmlEscape(p)}</button>`).join('');container.querySelectorAll('.person-tab').forEach(button=>button.addEventListener('click',()=>{container.querySelectorAll('.person-tab').forEach(item=>item.classList.remove('active'));button.classList.add('active');window.person=button.dataset.person;renderPending()}))}
-const renderPendingBeforeDynamicPeople=renderPending;renderPending=function(){renderDynamicPeopleTabs();renderPendingBeforeDynamicPeople()};renderDynamicPeopleTabs();renderPending();
-
-function refreshPendingPersonSelect(){const select=$('pending-person');if(!select)return;const people=[...new Set(pendingRows.map(r=>String(r.person||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));const selected=people.includes(window.person)?window.person:'all';select.innerHTML='<option value="all">Todas las personas</option>'+people.map(p=>`<option value="${htmlEscape(p)}">${htmlEscape(p)}</option>`).join('');select.value=selected}
-const renderPendingWithPersonSelect=renderPending;renderPending=function(){refreshPendingPersonSelect();renderPendingWithPersonSelect()};document.querySelector('#pending-person')?.addEventListener('change',event=>{window.person=event.target.value;renderPending()});function resetPendingFilters(){pendingPersonFilter='all';window.person='all';if($('pending-search'))$('pending-search').value='';if($('pending-person'))$('pending-person').value='all';if($('pending-priority'))$('pending-priority').value='all';if($('pending-status'))$('pending-status').value='PENDIENTE';renderPending();if(typeof saveViewFilters==='function')saveViewFilters('pending')};refreshPendingPersonSelect();renderPending();
 
 // Conserva la configuración de cada vista al navegar por la aplicación.
 const VIEW_FILTERS_KEY='kurro-view-filters-v2';
@@ -435,67 +298,16 @@ function saveViewFilters(view){
   const all=readViewFilters(); all[view]=Object.fromEntries(fields.map(id=>[id,$(id)?.value||'']));
   try{localStorage.setItem(VIEW_FILTERS_KEY,JSON.stringify(all))}catch(e){}
 }
-function restoreViewFilters(view){
-  const fields=VIEW_FILTER_FIELDS[view],saved=readViewFilters()[view]; if(!fields||!saved)return;
-  // Seguimientos siempre abre en una vista completa y predecible. Un filtro
-  // antiguo guardado en el navegador no debe dejar la tabla aparentemente vacía.
-  if(view==='pending'){
-    if($('pending-search'))$('pending-search').value='';
-    if($('pending-person'))$('pending-person').value='all';
-    if($('pending-priority'))$('pending-priority').value='all';
-    if($('pending-status'))$('pending-status').value='PENDIENTE';
-    window.person='all';
-    return;
-  }
-  fields.forEach(id=>{if($(id)&&saved[id]!==undefined)$(id).value=saved[id]});
-  if(view==='pending')renderPending();
-  if(view==='clients')renderClients();
-  if(view==='center')renderCenter();
-}
-Object.keys(VIEW_FILTER_FIELDS).forEach(view=>VIEW_FILTER_FIELDS[view].forEach(id=>{
-  $(id)?.addEventListener('input',()=>saveViewFilters(view));
-  $(id)?.addEventListener('change',()=>saveViewFilters(view));
-}));
-document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>setTimeout(()=>restoreViewFilters(button.dataset.view),0)));
-Object.keys(VIEW_FILTER_FIELDS).forEach(restoreViewFilters);
-
 document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
   const titles={center:'Control del centro',pending:'Seguimientos',clients:'Gestiones de clientes',directory:'Directorio'};
   if($('page-title'))$('page-title').textContent=titles[button.dataset.view]||'Centro';
 }));
 
-// Firebase es la única fuente de datos cuando la usuaria ha iniciado sesión.
-// La hoja original se conserva fuera de este flujo y no se consulta desde la aplicación.
-const legacyKurroRequest=kurroRequest;
-let firebaseBootstrapping=false;
-function firebaseDataFromRows(){
-  const planning=[['Actividad','Categoría','Periodicidad','Última revisión','Próxima revisión','Responsable','','','','Siguiente acción / comentarios','', 'Estado'],...centerRows.map(r=>[r.activity||'',r.category||'',r.frequency||'',r.last||'',r.next||'',r.owner||'','','','',r.action||'', '',r.status==='done'?'REALIZADO':r.status==='process'?'EN PROCESO':'PENDIENTE'])];
-  const pendingFor=person=>[['Estado','Comentarios','Pendiente / decisión','Prioridad','Fecha objetivo','Actualización','Cerrado','Fila'],...pendingRows.filter(r=>r.person===person).map((r,i)=>[r.status||'PENDIENTE',r.comments||'',r.text||'',r.priority||'NORMAL',r.date||'',r.updated||'',r.closed||'',r.serverRow||i+2])];
-  const clients=[['Estado','Cliente','Contacto','Pendiente / decisión','Prioridad','Fecha objetivo','Actualización','Comentarios','Cerrado'],...clientRows.map(r=>[r.status||'PENDIENTE',r.client||'',r.contact||'',r.text||'',r.priority||'NORMAL',r.date||'',r.updated||'',r.comments||'',r.closed||''])];
-  return {planning:{id:'firebase',name:'Registro Maestro',values:planning},miguel:{id:'firebase',name:'Seguimientos',values:pendingFor('Miguel')},properval:{id:'firebase',name:'Seguimientos',values:pendingFor('Properval')},clients:{id:'firebase',name:'Clientes',values:clients}};
-}
-function firebaseSnapshot(){return{center:centerRows.map(r=>({...r})),pending:pendingRows.map(r=>({...r})),clients:clientRows.map(r=>({...r})),lists:mergedKurroLists(),updated:new Date().toISOString()}}
-async function restoreOwnersFromLegacySource(){
-  return false;
-  /*
-  const current=centerRows.map(row=>({...row}));
-  if(!current.length||current.every(row=>String(row.owner||'').trim()))return false;
-  await legacyLoadRemoteData();
-  const owners=new Map(centerRows.map(row=>[`${String(row.activity||'').trim().toLowerCase()}|${String(row.frequency||'').trim().toLowerCase()}`,String(row.owner||'').trim()]));
-  centerRows.splice(0,centerRows.length,...current.map(row=>{const key=`${String(row.activity||'').trim().toLowerCase()}|${String(row.frequency||'').trim().toLowerCase()}`;return{...row,owner:owners.get(key)||row.owner||''}}));
-  return centerRows.some((row,index)=>row.owner!==current[index].owner&&String(row.owner||'').trim()); */
-}
-async function firebaseData(){const snap=await firebaseDb.collection('appState').doc('main').get();if(!snap.exists)throw new Error('Firebase aún no tiene datos');const value=snap.data()||{};centerRows.splice(0,centerRows.length,...(value.center||[]));pendingRows.splice(0,pendingRows.length,...(value.pending||[]));clientRows.splice(0,clientRows.length,...(value.clients||[]));clientsLoading=false;if(value.lists)remoteKurroLists=value.lists;saveData();saveClientData();return firebaseDataFromRows()}
-function firebasePersistSnapshot(){if(!firebaseDb||!firebaseUser)return Promise.reject(new Error('No hay sesión Firebase'));const payload=firebaseSnapshot();firebaseWriteQueue=firebaseWriteQueue.then(()=>firebaseDb.collection('appState').doc('main').set(payload,{merge:false}));return firebaseWriteQueue}
-loadGvizData=async function(){return firebaseDataForCurrentSession()};
-kurroRequest=async function(params){if(!firebaseUser)throw new Error('Se requiere sesión Firebase');if(params.api==='data')return firebaseDataForCurrentSession();await firebasePersistSnapshot();return{ok:true,result:{firebase:true}}};
+// Firebase es la única fuente de datos.
 function firebaseAuthMessage(text){const node=$('firebase-auth-message');if(node)node.textContent=text||''}
 function openFirebaseAuth(){const modal=$('firebase-auth');if(modal){modal.classList.add('open');$('firebase-password')?.focus()}}
 function closeFirebaseAuth(force=false){if(document.body.classList.contains('auth-locked')&&!force)return;$('firebase-auth')?.classList.remove('open');firebaseAuthMessage('')}
 function setFirebaseAuthBusy(busy,mode){const modal=$('firebase-auth');if(modal)modal.setAttribute('aria-busy',busy?'true':'false');['firebase-auth-login','firebase-auth-create'].forEach(id=>{const button=$(id);if(!button)return;if(!button.dataset.defaultText)button.dataset.defaultText=button.textContent;button.disabled=busy;if(busy&&((mode==='create'&&id==='firebase-auth-create')||(mode!=='create'&&id==='firebase-auth-login'))){button.classList.add('is-loading');button.innerHTML=`<span class="auth-spinner" aria-hidden="true"></span>${mode==='create'?'Creando…':'Entrando…'}`}else{button.classList.remove('is-loading');button.textContent=button.dataset.defaultText}});const password=$('firebase-password');if(password)password.disabled=busy}
-async function submitFirebaseAuth(mode){const password=$('firebase-password')?.value||'';if(password.length<6){firebaseAuthMessage('La contraseña debe tener al menos 6 caracteres.');return}setFirebaseAuthBusy(true,mode);try{firebaseAuthMessage(mode==='create'?'Creando tu acceso…':'Entrando…');if(mode==='create')await firebaseAuth.createUserWithEmailAndPassword(FIREBASE_ALLOWED_EMAIL,password);else await firebaseAuth.signInWithEmailAndPassword(FIREBASE_ALLOWED_EMAIL,password);closeFirebaseAuth(true)}catch(error){firebaseAuthMessage(error.code==='auth/email-already-in-use'?'Ese acceso ya existe. Pulsa Entrar.':error.code==='auth/wrong-password'?'La contraseña no es correcta.':'No se ha podido completar el acceso. Comprueba los datos.')}finally{setFirebaseAuthBusy(false,mode)}}
-function addFirebaseAuthUI(){if($('firebase-auth'))return;document.body.insertAdjacentHTML('beforeend',`<div id="firebase-auth" class="modal" aria-hidden="true"><div class="modal-card pending-editor-card" role="dialog" aria-modal="true"><div class="modal-heading"><div><p class="eyebrow">ACCESO PRIVADO</p><h2>Entrar en Aroa Gestión</h2></div><button class="modal-close" type="button" aria-label="Cerrar" id="firebase-auth-close">×</button></div><p class="pending-editor-note">Usa el acceso de Optimizia para abrir y guardar tus datos en Firebase.</p><label class="editor-grid" style="display:grid;gap:6px;color:#557078;font-size:13px;font-weight:700">Correo electrónico<input value="${FIREBASE_ALLOWED_EMAIL}" disabled></label><label style="display:grid;gap:6px;margin-top:14px;color:#557078;font-size:13px;font-weight:700">Contraseña<input id="firebase-password" type="password" autocomplete="current-password" placeholder="Mínimo 6 caracteres"></label><p id="firebase-auth-message" class="pending-editor-note" aria-live="polite"></p><div class="modal-actions"><button class="secondary" type="button" id="firebase-auth-cancel">Cancelar</button><button class="secondary" type="button" id="firebase-auth-create">Crear mi acceso</button><button class="primary" type="button" id="firebase-auth-login">Entrar</button></div></div></div>`);$('firebase-auth-close').addEventListener('click',closeFirebaseAuth);$('firebase-auth-cancel').addEventListener('click',closeFirebaseAuth);$('firebase-auth-login').addEventListener('click',()=>submitFirebaseAuth('login'));$('firebase-auth-create').addEventListener('click',()=>submitFirebaseAuth('create'));const top=document.querySelector('.top-actions');if(top&&!$('firebase-auth-open')){const button=document.createElement('button');button.id='firebase-auth-open';button.className='refresh-button';button.textContent='Acceso privado';button.addEventListener('click',openFirebaseAuth);top.insertBefore(button,top.firstChild)}}
-async function startFirebase(){if(!window.firebase)return;try{firebase.initializeApp(FIREBASE_CONFIG);firebaseAuth=firebase.auth();firebaseDb=firebase.firestore();addFirebaseAuthUI();firebaseAuth.onAuthStateChanged(async user=>{if(user&&user.email!==FIREBASE_ALLOWED_EMAIL){await firebaseAuth.signOut();return}firebaseUser=user||null;if(!firebaseUser){if($('sync-label'))$('sync-label').textContent='Acceso privado';openFirebaseAuth();return}try{firebaseBootstrapping=true;const existing=await firebaseDb.collection('appState').doc('main').get();if(existing.exists){await firebaseData()}else{throw new Error('Firebase aún no tiene la copia principal')}firebaseBootstrapping=false;refreshKURROMetrics();renderCenter();renderPending();renderClients();if($('sync-label'))$('sync-label').textContent='Firebase · sincronizado';setDataAlert('');closeFirebaseAuth(true);unlockPrivateApp()}catch(error){firebaseBootstrapping=false;if($('sync-label'))$('sync-label').textContent='Firebase · revisar conexión';setDataAlert('No se han podido cargar los datos reales de Firebase. Vuelve a pulsar Entrar para reintentarlo.')}})}catch(error){console.warn('Firebase no disponible',error)}}
 // Firebase REST fallback: algunos navegadores bloquean las librerías CDN de Firebase.
 // La aplicación puede autenticarse y leer/escribir Firestore sin depender de ellas.
 // La sesión se mantiene solo en memoria: cada nueva entrada exige la contraseña.
@@ -515,13 +327,14 @@ async function restRead(){let lastError=null;for(let attempt=0;attempt<3;attempt
 async function restWrite(value){const r=await restFetch('https://firestore.googleapis.com/v1/projects/'+FIREBASE_CONFIG.projectId+'/databases/(default)/documents/appState/main',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:Object.fromEntries(Object.entries(value).map(([k,v])=>[k,fsEncode(v)]))})});if(!r.ok)throw new Error('FIRESTORE_WRITE_'+r.status)}
 async function submitFirebaseRest(mode){const password=$('firebase-password')?.value||'';if(password.length<6){firebaseAuthMessage('La contraseña debe tener al menos 6 caracteres.');return}setFirebaseAuthBusy(true,mode);try{firebaseAuthMessage(mode==='create'?'Creando tu acceso…':'Entrando…');await restAuth(mode,password);closeFirebaseAuth(true);await finishFirebaseRest()}catch(error){const code=String(error.code||error.message||'');firebaseAuthMessage(code.includes('FIREBASE_QUOTA_EXCEEDED')?'Firebase ha alcanzado el límite diario. Los datos reales volverán a estar disponibles cuando se restablezca el servicio.':code.includes('EMAIL_EXISTS')?'Ese acceso ya existe. Pulsa Entrar.':code.includes('INVALID_PASSWORD')||code.includes('EMAIL_NOT_FOUND')||code.includes('INVALID_LOGIN_CREDENTIALS')?'La contraseña no es correcta o el acceso aún no existe.':code.includes('INVALID_API_KEY')?'La clave de Firebase no está autorizada para esta web.':code.includes('OPERATION_NOT_ALLOWED')?'El acceso por correo y contraseña no está habilitado.':'No se ha podido completar el acceso: '+(code||'error de conexión'))}finally{setFirebaseAuthBusy(false,mode)}}
 function addFirebaseRestUI(){if($('firebase-auth'))return;document.body.insertAdjacentHTML('beforeend',`<div id="firebase-auth" class="modal" aria-hidden="true"><div class="modal-card pending-editor-card" role="dialog" aria-modal="true"><div class="modal-heading"><div><p class="eyebrow">ACCESO PRIVADO</p><h2>Entrar en Aroa Gestión</h2></div><button class="modal-close" type="button" aria-label="Cerrar" id="firebase-auth-close">×</button></div><p class="pending-editor-note">Usa el acceso de Optimizia para abrir y guardar tus datos en Firebase.</p><label class="editor-grid" style="display:grid;gap:6px;color:#557078;font-size:13px;font-weight:700">Correo electrónico<input value="${FIREBASE_ALLOWED_EMAIL}" disabled></label><label style="display:grid;gap:6px;margin-top:14px;color:#557078;font-size:13px;font-weight:700">Contraseña<input id="firebase-password" type="password" autocomplete="current-password" placeholder="Mínimo 6 caracteres"></label><p id="firebase-auth-message" class="pending-editor-note" aria-live="polite"></p><div class="modal-actions"><button class="secondary" type="button" id="firebase-auth-cancel">Cancelar</button><button class="secondary" type="button" id="firebase-auth-create">Crear mi acceso</button><button class="primary" type="button" id="firebase-auth-login">Entrar</button></div></div></div>`);$('firebase-auth-close').addEventListener('click',closeFirebaseAuth);$('firebase-auth-cancel').addEventListener('click',closeFirebaseAuth);$('firebase-auth-login').addEventListener('click',()=>submitFirebaseRest('login'));$('firebase-auth-create').addEventListener('click',()=>submitFirebaseRest('create'));$('firebase-password').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();$('firebase-auth-login').click()}});const top=document.querySelector('.top-actions');if(top&&!$('firebase-auth-open')){const button=document.createElement('button');button.id='firebase-auth-open';button.className='refresh-button';button.textContent='Acceso privado';button.addEventListener('click',openFirebaseAuth);top.insertBefore(button,top.firstChild)}}
-async function finishFirebaseRest(){firebaseUser={email:FIREBASE_ALLOWED_EMAIL};try{const existing=await restRead();if(!existing)throw new Error('Firebase aún no tiene la copia principal');centerRows.splice(0,centerRows.length,...(existing.center||[]));pendingRows.splice(0,pendingRows.length,...(existing.pending||[]));clientRows.splice(0,clientRows.length,...(existing.clients||[]));if(existing.lists)remoteKurroLists=existing.lists;saveData();saveClientData();refreshKURROMetrics();renderCenter();renderPending();renderClients();if($('sync-label'))$('sync-label').textContent='Firebase · sincronizado';setDataAlert('');unlockPrivateApp()}catch(error){firebaseUser=null;if($('sync-label'))$('sync-label').textContent='Firebase · sin conexión';const quota=String(error.message||error.code||'').includes('FIREBASE_QUOTA_EXCEEDED');const message=quota?'Firebase ha alcanzado el límite diario. Los datos reales volverán a estar disponibles cuando se restablezca el servicio.':'No se han podido cargar los datos reales de Firebase. Vuelve a pulsar Entrar para reintentarlo.';setDataAlert(message);firebaseAuthMessage(quota?'Firebase ha alcanzado el límite diario. La aplicación permanecerá bloqueada hasta que vuelva a estar disponible.':'El acceso se ha validado, pero Firebase no responde ahora. Pulsa Entrar para reintentarlo.');openFirebaseAuth()}}
-firebasePersistSnapshot=()=>{const payload=firebaseSnapshot();if(firebaseDb&&firebaseUser){firebaseWriteQueue=firebaseWriteQueue.then(()=>firebaseDb.collection('appState').doc('main').set(payload,{merge:false}));return firebaseWriteQueue}return restWrite(payload)};
-async function firebaseDataForCurrentSession(){if(!firebaseUser)throw new Error('Se requiere sesión Firebase');if(firebaseDb)return firebaseData();const existing=await restRead();if(!existing)throw new Error('Firebase aún no tiene la copia principal');centerRows.splice(0,centerRows.length,...(existing.center||[]));pendingRows.splice(0,pendingRows.length,...(existing.pending||[]));clientRows.splice(0,clientRows.length,...(existing.clients||[]));if(existing.lists)remoteKurroLists=existing.lists;saveData();saveClientData();return firebaseDataFromRows()}
-loadGvizData=async function(){return firebaseDataForCurrentSession()};
-kurroRequest=async function(params){if(!firebaseUser)throw new Error('Se requiere sesión Firebase');if(params.api==='data')return firebaseDataForCurrentSession();await firebasePersistSnapshot();return{ok:true,result:{firebase:true}}};
+async function finishFirebaseRest(){
+  firebaseUser={email:FIREBASE_ALLOWED_EMAIL};
+  const ok=await loadRemoteData();
+  if(ok){closeFirebaseAuth(true);unlockPrivateApp()}
+  else{firebaseUser=null;document.body.classList.add('auth-locked');firebaseAuthMessage('No se han podido cargar los datos de Firebase. Pulsa Entrar para reintentarlo.');openFirebaseAuth()}
+}
 async function startFirebaseRest(){addFirebaseRestUI();if(restRefreshToken){try{await refreshRestSession();await finishFirebaseRest();return}catch(error){clearRestSession()}}openFirebaseAuth()}
-startFirebaseRest();
+
 
 // Descarga una copia de trabajo con los datos que están visibles tras la última sincronización.
 // El botón exige sesión para evitar exportar una copia privada por accidente.
@@ -577,83 +390,21 @@ function markSyncFailure(){
   if($('top-sync-time'))$('top-sync-time').textContent='No se ha confirmado el último guardado';
   if($('sync-time'))$('sync-time').textContent='No se ha confirmado el último guardado';
 }
-const auditedPersistSnapshot=firebasePersistSnapshot;
-firebasePersistSnapshot=async function(){
-  try{const result=await auditedPersistSnapshot();markSyncSuccess('Firebase');return result}
-  catch(error){markSyncFailure();throw error}
-};
-const auditedLoadRemoteData=loadRemoteData;
-loadRemoteData=async function(){
-  try{const result=await auditedLoadRemoteData();if(result&&firebaseUser)markSyncSuccess('Firebase');return result}
-  catch(error){markSyncFailure();throw error}
-};
-document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
-  document.querySelectorAll('.nav-item').forEach(item=>item.setAttribute('aria-current',item===button?'page':'false'));
-}));
-if(firebaseUser)markSyncSuccess('Firebase');
-
-// Mantiene el estado inferior alineado con el indicador principal, también
-// cuando la sesión se recupera desde Firebase sin una nueva escritura.
-function alignSyncFooter(){
-  const label=$('sync-label')?.textContent||'';
-  const footer=$('sync-time');
-  if(!footer)return;
-  if(/sincronizado/i.test(label)&&/Esperando sincronización/.test(footer.textContent)){
-    footer.textContent=`Última comprobación: ${new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}`;
-  }
-}
-setInterval(alignSyncFooter,500);
-
-// Completa automáticamente responsables ausentes usando la recuperación verificada.
-// Solo escribe cuando encuentra un responsable vacío; nunca sustituye uno ya informado.
-async function repairMissingOwners(){
-  if(!firebaseUser||typeof RECOVERED_BY_KEY==='undefined'||!centerRows.length)return;
-  const normalize=value=>String(value||'').trim().replace(/\s+/g,' ').toLowerCase();
-  let repaired=0;
-  RECOVERED_BY_KEY.forEach(source=>{
-    const target=centerRows.find(item=>normalize(item.activity)===normalize(source.a)&&normalize(item.frequency)===normalize(source.f))||centerRows.find(item=>normalize(item.activity)===normalize(source.a));
-    const owner=String(source.o||'').trim();
-    if(target&&owner&&!String(target.owner||'').trim()){target.owner=owner;repaired++}
-  });
-  if(!repaired)return;
-  saveData();
-  try{await firebasePersistSnapshot();refreshKURROMetrics();renderCenter();showSyncToast(`Responsables recuperados: ${repaired}`)}catch(error){markSyncFailure();showSyncToast('No se pudo guardar la columna Responsable')}
-}
-setTimeout(repairMissingOwners,1800);
-setInterval(repairMissingOwners,5000);
-
-// Recuperación puntual de la columna Responsable desde la exportación verificada de la hoja original.
-const RECOVERED_OWNERS=["Responsable centro","Responsable centro","SC / CVA","","Responsable centro","Responsable centro","Responsable centro","","Administración/Responsable centro","Administración/Responsable centro","Responsable centro","Responsable centro","Todo el personal","Responsable centro","Equipo de emergencia","Equipo de emergencia","EHS","EHS / SC","Responsable centro","Responsable centro","SC / Calidad","Responsable centro","Responsable centro","SC /EHS","Operador carretilla","SC / Calidad","SC / Calidad","SC / Dirección","Responsable del centro","Responsable del centro / EHS","SC /EHS","SC /EHS","SC /EHS","SC / CVA","SC / CVA","SC / CVA","SC /EHS","SC /EHS","SC /HR","EHS","Administración","SC /HR","SC /HR","SC /EHS","EHS / SC","SC / EHS (Carla Macedo)","SC / EHS (Carla Macedo)","SC / EHS (Carla Macedo)","SC / EHS (Carla Macedo)","","SC / EHS (Carla Macedo)","SC","SC","SC /EHS ","SC (Pavla Guznarova)","SC / Ingeniería, Antonio Espejo está trabajando en ello","SC /EHS","SC /EHS (Carla Compliance Management / SAP Javier Herreras)","SC /EHS (James Wolf)","SC / EHS / Ingeniería","","SC /EHS","SC /EHS","SC /EHS","SC /EHS","","","","","","","","","","","","Responsable centro"];
-const recoveryButton=$('restore-owners');
-if(recoveryButton){const replacement=recoveryButton.cloneNode(true);recoveryButton.replaceWith(replacement);replacement.addEventListener('click',async()=>{if(!firebaseUser){showSyncToast('Entra primero en el acceso privado');return}replacement.classList.add('busy');showSyncToast('Recuperando responsables…');try{let restored=0;RECOVERED_OWNERS.forEach((owner,index)=>{const target=centerRows.find(item=>Number(item.serverRow)===index+2);const clean=String(owner||'').trim();if(target&&target.owner!==clean){target.owner=clean;restored++}});saveData();await firebasePersistSnapshot();refreshKURROMetrics();renderCenter();showSyncToast(restored?'Responsables recuperados: '+restored:'Los responsables ya estaban completos')}catch(error){showSyncToast('No se pudo guardar la columna Responsable')}finally{replacement.classList.remove('busy')}})}
-
-const RECOVERED_BY_KEY=[{"a":"Revisión lavaojos de emergencia","f":"Semanal","o":"Responsable centro"},{"a":"Limpieza Nave y cristales","f":"Bimestral","o":"Responsable centro"},{"a":"Exámenes de salud de los empleados","f":"1 año","o":"SC / CVA"},{"a":"CARTEL SEÑALIZACION PLAN DE CIRCULACION Y FIRMAR RECIBIDO PLAN DE CIRCULACION","f":"","o":""},{"a":"Mantenimiento Preventivo del Portón","f":"Semestral","o":"Responsable centro"},{"a":"Limpieza oficinas y baños registro","f":"Mensual","o":"Responsable centro"},{"a":"Escalera - inspección visual","f":"Anual","o":"Responsable centro"},{"a":"Control de Plagas","f":"Trimestral","o":""},{"a":"PCI - Extintores portátiles, BIE (3 uds), Sistema detección/alarma (central, pulsadores, sirenas), Sectorización y evacuación","f":"Trimestral","o":"Administración/Responsable centro"},{"a":"PCI - Extintores portátiles, BIE (3 uds), Sistema detección/alarma (central, pulsadores, sirenas), Sectorización y evacuación","f":"Anual","o":"Administración/Responsable centro"},{"a":"Estanterías trastienda (archivo/oficina) - inspección visual","f":"Semestral","o":"Responsable centro"},{"a":"Botiquín","f":"Semestral","o":"Responsable centro"},{"a":"Formación Emergency Preparedness-Annual (LearnEx 50009058)","f":"Anual (MAUs)","o":"Todo el personal"},{"a":"Plan de Circulación (límite 8 km/h) - revisión","f":"Periódico [propuesta: anual]","o":"Responsable centro"},{"a":"Formación Primeros Auxilios (50689913)","f":"Cada 3 años (MAUs)","o":"Equipo de emergencia"},{"a":"Formación uso de extintores (hands on) (50954288)","f":"Cada 3 años (MAUs)","o":"Equipo de emergencia"},{"a":"MAUs -Plan de Autoprotección Revisión/actualización del documento","f":"3 años","o":"EHS"},{"a":"PRL / Evaluación de Riesgos","f":"Revisión cuando haya cambios","o":"EHS / SC"},{"a":"Inspección Portón RD 1215 OCA","f":"5 años","o":"Responsable centro"},{"a":"Inspección APQ (Almacenamiento de Productos Químicos)","f":"5 años","o":"Responsable centro"},{"a":"Memoria Técnica","f":"","o":"SC / Calidad"},{"a":"Revision Carretilla elevadora LINDE E25","f":"500 horas en contrato y saltan alarmas en el dispositivo de la carretilla","o":"Responsable centro"},{"a":"Licencia de apertura y funcionamiento","f":"No periódica","o":"Responsable centro"},{"a":"Certificado de Instalación Eléctrica de Baja Tensión (CIE)","f":"","o":"SC /EHS"},{"a":"Carretilla elevadora - checklist diario","f":"Diario (Evaluación de Riesgos)","o":"Operador carretilla"},{"a":"Prerrequisitos","f":"","o":"SC / Calidad"},{"a":"Procedimientos AP","f":"","o":"SC / Calidad"},{"a":"Jod Aids","f":"No periódica","o":"SC / Dirección"},{"a":"MAUs - Revisión por cambios (personal/horario/instalación)","f":"Cuando aplique (MAUs)","o":"Responsable del centro"},{"a":"Simulacro de emergencia (documentado)","f":"Anual","o":"Responsable del centro / EHS"},{"a":"CARA Evaluación de Riesgos por Agentes Químicos","f":"5 años","o":"SC /EHS"},{"a":"Informes higiénicos y ergonómicos, psicosociales","f":"Depende de resultados","o":"SC /EHS"},{"a":"Curso básico de PRL","f":"No periódica","o":"SC /EHS"},{"a":"Formación CVA en carga/descarga de vehículos","f":"Según CVA","o":"SC / CVA"},{"a":"Formación CVA en carretillas elevadoras/traspaletas","f":"Según CVA","o":"SC / CVA"},{"a":"Formación CVA en manipulación de botellas","f":"Según CVA","o":"SC / CVA"},{"a":"Formacion Mylearning","f":"No periódica","o":"SC /EHS"},{"a":"Formación permisos de trabajo","f":"No periódica","o":"SC /EHS"},{"a":"Apertura del centro de trabajo","f":"Única (en caso de apertura o cambio sustancial)","o":"SC /HR"},{"a":"ATEX - Zona de carga de carretilla","f":"Revisión cuando haya cambios","o":"EHS"},{"a":"CAE - divulgación MAUs a contratas y visitas","f":"","o":"Administración"},{"a":"Licencia de actividad (cambio de titularidad)","f":"","o":"SC /HR"},{"a":"Registro Establecimientos Industriales (REIC)","f":"","o":"SC /HR"},{"a":"Registro Sanitario","f":"","o":"SC /EHS"},{"a":"RITE - Instalaciones térmicas (climatización)","f":"Revisión cuando haya cambios","o":"EHS / SC"},{"a":"APCA (Actividades potencialmente contaminadoras de la atmósfera)","f":"Ver si aplica","o":"SC / EHS (Carla Macedo)"},{"a":"Licencia Autorización Ambiental","f":"Ver si aplica","o":"SC / EHS (Carla Macedo)"},{"a":"Productor de Residuos","f":"","o":"SC / EHS (Carla Macedo)"},{"a":"Ruido al exterior","f":"Ver si aplica","o":"SC / EHS (Carla Macedo)"},{"a":"Tasa de recogida de residuos/basura","f":"Anual","o":""},{"a":"Vertidos (Autorización de Vertidos, control analítico si aplica)","f":"Ver si aplica","o":"SC / EHS (Carla Macedo)"},{"a":"Actualización PR´s extendidos en centro según marco legal","f":"","o":"SC"},{"a":"CAE (SC alta en e-coordina)","f":"","o":"SC"},{"a":"CRA Alarmas/Intrusión","f":"","o":"SC /EHS "},{"a":"Gestión y entrega de EPI´s establecida","f":"","o":"SC (Pavla Guznarova)"},{"a":"Hazardous Enclosures","f":"No aplica","o":"SC / Ingeniería, Antonio Espejo está trabajando en ello"},{"a":"Plan EHS","f":"","o":"SC /EHS"},{"a":"Revisiones (Puertas abatibles, estanterías, botiquines, EPI´s, carga baterías, lavaojos, escaleras fijas)","f":"","o":"SC /EHS (Carla Compliance Management / SAP Javier Herreras)"},{"a":"SVA Estudio de Seguridad e Intrusión","f":"","o":"SC /EHS (James Wolf)"},{"a":"Trabajos en solitario","f":"","o":"SC / EHS / Ingeniería"},{"a":"Calendario Laboral","f":"","o":""},{"a":"Instrucciones de Trabajo (IT) (Nuevos procedimientos) (Incluído ventanilla si procede)","f":"","o":"SC /EHS"},{"a":"Organigrama del centro","f":"","o":"SC /EHS"},{"a":"Programa Comunicación de Riesgos (productos químicos)","f":"","o":"SC /EHS"},{"a":"Programa de Conservación Auditiva","f":"","o":"SC /EHS"},{"a":"Programa de Protección Respiratoria","f":"","o":"SC /EHS"},{"a":"Llamar a Serrano e Hijos para confirmar cuándo instalan las plataformas nuevas.","f":"","o":"Responsable centro"}];
-const recoveryButtonByActivity=$('restore-owners');
-if(recoveryButtonByActivity){const replacementByActivity=recoveryButtonByActivity.cloneNode(true);recoveryButtonByActivity.replaceWith(replacementByActivity);replacementByActivity.addEventListener('click',async()=>{if(!firebaseUser){showSyncToast('Entra primero en el acceso privado');return}replacementByActivity.classList.add('busy');showSyncToast('Recuperando responsables…');try{let restored=0;RECOVERED_BY_KEY.forEach(source=>{const target=centerRows.find(item=>item.activity===source.a&&item.frequency===source.f)||centerRows.find(item=>item.activity===source.a);const owner=String(source.o||'').trim();if(target&&target.owner!==owner){target.owner=owner;restored++}});saveData();await firebasePersistSnapshot();refreshKURROMetrics();renderCenter();showSyncToast(restored?'Responsables recuperados: '+restored:'Los responsables ya estaban completos')}catch(error){showSyncToast('No se pudo guardar la columna Responsable')}finally{replacementByActivity.classList.remove('busy')}})}
-
-const recoveryButtonNormalized=$('restore-owners');
-if(recoveryButtonNormalized){const replacementNormalized=recoveryButtonNormalized.cloneNode(true);recoveryButtonNormalized.replaceWith(replacementNormalized);replacementNormalized.addEventListener('click',async()=>{if(!firebaseUser){showSyncToast('Entra primero en el acceso privado');return}replacementNormalized.classList.add('busy');showSyncToast('Recuperando responsables…');try{let restored=0;const normalize=value=>String(value||'').trim().replace(/\\s+/g,' ').toLowerCase();RECOVERED_BY_KEY.forEach(source=>{const target=centerRows.find(item=>normalize(item.activity)===normalize(source.a)&&normalize(item.frequency)===normalize(source.f))||centerRows.find(item=>normalize(item.activity)===normalize(source.a));const owner=String(source.o||'').trim();if(target&&target.owner!==owner){target.owner=owner;restored++}});saveData();await firebasePersistSnapshot();refreshKURROMetrics();renderCenter();showSyncToast(restored?'Responsables recuperados: '+restored:'Los responsables ya estaban completos')}catch(error){showSyncToast('No se pudo guardar la columna Responsable')}finally{replacementNormalized.classList.remove('busy')}})}
 function renderSimpleCenterSummary(){const panel=$('center-metrics');if(!panel)return;const overdue=centerRows.filter(isOverdue).length,soon=centerRows.filter(r=>dueTone(r)==='row-soon').length;panel.innerHTML=metric('Vencidas',overdue,'Revisiones fuera de plazo',true)+metric('Próximas',soon,'Dentro de 30 días')}
 function setCenterView(value){if(['all','open','process','done'].includes(value)){$('center-status').value=value;window.centerQuickFilter=null}else{$('center-status').value='all';window.centerQuickFilter=value==='all'?null:value}renderCenter();if(typeof saveViewFilters==='function')saveViewFilters('center')}
-renderSimpleCenterSummary();
 function simplifyCenterLegacyDom(){const oldPanel=$('attention-panel');if(oldPanel)oldPanel.remove();const status=$('center-status');if(!status)return;status.classList.add('status-source');let mode=$('center-view-mode');if(!mode){mode=document.createElement('select');mode.id='center-view-mode';mode.setAttribute('aria-label','Qué quieres ver');mode.innerHTML='<option value="all">Qué quieres ver: Todas</option><option value="overdue">Vencidas</option><option value="soon">Próximas</option><option value="open">Pendientes</option><option value="process">En proceso</option><option value="done">Realizadas</option><option value="nodate">Sin fecha</option>';mode.addEventListener('change',()=>setCenterView(mode.value));status.parentNode.insertBefore(mode,status)}let dates=$('center-date-filter');if(!dates){dates=document.createElement('select');dates.id='center-date-filter';dates.className='status-source';dates.innerHTML='<option value="all">Todas las fechas</option><option value="overdue">Vencidas</option><option value="soon">Próximas</option><option value="dated">Con fecha</option><option value="nodate">Sin fecha</option>';status.parentNode.insertBefore(dates,status)}dates.classList.add('status-source');const style=document.createElement('style');style.textContent='.status-source{position:absolute!important;opacity:0!important;width:1px!important;height:1px!important;pointer-events:none!important}.metric-grid{grid-template-columns:repeat(2,1fr)!important}@media(max-width:620px){.metric-grid{grid-template-columns:1fr!important}}';document.head.appendChild(style);renderSimpleCenterSummary()}
 simplifyCenterLegacyDom();
 function separateCenterFilters(){const mode=$('center-view-mode');if(mode)mode.remove();const status=$('center-status');if(status){status.classList.remove('status-source');status.setAttribute('aria-label','Estado');status.innerHTML='<option value="all">Estado: Todos</option><option value="open">Estado: Pendientes</option><option value="process">Estado: En proceso</option><option value="done">Estado: Realizadas</option>';status.value='all'}let dates=$('center-date-filter');if(!dates){dates=document.createElement('select');dates.id='center-date-filter';dates.innerHTML='<option value="all">Fecha: Todas</option><option value="overdue">Fecha: Vencidas</option><option value="soon">Fecha: Próximas</option><option value="nodate">Fecha: Sin fecha</option>';status?.parentNode?.insertBefore(dates,status)}dates.classList.remove('status-source');dates.setAttribute('aria-label','Fecha');dates.onchange=()=>setCenterDateFilter(dates.value);if(status)status.onchange=()=>{window.centerQuickFilter=null;renderCenter();if(typeof saveViewFilters==='function')saveViewFilters('center')};const style=document.createElement('style');style.textContent='.status-source{position:absolute!important;opacity:0!important;width:1px!important;height:1px!important;pointer-events:none!important}.metric-grid{grid-template-columns:repeat(2,1fr)!important}@media(max-width:620px){.metric-grid{grid-template-columns:1fr!important}}';document.head.appendChild(style);renderSimpleCenterSummary()}
 separateCenterFilters();
 // Conserva la categoría elegida aunque la vista se redibuje al sincronizar o filtrar.
-const renderCenterStable=renderCenter;
-renderCenter=function(){const selected=$('center-category')?.value||'all';renderCenterStable();const select=$('center-category');if(select&&[...select.options].some(option=>option.value===selected))select.value=selected};
-document.querySelector('#center-category')?.addEventListener('change',()=>renderCenter());
-document.querySelector('#center-sort')?.remove();
+
 document.querySelector('#pending-metrics')?.remove();
 function ensurePendingControls(){const view=$('pending-view'),toolbar=view?.querySelector('.toolbar');if(!view||!toolbar)return;const peopleTabs=$('people-tabs');if(peopleTabs){peopleTabs.hidden=true;peopleTabs.setAttribute('aria-hidden','true');peopleTabs.innerHTML=''}let person=$('pending-person');if(!person){person=document.createElement('select');person.id='pending-person';person.setAttribute('aria-label','Persona o empresa');toolbar.insertBefore(person,toolbar.querySelector('#pending-priority')||null);person.addEventListener('change',event=>{window.person=event.target.value;renderPending()})}const status=$('pending-status');if(status){const selectedStatus=status.value||'PENDIENTE';status.innerHTML='<option value="PENDIENTE">Pendientes</option><option value="REALIZADO">Realizadas</option>';status.value=selectedStatus;status.setAttribute('aria-label','Estado')}view.querySelectorAll('.panel-heading p').forEach(node=>{if(/^Fuentes:/i.test(node.textContent||''))node.remove()});if(!toolbar.querySelector('[data-pending-reset]')){const button=document.createElement('button');button.type='button';button.className='secondary filter-reset';button.dataset.pendingReset='true';button.textContent='Limpiar filtros';button.addEventListener('click',resetPendingFilters);toolbar.appendChild(button)}}
-ensurePendingControls();refreshPendingPersonSelect();renderPending();
-const refreshCenterMetricsOriginal=refreshKURROMetrics;refreshKURROMetrics=function(){refreshCenterMetricsOriginal();renderSimpleCenterSummary()};
 
-// Pintado final y estable de Seguimientos. Las capas antiguas se conservan
-// por compatibilidad con datos guardados, pero esta es la única presentación
-// que se usa: filtros arriba y una acción Editar en todas las filas.
-function renderPendingStable(){
+
+
+function renderPending(){
+  ensurePendingControls();refreshPendingPersonSelect();
   const table=$('pending-table');
   if(!table)return;
   const peopleTabs=$('people-tabs');
@@ -671,105 +422,95 @@ function renderPendingStable(){
     const status=r.status==='REALIZADO'?'<span class="status done">REALIZADO</span>':'<span class="status open"><span class="status-dot"></span>PENDIENTE</span>';
     return `<tr><td>${status}</td><td>${htmlEscape(r.text||'')}</td><td><strong>${htmlEscape(r.person||'Sin asignar')}</strong></td><td><span class="priority">${htmlEscape(r.priority||'NORMAL')}</span></td><td class="date">${htmlEscape(r.date||'Sin fecha')}</td><td class="date">${htmlEscape(r.updated||'Sin fecha')}</td><td>${htmlEscape(r.comments||'Sin comentarios')}</td><td><button type="button" class="edit-btn" onclick="openPendingEditor(${i})">Editar</button></td></tr>`;
   }).join(''):'<tr><td colspan="8" class="empty">No hay resultados con estos filtros.</td></tr>';
-  if($('pending-heading'))$('pending-heading').textContent=person==='all'?'Todos mis pendientes':`Pendientes con ${htmlEscape(person)}`;
+  if($('pending-heading'))$('pending-heading').textContent=person==='all'?'Todos mis pendientes':`Pendientes con ${person}`;
   if($('pending-count'))$('pending-count').textContent=`${rows.length} registros`;
 }
-let pendingPersonFilter=$('pending-person')?.value||window.person||'all';
-renderPending=()=>{window.person=pendingPersonFilter;ensurePendingControls();refreshPendingPersonSelect();const personSelect=$('pending-person');if(personSelect)personSelect.value=pendingPersonFilter;renderPendingStable()};
-document.querySelector('#pending-person')?.addEventListener('change',event=>{window.person=event.target.value;renderPendingStable()});
-renderPending();
 
-// Sustituye los listeners antiguos de los filtros para que cada cambio use
-// siempre el pintado estable, incluida la columna «Editar».
-['pending-search','pending-person','pending-priority','pending-status'].forEach(id=>{
-  const node=$(id); if(!node)return;
-  const replacement=node.cloneNode(true); node.replaceWith(replacement);
-  const onPendingFilterChange=event=>{
-    if(id==='pending-person'){
-      pendingPersonFilter=event.target.value||'all';
-      window.person=pendingPersonFilter;
-      renderPendingStable();
-      return;
-    }
-    renderPending();
-  };
-  replacement.addEventListener('input',onPendingFilterChange);
-  replacement.addEventListener('change',onPendingFilterChange);
-});
-ensurePendingControls();
-renderPending();
-
-// Reconciliación final: la vista de clientes siempre se pinta con datos,
-// filtros y edición después de cualquier carga o redibujado.
-if(typeof renderClientsStable==='function'){
-  const auditedClientRender=renderClientsStable;
-  renderClients=function(){ensureClientControls();refreshClientFilterSelect();auditedClientRender()};
-  ['client-search','client-filter-client','client-priority','client-status'].forEach(id=>{
-    const node=$(id);if(!node)return;
-    const replacement=node.cloneNode(true);node.replaceWith(replacement);
-    replacement.addEventListener('input',renderClients);
-    replacement.addEventListener('change',renderClients);
-  });
-  renderClients();
+function refreshPendingPersonSelect(){
+ const select=$('pending-person');if(!select)return;
+ const selected=window.person||'all';
+ const people=[...new Set(pendingRows.map(r=>r.person).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+ select.innerHTML='<option value="all">Todas las personas</option>'+people.map(p=>`<option value="${htmlEscape(p)}">${htmlEscape(p)}</option>`).join('');
+ select.value=people.includes(selected)?selected:'all';window.person=select.value;
 }
-// Vista estable de Gestiones de clientes: filtros dinámicos y edición siempre visible.
-var clientFilterValue='all';
-function ensureClientControls(){
-  const view=$('clients-view'),toolbar=view?.querySelector('.toolbar');
-  if(!view||!toolbar)return;
-  const metrics=$('client-metrics');
-  if(metrics){metrics.hidden=true;metrics.innerHTML=''}
-  view.querySelectorAll('.panel-heading p').forEach(node=>{if(/^Fuente:/i.test(node.textContent||''))node.remove()});
-  let clientSelect=$('client-filter-client');
-  if(!clientSelect){clientSelect=document.createElement('select');clientSelect.id='client-filter-client';clientSelect.setAttribute('aria-label','Cliente');toolbar.insertBefore(clientSelect,$('client-priority')||null)}
-  const status=$('client-status');
-  if(status){const value=status.value||'all';status.innerHTML='<option value="all">Todos los estados</option><option value="PENDIENTE">Pendientes</option><option value="EN PROCESO">En proceso</option><option value="REALIZADO">Realizadas</option>';status.value=['all','PENDIENTE','EN PROCESO','REALIZADO'].includes(value)?value:'all'}
-  if(!toolbar.querySelector('[data-client-reset]')){const button=document.createElement('button');button.type='button';button.className='secondary filter-reset';button.dataset.clientReset='true';button.textContent='Limpiar filtros';button.addEventListener('click',resetClientFilters);toolbar.appendChild(button)}
+function resetPendingFilters(){window.person='all';$('pending-search').value='';$('pending-priority').value='all';$('pending-status').value='PENDIENTE';renderPending()}
+function resetCenterFilters(){
+ $('center-search').value='';$('center-category').value='all';$('center-status').value='all';
+ if($('center-date-filter'))$('center-date-filter').value='all';window.centerQuickFilter=null;renderCenter();
 }
-function refreshClientFilterSelect(){
-  const select=$('client-filter-client');if(!select)return;
-  const values=[...new Set(clientRows.map(row=>String(row.client||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
-  select.innerHTML='<option value="all">Todos los clientes</option>'+values.map(value=>`<option value="${htmlEscape(value)}">${htmlEscape(value)}</option>`).join('');
-  if(!values.includes(clientFilterValue))clientFilterValue='all';
-  select.value=clientFilterValue;
+function renderCenter(){
+ const category=canonicalCategory($('center-category')?.value)||'all';
+ const cats=[...new Set(centerRows.map(r=>canonicalCategory(r.category)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+ const select=$('center-category');
+ select.innerHTML='<option value="all">Todas las categorías</option>'+cats.map(c=>`<option value="${htmlEscape(c)}">${htmlEscape(c)}</option>`).join('');
+ select.value=cats.includes(category)?category:'all';
+ const q=($('center-search')?.value||'').trim().toLocaleLowerCase('es');
+ const state=$('center-status')?.value||'all',date=$('center-date-filter')?.value||'all';
+ const rows=centerRows.filter(r=>(select.value==='all'||canonicalCategory(r.category)===select.value)&&(state==='all'||effectiveStatus(r)===state)&&[r.activity,r.category,r.frequency,r.last,r.next,r.owner,r.action].join(' ').toLocaleLowerCase('es').includes(q)&&
+ (date==='all'||date==='overdue'&&isOverdue(r)||date==='soon'&&dueTone(r)==='row-soon'||date==='nodate'&&!r.next||date==='dated'&&!!r.next)).sort((a,b)=>{const av=sortValue(a,'next'),bv=sortValue(b,'next');return av>bv?1:av<bv?-1:0});
+ $('center-table').innerHTML=rows.length?rows.map(r=>`<tr class="${dueTone(r)}"><td>${htmlEscape(r.activity)}</td><td>${htmlEscape(canonicalCategory(r.category))}</td><td>${htmlEscape(r.frequency||'Sin periodicidad')}</td><td class="date">${htmlEscape(displayDate(r.last)||'Sin fecha')}</td><td class="date">${htmlEscape(displayDate(r.next)||'Sin fecha')}${isOverdue(r)?' <span class="overdue-label">VENCIDA</span>':''}</td><td>${htmlEscape(canonicalOwner(r.owner)||'Sin asignar')}</td><td>${statusTag(effectiveStatus(r))}</td><td>${htmlEscape(r.action||'Sin comentarios')}</td><td><button class="edit-btn" onclick="openCenterEditor(${centerRows.indexOf(r)})">Editar</button></td></tr>`).join(''):'<tr><td colspan="9" class="empty">No hay resultados con estos filtros.</td></tr>';
+ $('center-count').textContent=`${rows.length} registros`;
 }
-function renderClientsStable(){
-  const table=$('client-table');if(!table)return;
-  const q=String($('client-search')?.value||'').trim().toLocaleLowerCase('es');
-  const client=$('client-filter-client')?.value||clientFilterValue||'all';
-  const priority=$('client-priority')?.value||'all';
-  const status=$('client-status')?.value||'all';
-  clientFilterValue=client;
-  if(clientsLoading&&!clientRows.length){table.innerHTML='<tr><td colspan="9" class="empty">Cargando gestiones reales desde Firebase…</td></tr>';if($('client-count'))$('client-count').textContent='Cargando…';return}
-  const rows=clientRows.filter(row=>(client==='all'||String(row.client||'')===client)&&(priority==='all'||row.priority===priority)&&(status==='all'||row.status===status)&&[row.client,row.contact,row.text,row.priority,row.status,row.comments].join(' ').toLocaleLowerCase('es').includes(q));
-  table.innerHTML=rows.length?rows.map(row=>{
-    const index=clientRows.indexOf(row);
-    const statusHtml=row.status==='REALIZADO'?'<span class="status done">REALIZADO</span>':row.status==='EN PROCESO'?'<span class="status process">EN PROCESO</span>':'<span class="status open"><span class="status-dot"></span>PENDIENTE</span>';
-    return `<tr><td>${statusHtml}</td><td><strong>${htmlEscape(row.client||'Sin asignar')}</strong></td><td>${htmlEscape(row.contact||'Sin contacto')}</td><td>${htmlEscape(row.text||'')}</td><td><span class="priority">${htmlEscape(row.priority||'NORMAL')}</span></td><td class="date">${htmlEscape(row.date||'Sin fecha')}</td><td class="date">${htmlEscape(row.updated||'Sin fecha')}</td><td>${htmlEscape(row.comments||'Sin comentarios')}</td><td><button type="button" class="edit-btn" onclick="openClientEditor(${index})">Editar</button></td></tr>`;
-  }).join(''):'<tr><td colspan="9" class="empty">No hay gestiones con estos filtros. Pulsa «Nueva gestión» para añadir la primera.</td></tr>';
-  if($('client-heading'))$('client-heading').textContent=client==='all'?'Todas las gestiones':`Gestiones con ${htmlEscape(client)}`;
-  if($('client-count'))$('client-count').textContent=`${rows.length} registros`;
+function refreshKURROMetrics(){renderSimpleCenterSummary()}
+function firebaseSnapshot(){return {center:centerRows.map(r=>({...r})),pending:pendingRows.map(r=>({...r})),clients:clientRows.map(r=>({...r})),lists:mergedKurroLists(),updated:new Date().toISOString()}}
+async function firebasePersistSnapshot(){
+ if(!firebaseUser)throw new Error('No hay sesión Firebase');
+ const payload=firebaseSnapshot();
+ firebaseWriteQueue=firebaseWriteQueue.catch(()=>{}).then(()=>restWrite(payload));
+ try{await firebaseWriteQueue;markSyncSuccess()}catch(error){markSyncFailure();throw error}
 }
-function resetClientFilters(){
-  clientFilterValue='all';
-  if($('client-search'))$('client-search').value='';
-  if($('client-filter-client'))$('client-filter-client').value='all';
-  if($('client-priority'))$('client-priority').value='all';
-  if($('client-status'))$('client-status').value='all';
-  renderClients();
-  if(typeof saveViewFilters==='function')saveViewFilters('clients');
+async function kurroRequest(params){
+ if(!firebaseUser)throw new Error('No hay sesión Firebase');
+ if(params.api==='data')return restRead();
+ if(params.api==='config')return {values:[]};
+ // Legacy form calls are coalesced after the synchronous form update finishes.
+ await Promise.resolve();await firebasePersistSnapshot();return {ok:true};
 }
-renderClients=()=>{ensureClientControls();refreshClientFilterSelect();renderClientsStable()};
-['client-search','client-filter-client','client-priority','client-status'].forEach(id=>{
-  const node=$(id);if(!node)return;
-  const replacement=node.cloneNode(true);node.replaceWith(replacement);
-  const handler=event=>{if(id==='client-filter-client')clientFilterValue=event.target.value||'all';renderClients()};
-  replacement.addEventListener('input',handler);replacement.addEventListener('change',handler);
-});
-renderClients();
-
-function renderDynamicPeopleTabs(){const container=$('people-tabs');if(!container)return;const people=[...new Set(pendingRows.map(r=>String(r.person||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));const selected=people.includes(window.person)?window.person:'all';window.person=selected;container.innerHTML=['all',...people].map(p=>`<button class="person-tab ${p===selected?'active':''}" data-person="${htmlEscape(p)}">${p==='all'?'Todos':htmlEscape(p)}</button>`).join('');container.querySelectorAll('.person-tab').forEach(button=>button.addEventListener('click',()=>{container.querySelectorAll('.person-tab').forEach(item=>item.classList.remove('active'));button.classList.add('active');window.person=button.dataset.person;renderPending()}))}
-const renderPendingBeforeDynamicPeople=renderPending;renderPending=function(){renderDynamicPeopleTabs();renderPendingBeforeDynamicPeople()};renderDynamicPeopleTabs();renderPending();
-
-function refreshPendingPersonSelect(){const select=$('pending-person');if(!select)return;const people=[...new Set(pendingRows.map(r=>String(r.person||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));const selected=people.includes(window.person)?window.person:'all';select.innerHTML='<option value="all">Todas las personas</option>'+people.map(p=>`<option value="${htmlEscape(p)}">${htmlEscape(p)}</option>`).join('');select.value=selected}
-const renderPendingWithPersonSelect=renderPending;renderPending=function(){refreshPendingPersonSelect();renderPendingWithPersonSelect()};document.querySelector('#pending-person')?.addEventListener('change',event=>{window.person=event.target.value;renderPending()});function resetPendingFilters(){pendingPersonFilter='all';window.person='all';if($('pending-search'))$('pending-search').value='';if($('pending-person'))$('pending-person').value='all';if($('pending-priority'))$('pending-priority').value='all';if($('pending-status'))$('pending-status').value='PENDIENTE';renderPending();if(typeof saveViewFilters==='function')saveViewFilters('pending')};refreshPendingPersonSelect();renderPending();
+let dataLoadInFlight=null;
+async function loadRemoteData(){
+ if(!firebaseUser)return false;
+ if(dataLoadInFlight)return dataLoadInFlight;
+ dataLoadInFlight=(async()=>{
+  try{
+   clientsLoading=true;
+   const value=await restRead();
+   if(!value)throw new Error('Firebase no contiene el documento de datos');
+   if(!['center','pending','clients'].every(k=>Array.isArray(value[k])))throw new Error('Formato de Firebase incompleto');
+   // Preserve every row, custom person, identifier, and field exactly as received.
+   centerRows.splice(0,centerRows.length,...value.center);
+   pendingRows.splice(0,pendingRows.length,...value.pending);
+   clientRows.splice(0,clientRows.length,...value.clients);
+   remoteKurroLists=value.lists||{};clientsLoading=false;
+   refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();
+   renderCenter();renderPending();renderClients();setDataAlert('');markSyncSuccess();return true;
+  }catch(error){
+   clientsLoading=false;renderClients();markSyncFailure();
+   setDataAlert('No se han podido actualizar los datos de Firebase. '+(centerRows.length||pendingRows.length||clientRows.length?'Se conserva la última lectura de esta sesión. ':'')+'Pulsa Actualizar para reintentarlo.');
+   return false;
+  }finally{dataLoadInFlight=null}
+ })();return dataLoadInFlight;
+}
+async function refreshKURROFromFirebase(silent=false){
+ if(!firebaseUser||kurroRefreshInFlight||kurroPendingWrites||document.querySelector('.modal.open'))return false;
+ kurroRefreshInFlight=true;
+ try{let ok=await loadRemoteData();if($('directory-view')?.classList.contains('active-view')){if(!silent)directoryLoaded=false;ok=await loadDirectoryFromFirebase()&&ok}if(!silent&&ok)showSyncToast('Datos actualizados desde Firebase');return ok}finally{kurroRefreshInFlight=false}
+}
+init();ensureClientControls();ensurePendingControls();
+$('pending-person').addEventListener('change',event=>{window.person=event.target.value;renderPending()});
+$('client-filter-client').addEventListener('change',renderClients);
+$('center-date-filter').addEventListener('change',renderCenter);
+$('center-sort')?.remove();
+renderCenter();renderPending();renderClients();
+startFirebaseRest();
+function init(){
+ window.person='all';
+ document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
+  document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b===button);b.setAttribute('aria-current',b===button?'page':'false')});
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active-view',v.id===button.dataset.view+'-view'));
+  $('page-title').textContent={center:'Control del centro',pending:'Seguimientos',clients:'Gestiones de clientes',directory:'Directorio'}[button.dataset.view];
+  if(button.dataset.view==='directory')loadDirectoryFromFirebase();
+ }));
+ ['center-search','center-category','center-status'].forEach(id=>$(id)?.addEventListener('input',renderCenter));
+ ['pending-search','pending-priority','pending-status'].forEach(id=>$(id)?.addEventListener('input',renderPending));
+ renderCenter();renderPending();renderDirectory();
+}
