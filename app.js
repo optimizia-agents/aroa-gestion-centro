@@ -397,7 +397,7 @@ renderCenter();renderPending();renderClients();
 startFirebaseRest();
 function init(){
  window.person='all';
- const accountLabelObserver=new MutationObserver(()=>{const account=$('firebase-auth-open');if(account)account.textContent='Cuenta'});
+ const accountLabelObserver=new MutationObserver(()=>{const account=$('firebase-auth-open');if(account&&account.textContent!=='Cuenta')account.textContent='Cuenta'});
  accountLabelObserver.observe(document.body,{childList:true,subtree:true});
  document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
   document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b===button);b.setAttribute('aria-current',b===button?'page':'false')});
