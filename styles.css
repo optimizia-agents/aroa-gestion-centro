@@ -16,6 +16,7 @@
 #pending-table tr.group-colored:hover td,#client-table tr.group-colored:hover td{background:var(--group-chip)!important}
 
 .save-feedback{padding:12px 14px;background:#fff6dd;color:#604509;border-radius:8px;line-height:1.5}.save-feedback:empty{display:none}[aria-busy="true"]{cursor:wait}
+.evidence-box{margin-top:4px;padding:14px;border:1px solid var(--ui-line);border-radius:10px;background:#f8fbfa}.evidence-box>strong{color:var(--ui-ink);font-size:14px}.evidence-box .pending-editor-note{margin:5px 0 10px}.evidence-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.evidence-actions a{display:inline-flex;align-items:center;text-decoration:none}.evidence-upload{display:inline-flex!important;align-items:center;cursor:pointer!important}
 .table-wrap .status,.table-wrap .edit-btn{white-space:nowrap;overflow-wrap:normal;word-break:normal}
 .table-wrap .edit-btn{min-width:60px}
 #pending-view .table-wrap table,#clients-view .table-wrap table{table-layout:auto!important;min-width:1000px}

@@ -50,7 +50,7 @@ renderCenter();renderPending();
 
 // La próxima revisión se calcula por defecto, pero admite una fecha manual.
 $('edit-next')?.addEventListener('input',()=>{$('edit-next').dataset.manual='true'});
-const saveButton=$('save-center-editor');if(saveButton){const replacement=saveButton.cloneNode(true);saveButton.replaceWith(replacement);replacement.addEventListener('click',saveCenterEditorFlexible)}
+const saveButton=$('save-center-editor');if(saveButton){const replacement=saveButton.cloneNode(true);saveButton.replaceWith(replacement);replacement.addEventListener('click',async()=>{if(pendingEvidenceFile){try{window.pendingEvidenceMetadata=await uploadEvidence(pendingEvidenceFile,centerEditorIndex>=0?(centerRows[centerEditorIndex]?.id||crypto.randomUUID()):crypto.randomUUID());pendingEvidenceFile=null}catch(error){editorMessage($('center-editor'),error.message);return}}saveCenterEditorFlexible()})}
 function setCenterStatus(state){$('center-status').value=state;window.centerQuickFilter=null;renderCenter();if(typeof saveViewFilters==='function')saveViewFilters('center')}
 function setCenterDateFilter(kind){window.centerQuickFilter=kind==='all'?null:kind;renderCenter();if(typeof saveViewFilters==='function')saveViewFilters('center')}
 
@@ -74,6 +74,11 @@ setInterval(()=>{if(document.visibilityState==='visible')refreshKURROFromFirebas
 window.addEventListener('focus',()=>refreshKURROFromFirebase(true));
 document.querySelector('[data-refresh]')?.addEventListener('click',async()=>{const button=document.querySelector('[data-refresh]');button?.classList.add('busy');if($('sync-label'))$('sync-label').textContent='Actualizando…';const ok=await refreshKURROFromFirebase(false);button?.classList.remove('busy')});
 let centerEditorIndex=null;
+let pendingEvidenceFile=null;
+function ensureEvidenceControls(){const grid=$('center-editor')?.querySelector('.editor-grid');if(!grid||$('edit-evidence-file'))return;const box=document.createElement('div');box.className='editor-wide evidence-box';box.innerHTML='<strong>Evidencia</strong><p id="edit-evidence-status" class="pending-editor-note">No hay ningún documento asociado.</p><div class="evidence-actions"><a id="edit-evidence-view" class="secondary" href="#" target="_blank" rel="noopener" hidden>Ver evidencia</a><label class="secondary evidence-upload">Subir o sustituir<input id="edit-evidence-file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" hidden></label></div>';grid.appendChild(box);$('edit-evidence-file').addEventListener('change',event=>{pendingEvidenceFile=event.target.files?.[0]||null;if(pendingEvidenceFile)$('edit-evidence-status').textContent=`Nuevo archivo: ${pendingEvidenceFile.name}`})}
+function showEvidence(evidence){ensureEvidenceControls();const status=$('edit-evidence-status'),link=$('edit-evidence-view');if(!status||!link)return;pendingEvidenceFile=null;if($('edit-evidence-file'))$('edit-evidence-file').value='';if(evidence?.url){status.textContent=`${evidence.name||'Documento'} · actualizado ${evidence.updated||''}`;link.href=evidence.url;link.hidden=false}else{status.textContent='No hay ningún documento asociado.';link.hidden=true}}
+async function uploadEvidence(file,activityId){if(!file)return null;if(file.size>10*1024*1024)throw new Error('La evidencia no puede superar 10 MB.');const name=`evidence/${activityId}/${Date.now()}-${file.name.replace(/[^\w.\- áéíóúÁÉÍÓÚ]/g,'_')}`;const endpoint=`https://firebasestorage.googleapis.com/v0/b/${FIREBASE_CONFIG.storageBucket}/o?uploadType=media&name=${encodeURIComponent(name)}`;const response=await fetch(endpoint,{method:'POST',headers:{Authorization:'Bearer '+restIdToken,'Content-Type':file.type||'application/octet-stream'},body:file});if(!response.ok)throw new Error('No se ha podido subir la evidencia.');const data=await response.json();const token=data.downloadTokens||'';return{name:file.name,path:name,url:`https://firebasestorage.googleapis.com/v0/b/${FIREBASE_CONFIG.storageBucket}/o/${encodeURIComponent(name)}?alt=media${token?'&token='+encodeURIComponent(token):''}`,updated:formatDate(new Date())}}
+async function deleteEvidence(evidence){if(!evidence?.path)return;const endpoint=`https://firebasestorage.googleapis.com/v0/b/${FIREBASE_CONFIG.storageBucket}/o/${encodeURIComponent(evidence.path)}`;await fetch(endpoint,{method:'DELETE',headers:{Authorization:'Bearer '+restIdToken}})}
 function dateForEditor(value){const p=String(value||'').split('/');return p.length===3?`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`:''}
 function dateFromEditor(value){const p=String(value||'').split('-');return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:''}
 function frequencyChoice(value){const f=String(value||'').toLowerCase();if(f.includes('seman'))return'Semanal';if(f.includes('bimes'))return'Bimestral';if(f.includes('trimes'))return'Trimestral';if(f.includes('semes'))return'Semestral';if(f.includes('mens'))return'Mensual';if(f.includes('5 años'))return'Cada 5 años';if(f.includes('3 años'))return'Cada 3 años';if(f.includes('anual')||f.includes('1 año'))return'Anual';if(f.includes('cuando aplique'))return'Cuando aplique';if(f.includes('cambio'))return'Según cambios';if(!f||f.includes('sin periodicidad')||f.includes('no periódica'))return'Sin periodicidad';return'custom'}
@@ -409,6 +414,8 @@ function init(){
  ['pending-search','pending-priority','pending-status'].forEach(id=>$(id)?.addEventListener('input',()=>{renderPending();saveViewFilters('pending')}));
  ['client-search','client-filter-client','client-priority','client-status'].forEach(id=>$(id)?.addEventListener('input',()=>{renderClients();saveViewFilters('clients')}));
  document.addEventListener('change',event=>{if(event.target?.id==='pending-person'||event.target?.id==='pending-sort')saveViewFilters('pending')});
+ ensureEvidenceControls();
+ document.addEventListener('click',()=>{if($('center-editor')?.classList.contains('open')){if(centerEditorIndex<0)window.pendingEvidenceMetadata=null;showEvidence(centerEditorIndex>=0?centerRows[centerEditorIndex]?.evidence:null)}});
  restoreViewFilters('center');restoreViewFilters('pending');restoreViewFilters('clients');
  $('pending-status').value='all';
  window.person=$('pending-person')?.value||'all';
@@ -484,9 +491,11 @@ async function commitEditor(kind,index,changes,modalId,close,remove=false){
  const rows={center:centerRows,pending:pendingRows,clients:clientRows}[kind];
  if(index>=0&&!rows[index]){editorMessage(modal,'Este registro ya no está disponible.');return}
  const payload=structuredClone(appDocument);
+ if(kind==='center'&&window.pendingEvidenceMetadata)changes.evidence=window.pendingEvidenceMetadata;
+ if(kind==='center'&&index<0&&!changes.id)changes.id=crypto.randomUUID();
  payload[kind]=rows.map(row=>({...row}));
  if(remove)payload[kind].splice(index,1);
- else if(index<0)payload[kind].push({...changes,id:crypto.randomUUID()});
+ else if(index<0)payload[kind].push({...changes,id:changes.id||crypto.randomUUID()});
  else payload[kind][index]={...payload[kind][index],...changes};
  payload.lists=mergedKurroLists();payload.updated=new Date().toISOString();payload.lastMutation=crypto.randomUUID();
  const revision=appRevision,intent=JSON.stringify({kind,index,changes,remove});
