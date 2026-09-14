@@ -388,7 +388,7 @@ async function refreshKURROFromFirebase(silent=false){
  kurroRefreshInFlight=true;
  try{let ok=await loadRemoteData();if($('directory-view')?.classList.contains('active-view')){if(!silent)directoryLoaded=false;ok=await loadDirectoryFromFirebase()&&ok}if(!silent&&ok)showSyncToast('Datos actualizados desde Firebase');return ok}finally{kurroRefreshInFlight=false}
 }
-init();ensureClientControls();ensurePendingControls();
+try{init();ensureClientControls();ensurePendingControls()}catch(error){console.error('No se pudo preparar una vista inicial',error)}
 $('pending-person').addEventListener('change',event=>{window.person=event.target.value;renderPending()});
 $('client-filter-client').addEventListener('change',renderClients);
 $('center-date-filter').addEventListener('change',renderCenter);
