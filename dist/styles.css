@@ -14,3 +14,11 @@
 #pending-table tr.group-colored td:first-child,#client-table tr.group-colored td:first-child{border-left:4px solid var(--group-accent)}
 .group-colored .group-label{display:inline-block;padding:5px 9px;border-radius:7px;background:var(--group-chip);color:#183442;border-left:3px solid var(--group-accent);line-height:1.4}
 #pending-table tr.group-colored:hover td,#client-table tr.group-colored:hover td{background:var(--group-chip)!important}
+
+.save-feedback{padding:12px 14px;background:#fff6dd;color:#604509;border-radius:8px;line-height:1.5}.save-feedback:empty{display:none}[aria-busy="true"]{cursor:wait}
+.table-wrap .status,.table-wrap .edit-btn{white-space:nowrap;overflow-wrap:normal;word-break:normal}
+.table-wrap .edit-btn{min-width:60px}
+#pending-view .table-wrap table,#clients-view .table-wrap table{table-layout:auto!important;min-width:1000px}
+#pending-view .table-wrap th:first-child,#clients-view .table-wrap th:first-child{min-width:100px}
+#pending-view .table-wrap th:last-child,#clients-view .table-wrap th:last-child{min-width:76px}
+body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9634}
