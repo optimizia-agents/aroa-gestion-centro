@@ -214,14 +214,18 @@ function resetClientFilters(){
 const VIEW_FILTERS_KEY='kurro-view-filters-v2';
 const VIEW_FILTER_FIELDS={
   center:['center-search','center-category'],
-  pending:['pending-search','pending-priority','pending-status'],
-  clients:['client-search','client-priority','client-status']
+  pending:['pending-search','pending-person','pending-priority','pending-status','pending-sort'],
+  clients:['client-search','client-filter-client','client-priority','client-status']
 };
 function readViewFilters(){try{return JSON.parse(localStorage.getItem(VIEW_FILTERS_KEY)||'{}')}catch(e){return {}}}
 function saveViewFilters(view){
   const fields=VIEW_FILTER_FIELDS[view]; if(!fields)return;
   const all=readViewFilters(); all[view]=Object.fromEntries(fields.map(id=>[id,$(id)?.value||'']));
   try{localStorage.setItem(VIEW_FILTERS_KEY,JSON.stringify(all))}catch(e){}
+}
+function restoreViewFilters(view){
+  const saved=readViewFilters()[view]||{};
+  (VIEW_FILTER_FIELDS[view]||[]).forEach(id=>{const node=$(id);if(node&&saved[id]!==undefined)node.value=saved[id]});
 }
 document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
   const titles={center:'Control del centro',pending:'Seguimientos',clients:'Gestiones de clientes',directory:'Directorio'};
@@ -359,7 +363,7 @@ function refreshPendingPersonSelect(){
  select.innerHTML='<option value="all">Todas las personas</option>'+people.map(p=>`<option value="${htmlEscape(p)}">${htmlEscape(p)}</option>`).join('');
  select.value=people.includes(selected)?selected:'all';window.person=select.value;
 }
-function resetPendingFilters(){window.person='all';$('pending-search').value='';$('pending-priority').value='all';$('pending-status').value='all';if($('pending-sort'))$('pending-sort').value='person';renderPending()}
+function resetPendingFilters(){window.person='all';$('pending-search').value='';$('pending-priority').value='all';$('pending-status').value='all';if($('pending-person'))$('pending-person').value='all';if($('pending-sort'))$('pending-sort').value='person';renderPending();saveViewFilters('pending')}
 function resetCenterFilters(){
  $('center-search').value='';$('center-category').value='all';$('center-status').value='all';
  if($('center-date-filter'))$('center-date-filter').value='all';window.centerQuickFilter=null;renderCenter();
@@ -393,15 +397,21 @@ renderCenter();renderPending();renderClients();
 startFirebaseRest();
 function init(){
  window.person='all';
+ const accountLabelObserver=new MutationObserver(()=>{const account=$('firebase-auth-open');if(account)account.textContent='Cuenta'});
+ accountLabelObserver.observe(document.body,{childList:true,subtree:true});
  document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
   document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b===button);b.setAttribute('aria-current',b===button?'page':'false')});
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active-view',v.id===button.dataset.view+'-view'));
   $('page-title').textContent={center:'Control del centro',pending:'Seguimientos',clients:'Gestiones de clientes',directory:'Directorio'}[button.dataset.view];
   if(button.dataset.view==='directory')loadDirectoryFromFirebase();
  }));
- ['center-search','center-category','center-status'].forEach(id=>$(id)?.addEventListener('input',renderCenter));
- ['pending-search','pending-priority','pending-status','pending-sort'].forEach(id=>$(id)?.addEventListener('input',renderPending));
- renderCenter();renderPending();renderDirectory();
+ ['center-search','center-category','center-status'].forEach(id=>$(id)?.addEventListener('input',()=>{renderCenter();saveViewFilters('center')}));
+ ['pending-search','pending-priority','pending-status'].forEach(id=>$(id)?.addEventListener('input',()=>{renderPending();saveViewFilters('pending')}));
+ ['client-search','client-filter-client','client-priority','client-status'].forEach(id=>$(id)?.addEventListener('input',()=>{renderClients();saveViewFilters('clients')}));
+ document.addEventListener('change',event=>{if(event.target?.id==='pending-person'||event.target?.id==='pending-sort')saveViewFilters('pending')});
+ restoreViewFilters('center');restoreViewFilters('pending');restoreViewFilters('clients');
+ window.person=$('pending-person')?.value||'all';
+ renderCenter();renderPending();renderClients();renderDirectory();
 }
 
 // Allocate colors from the complete canonical list, consistently on every device.
