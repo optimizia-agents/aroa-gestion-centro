@@ -398,7 +398,7 @@ let dataLoadInFlight=null;
 async function refreshKURROFromFirebase(silent=false){
  if(!firebaseUser||editorBusy||directoryImportBusy||kurroRefreshInFlight||document.querySelector('.modal.open'))return false;
  kurroRefreshInFlight=true;
- try{let ok=await loadRemoteData();if($('directory-view')?.classList.contains('active-view')){if(!silent)directoryLoaded=false;ok=await loadDirectoryFromFirebase()&&ok}if(!silent&&ok)showSyncToast('Datos actualizados desde Firebase');return ok}finally{kurroRefreshInFlight=false}
+ try{let ok=await loadRemoteData();if(ok)await ensureEvidenceTestLine();if($('directory-view')?.classList.contains('active-view')){if(!silent)directoryLoaded=false;ok=await loadDirectoryFromFirebase()&&ok}if(!silent&&ok)showSyncToast('Datos actualizados desde Firebase');return ok}finally{kurroRefreshInFlight=false}
 }
 try{init();ensureClientControls();ensurePendingControls()}catch(error){console.error('No se pudo preparar una vista inicial',error)}
 $('pending-person').addEventListener('change',event=>{window.person=event.target.value;renderPending()});
