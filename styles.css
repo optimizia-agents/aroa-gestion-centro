@@ -22,6 +22,38 @@
 #pending-view .table-wrap th:first-child,#clients-view .table-wrap th:first-child{min-width:100px}
 #pending-view .table-wrap th:last-child,#clients-view .table-wrap th:last-child{min-width:76px}
 body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9634}
+.toolbar-label{display:block;flex:0 0 auto;color:#557078;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}.toolbar-label-sort{margin-left:8px}.filter-summary{display:block;margin-top:4px;color:#6f878c;font-size:12px;line-height:1.4;font-weight:500}.app-shell .panel-heading>div:first-child{min-width:0}
+.app-shell .table-wrap thead th{position:sticky;top:0;z-index:2}.app-shell .table-wrap{scroll-behavior:smooth}
+.app-shell #pending-table tr.group-colored td,.app-shell #client-table tr.group-colored td{background:color-mix(in srgb,var(--group-bg) 34%,white)}
+@media(max-width:620px){
+ .app-shell #pending-view .table-wrap table,.app-shell #clients-view .table-wrap table,.app-shell #directory-view .table-wrap table{display:block;min-width:0;width:100%!important}
+ .app-shell #pending-view .table-wrap thead,.app-shell #clients-view .table-wrap thead,.app-shell #directory-view .table-wrap thead{display:none}
+ .app-shell #pending-view .table-wrap tbody,.app-shell #clients-view .table-wrap tbody,.app-shell #directory-view .table-wrap tbody{display:block;width:100%}
+ .app-shell #pending-view .table-wrap tr,.app-shell #clients-view .table-wrap tr,.app-shell #directory-view .table-wrap tr{display:block;width:100%;padding:14px 16px;border-top:1px solid #edf2f1}
+ .app-shell #pending-view .table-wrap td,.app-shell #clients-view .table-wrap td,.app-shell #directory-view .table-wrap td{display:block;width:100%;min-width:0!important;padding:4px 0;border:0;background:transparent!important;font-size:14px;line-height:1.45}
+ .app-shell #pending-view .table-wrap td:before,.app-shell #clients-view .table-wrap td:before,.app-shell #directory-view .table-wrap td:before{display:block;margin:8px 0 3px;color:#7a969b;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+ .app-shell #pending-view .table-wrap td:nth-child(1):before,.app-shell #clients-view .table-wrap td:nth-child(1):before{content:'Estado'}
+ .app-shell #pending-view .table-wrap td:nth-child(2):before{content:'Seguimiento'}
+ .app-shell #pending-view .table-wrap td:nth-child(3):before{content:'Persona o empresa'}
+ .app-shell #pending-view .table-wrap td:nth-child(4):before{content:'Prioridad'}
+ .app-shell #pending-view .table-wrap td:nth-child(5):before{content:'Fecha objetivo'}
+ .app-shell #pending-view .table-wrap td:nth-child(6):before{content:'Última actualización'}
+ .app-shell #pending-view .table-wrap td:nth-child(7):before{content:'Comentarios'}
+ .app-shell #pending-view .table-wrap td:nth-child(8):before,.app-shell #clients-view .table-wrap td:nth-child(9):before,.app-shell #directory-view .table-wrap td:nth-child(10):before{content:'Acciones'}
+ .app-shell #clients-view .table-wrap td:nth-child(2):before{content:'Cliente'}
+ .app-shell #clients-view .table-wrap td:nth-child(3):before{content:'Contacto'}
+ .app-shell #clients-view .table-wrap td:nth-child(4):before{content:'Gestión'}
+ .app-shell #clients-view .table-wrap td:nth-child(5):before{content:'Prioridad'}
+ .app-shell #clients-view .table-wrap td:nth-child(6):before{content:'Fecha objetivo'}
+ .app-shell #clients-view .table-wrap td:nth-child(7):before{content:'Última actualización'}
+ .app-shell #clients-view .table-wrap td:nth-child(8):before{content:'Comentarios'}
+ .app-shell #directory-view .table-wrap td:nth-child(1):before{content:'Número de cliente'}.app-shell #directory-view .table-wrap td:nth-child(2):before{content:'Nombre'}.app-shell #directory-view .table-wrap td:nth-child(3):before{content:'CIF / NIF'}.app-shell #directory-view .table-wrap td:nth-child(4):before{content:'Teléfono'}.app-shell #directory-view .table-wrap td:nth-child(5):before{content:'Ciudad'}.app-shell #directory-view .table-wrap td:nth-child(6):before{content:'Código postal'}.app-shell #directory-view .table-wrap td:nth-child(7):before{content:'Planta'}.app-shell #directory-view .table-wrap td:nth-child(8):before{content:'Dirección'}.app-shell #directory-view .table-wrap td:nth-child(9):before{content:'Comercial principal'}
+ .app-shell #pending-view .table-wrap tr.group-colored,.app-shell #clients-view .table-wrap tr.group-colored{border-left:4px solid var(--group-accent);background:color-mix(in srgb,var(--group-bg) 34%,white);border-radius:8px;margin:8px 0;padding-left:12px}
+ .app-shell #pending-view .table-wrap tr.group-colored td,.app-shell #clients-view .table-wrap tr.group-colored td{background:transparent!important}
+ .app-shell .toolbar-label{flex-basis:100%;margin:0}.app-shell .toolbar-label-sort{flex-basis:auto;margin-left:0}.app-shell #pending-clear-search,.app-shell #client-clear-search{width:100%}
+}
+@media(min-width:621px){#pending-clear-search,#client-clear-search{display:none!important}}
+#pending-view .toolbar #pending-sort{order:3}#pending-view .toolbar .toolbar-label-sort{order:2}#pending-view .toolbar #pending-clear-search{order:4}#pending-view .toolbar [data-pending-reset]{order:5}
 
 /* Shared presentation for every workspace and editor. */
 :root{--ui-ink:#183442;--ui-muted:#557078;--ui-line:#d9e7e3;--ui-action:#bd5234;--ui-canvas:#f3f7f6}
@@ -107,3 +139,11 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 }
 @media(max-width:900px){.app-shell .view{padding:24px}.app-shell .hero-row{align-items:flex-start;flex-direction:column}.app-shell .hero-row .primary{align-self:flex-start}}
 @media(max-width:620px){.app-shell .view{padding:22px 14px 32px}.app-shell .hero-row h2{font-size:25px}.app-shell .hero-row .primary{width:100%}.app-shell .toolbar{padding:12px}.app-shell .toolbar select{flex-basis:calc(50% - 10px)}.app-shell .toolbar .secondary{width:100%;margin:0}.app-shell .panel-heading{padding:16px}.modal .modal-card{padding:18px}.modal .modal-actions{flex-wrap:wrap}.modal .modal-actions .primary{width:auto;flex:1}.app-shell .sidebar nav{flex-wrap:wrap}.app-shell .nav-item{flex:1 1 45%}.app-shell .topbar{height:auto;min-height:88px;flex-wrap:wrap;gap:12px}.app-shell .top-actions{flex-wrap:wrap}}
+@media(max-width:620px){
+ #pending-view .table-wrap table,#clients-view .table-wrap table,#directory-view .table-wrap table{display:block!important;width:100%!important;min-width:0!important}
+ #pending-view .table-wrap thead,#clients-view .table-wrap thead,#directory-view .table-wrap thead{display:none!important}
+ #pending-view .table-wrap tbody,#clients-view .table-wrap tbody,#directory-view .table-wrap tbody{display:block!important;width:100%!important}
+ #pending-view .table-wrap tr,#clients-view .table-wrap tr,#directory-view .table-wrap tr{display:block!important;width:100%!important}
+ #pending-view .table-wrap td,#clients-view .table-wrap td,#directory-view .table-wrap td{display:block!important;width:100%!important;min-width:0!important;padding:4px 0!important;border:0!important}
+ #pending-view .table-wrap td:before,#clients-view .table-wrap td:before,#directory-view .table-wrap td:before{display:block!important}
+}
