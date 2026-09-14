@@ -22,3 +22,47 @@
 #pending-view .table-wrap th:first-child,#clients-view .table-wrap th:first-child{min-width:100px}
 #pending-view .table-wrap th:last-child,#clients-view .table-wrap th:last-child{min-width:76px}
 body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9634}
+
+/* Shared presentation for every workspace and editor. */
+.app-shell .view{padding:28px 32px 40px}
+.app-shell .hero-row{align-items:center;gap:24px;margin-bottom:24px}
+.app-shell .hero-row h2{font-size:28px;line-height:1.25;letter-spacing:-.02em;margin:0 0 6px}
+.app-shell .hero-row p{font-size:14px;line-height:1.5;color:#557078}
+.app-shell button,.modal button{font-family:inherit}
+.app-shell .primary,.modal .primary,.app-shell .secondary,.modal .secondary,.modal .danger-button{min-height:44px;padding:10px 16px;border-radius:9px;font-size:13px;font-weight:700;line-height:1.4;box-shadow:none}
+.app-shell .hero-row .primary{flex-shrink:0}
+.app-shell .toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:20px;padding:16px;background:#fff;border:1px solid #d9e7e3;border-radius:12px}
+.app-shell .toolbar .search{flex:1 1 100%;min-width:0;min-height:44px;border-radius:9px;background:#f8fbfa}
+.app-shell .toolbar .search input{min-width:0;font-size:14px;padding:11px 8px}
+.app-shell .toolbar select{flex:1 1 150px;min-width:0;min-height:44px;padding:10px 12px;border-radius:9px;font-size:13px;max-width:100%}
+.app-shell .toolbar [hidden]{display:none!important}
+.app-shell .toolbar .secondary{margin-left:auto;white-space:nowrap}
+.app-shell .panel{border:1px solid #d9e7e3;border-radius:12px;box-shadow:none}
+.app-shell .panel-heading{min-height:68px;align-items:center;padding:18px 20px;gap:16px}
+.app-shell .panel-heading h3{font-size:16px;line-height:1.4;margin:0}
+.app-shell .panel-heading p{font-size:12px;line-height:1.5;color:#557078}
+.app-shell .count-pill{font-size:12px;white-space:nowrap;padding:5px 10px}
+.app-shell .table-wrap th{font-size:11px;line-height:1.4;letter-spacing:.04em;padding:14px 12px;color:#557078;background:#f8fbfa;overflow-wrap:normal;word-break:normal;white-space:nowrap}
+.app-shell .table-wrap td{font-size:13px;line-height:1.5;padding:14px 12px;vertical-align:top}
+.app-shell #directory-table th{white-space:normal}
+.app-shell .table-wrap .edit-btn{min-height:36px;padding:8px 12px;border:1px solid #bdd7d0;border-radius:8px;background:#f4faf8;color:#225663;font-size:12px;font-weight:700;line-height:1.4;white-space:nowrap}
+.app-shell .status,.app-shell .priority{font-size:11px;line-height:1.4;padding:5px 8px;border-radius:7px;white-space:nowrap}
+.app-shell .group-label{font-size:13px;line-height:1.4;border-radius:7px}
+.modal .modal-card{width:min(720px,100%);padding:24px;border-radius:14px}
+.modal .directory-detail-card{width:min(900px,100%)}
+.modal .modal-heading h2{font-size:24px;line-height:1.3}
+.modal .editor-grid{gap:16px}
+.modal .editor-grid input,.modal .editor-grid select,.modal .editor-grid textarea{min-height:44px;border-radius:9px;font-size:14px;line-height:1.5}
+.modal .editor-grid textarea{min-height:108px}
+.modal .modal-actions{padding-top:20px;border-top:1px solid #d9e7e3;margin-top:24px;align-items:center}
+@media(max-width:620px){
+ .app-shell .table-wrap table{display:table;min-width:1000px}
+ .app-shell .table-wrap thead{display:table-header-group}
+ .app-shell .table-wrap tbody{display:table-row-group;width:auto}
+ .app-shell .table-wrap tr{display:table-row;width:auto;padding:0}
+ .app-shell .table-wrap td{display:table-cell;width:auto;border-top:1px solid #edf2f1}
+ .app-shell .table-wrap td:before{display:none;content:none}
+ .app-shell .table-wrap td:first-child{font-size:13px}
+}
+@media(max-width:900px){.app-shell .view{padding:24px}.app-shell .hero-row{align-items:flex-start;flex-direction:column}.app-shell .hero-row .primary{align-self:flex-start}}
+@media(max-width:620px){.app-shell .view{padding:22px 14px 32px}.app-shell .hero-row h2{font-size:25px}.app-shell .hero-row .primary{width:100%}.app-shell .toolbar{padding:12px}.app-shell .toolbar select{flex-basis:calc(50% - 10px)}.app-shell .toolbar .secondary{width:100%;margin:0}.app-shell .panel-heading{padding:16px}.modal .modal-card{padding:18px}.modal .modal-actions{flex-wrap:wrap}.modal .modal-actions .primary{width:auto;flex:1}.app-shell .sidebar nav{flex-wrap:wrap}.app-shell .nav-item{flex:1 1 45%}.app-shell .topbar{height:auto;min-height:88px;flex-wrap:wrap;gap:12px}.app-shell .top-actions{flex-wrap:wrap}}
