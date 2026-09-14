@@ -24,6 +24,42 @@
 body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9634}
 
 /* Shared presentation for every workspace and editor. */
+:root{--ui-ink:#183442;--ui-muted:#557078;--ui-line:#d9e7e3;--ui-action:#bd5234;--ui-canvas:#f3f7f6}
+.app-shell .main{background:var(--ui-canvas)}
+.app-shell .topbar{height:auto;min-height:88px;gap:16px;flex-wrap:wrap;padding:20px 32px}
+.app-shell .topbar .eyebrow{font-size:12px;letter-spacing:.12em;line-height:1.5}
+.app-shell .top-actions{gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.app-shell .refresh-button{min-height:36px;border-radius:8px;font-size:12px}
+.app-shell .sidebar{box-shadow:none}
+.app-shell .nav-item{min-height:48px;font-size:14px;line-height:1.4}
+.app-shell .nav-item:not(.active){box-shadow:none}
+.app-shell .nav-item.active{box-shadow:inset 3px 0 #f4c95d;background:#24576b}
+.app-shell .metric{border-radius:12px;box-shadow:none;transform:none}
+.app-shell #center-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.app-shell .metric-label{color:var(--ui-muted);font-size:12px}
+.app-shell .metric-note{line-height:1.5}
+.app-shell .primary,.modal .primary{background:var(--ui-action);color:#fff}
+.app-shell .primary:hover,.modal .primary:hover{background:#a8442a}
+.app-shell #directory-view .toolbar .search{flex:1 1 260px}
+.app-shell .table-wrap{scrollbar-width:thin;scrollbar-color:#b0c7c1 #f3f7f6}
+.app-shell .table-wrap:focus-visible{outline:3px solid #8bb7aa;outline-offset:-3px}
+.app-shell #pending-table tr.group-colored td,.app-shell #client-table tr.group-colored td{background:color-mix(in srgb,var(--group-bg) 50%,white)}
+.app-shell #pending-table tr.group-colored:hover td,.app-shell #client-table tr.group-colored:hover td{background:color-mix(in srgb,var(--group-bg) 75%,white)!important}
+.app-shell .table-wrap .priority{background:#f0f3f4;color:#52626a}
+.app-shell .table-wrap .priority.priority-high{background:#fff0d4;color:#805719}
+.app-shell .empty{padding:36px 24px;line-height:1.6;color:var(--ui-muted)}
+.app-shell .directory-pagination{padding:16px 0;flex-wrap:wrap}
+.modal .modal-heading{gap:16px;margin-bottom:20px}
+.modal .pending-editor-note{font-size:14px;line-height:1.6;color:var(--ui-muted);margin:0 0 20px}
+.modal .modal-close{flex-shrink:0;min-width:36px;min-height:36px;border-radius:9px}
+.modal .add-option-button{min-width:44px;height:44px;border-radius:9px;border:1px solid #bdd7d0;background:#f4faf8;color:#225663}
+.modal .danger-button{border:1px solid #e2bdb6;background:#fff7f5;color:#a13f2c}
+.modal #firebase-password,.modal #firebase-auth input{width:100%;min-height:44px;border:1px solid var(--ui-line);border-radius:9px;padding:10px 12px;font:inherit}
+.modal #firebase-auth input:disabled{background:#f3f7f6;color:var(--ui-muted)}
+.modal#firebase-auth .editor-grid{grid-template-columns:1fr}
+.app-shell .data-alert{margin-left:32px;margin-right:32px}
+@media(max-width:1100px){.app-shell .top-actions{justify-content:flex-start}.app-shell .sync-time{display:none}}
+@media(max-width:620px){.app-shell .topbar{padding:16px}.app-shell .top-actions{gap:8px}.app-shell .top-actions .avatar{display:none}.app-shell .data-alert{margin-left:14px;margin-right:14px}.app-shell .metric{padding:14px}.app-shell .metric-value{font-size:24px}.app-shell #directory-view .toolbar .search{flex-basis:100%}}
 .app-shell .view{padding:28px 32px 40px}
 .app-shell .hero-row{align-items:center;gap:24px;margin-bottom:24px}
 .app-shell .hero-row h2{font-size:28px;line-height:1.25;letter-spacing:-.02em;margin:0 0 6px}
@@ -34,7 +70,7 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 .app-shell .toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:20px;padding:16px;background:#fff;border:1px solid #d9e7e3;border-radius:12px}
 .app-shell .toolbar .search{flex:1 1 100%;min-width:0;min-height:44px;border-radius:9px;background:#f8fbfa}
 .app-shell .toolbar .search input{min-width:0;font-size:14px;padding:11px 8px}
-.app-shell .toolbar select{flex:1 1 150px;min-width:0;min-height:44px;padding:10px 12px;border-radius:9px;font-size:13px;max-width:100%}
+.app-shell .toolbar select{flex:1 1 190px;min-width:0;min-height:44px;padding:10px 12px;border-radius:9px;font-size:13px;max-width:100%}
 .app-shell .toolbar [hidden]{display:none!important}
 .app-shell .toolbar .secondary{margin-left:auto;white-space:nowrap}
 .app-shell .panel{border:1px solid #d9e7e3;border-radius:12px;box-shadow:none}
@@ -54,7 +90,12 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 .modal .editor-grid{gap:16px}
 .modal .editor-grid input,.modal .editor-grid select,.modal .editor-grid textarea{min-height:44px;border-radius:9px;font-size:14px;line-height:1.5}
 .modal .editor-grid textarea{min-height:108px}
-.modal .modal-actions{padding-top:20px;border-top:1px solid #d9e7e3;margin-top:24px;align-items:center}
+.modal .modal-actions{position:sticky;bottom:-24px;z-index:2;padding:16px 0 24px;background:#fff;border-top:1px solid #d9e7e3;margin-top:24px;margin-bottom:-24px;align-items:center}
+.app-shell #clients-table td:nth-child(2),.app-shell #clients-table td:nth-child(3){min-width:130px}
+.app-shell #clients-table td:nth-child(4),.app-shell #clients-table td:nth-child(8){min-width:180px}
+.app-shell #pending-view td:nth-child(2),.app-shell #pending-view td:nth-child(7){min-width:180px}
+.app-shell .group-label{overflow-wrap:normal;word-break:normal}
+@media(max-width:620px){.app-shell .toolbar select{flex-basis:100%!important}.modal .modal-actions{bottom:-18px;margin-bottom:-18px;padding-bottom:18px}}
 @media(max-width:620px){
  .app-shell .table-wrap table{display:table;min-width:1000px}
  .app-shell .table-wrap thead{display:table-header-group}
