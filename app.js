@@ -410,6 +410,7 @@ function init(){
  ['client-search','client-filter-client','client-priority','client-status'].forEach(id=>$(id)?.addEventListener('input',()=>{renderClients();saveViewFilters('clients')}));
  document.addEventListener('change',event=>{if(event.target?.id==='pending-person'||event.target?.id==='pending-sort')saveViewFilters('pending')});
  restoreViewFilters('center');restoreViewFilters('pending');restoreViewFilters('clients');
+ $('pending-status').value='all';
  window.person=$('pending-person')?.value||'all';
  renderCenter();renderPending();renderClients();renderDirectory();
 }
