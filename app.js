@@ -490,6 +490,7 @@ async function commitEditor(kind,index,changes,modalId,close,remove=false){
  const modal=$(modalId);
  if(!firebaseUser||!appRevision){editorMessage(modal,'Actualiza los datos de Firebase antes de guardar.');return}
  const rows={center:centerRows,pending:pendingRows,clients:clientRows}[kind];
+ const oldEvidence=kind==='center'&&index>=0?rows[index]?.evidence:null;
  if(index>=0&&!rows[index]){editorMessage(modal,'Este registro ya no está disponible.');return}
  const payload=structuredClone(appDocument);
  if(kind==='center'&&window.pendingEvidenceMetadata)changes.evidence=window.pendingEvidenceMetadata;
@@ -517,6 +518,7 @@ async function commitEditor(kind,index,changes,modalId,close,remove=false){
   }
   uncertainSave=payload;uncertainIntent=intent;
   const confirmed=await writeDocument('appState','main',payload,revision);
+  if(oldEvidence&&changes.evidence&&oldEvidence.path!==changes.evidence.path)deleteEvidence(oldEvidence).catch(()=>{});
   uncertainSave=null;applyConfirmedDocument(confirmed);setEditorBusy(modal,false);modal.dataset.dirty="false";close();showSyncToast(remove?'Registro eliminado':'Cambios guardados');
  }catch(error){
   if(error.message==='CONFLICT')uncertainSave=null;
