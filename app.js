@@ -320,7 +320,7 @@ separateCenterFilters();
 // Conserva la categoría elegida aunque la vista se redibuje al sincronizar o filtrar.
 
 document.querySelector('#pending-metrics')?.remove();
-function ensurePendingControls(){const view=$('pending-view'),toolbar=view?.querySelector('.toolbar');if(!view||!toolbar)return;const peopleTabs=$('people-tabs');if(peopleTabs){peopleTabs.hidden=true;peopleTabs.setAttribute('aria-hidden','true');peopleTabs.innerHTML=''}let person=$('pending-person');if(!person){person=document.createElement('select');person.id='pending-person';person.setAttribute('aria-label','Persona o empresa');toolbar.insertBefore(person,toolbar.querySelector('#pending-priority')||null);person.addEventListener('change',event=>{window.person=event.target.value;renderPending()})}const status=$('pending-status');if(status){const selectedStatus=status.value||'PENDIENTE';status.innerHTML='<option value="all">Todos los estados</option><option value="PENDIENTE">Pendientes</option><option value="EN PROCESO">En proceso</option><option value="REALIZADO">Realizadas</option>';status.value=selectedStatus;status.setAttribute('aria-label','Estado')}view.querySelectorAll('.panel-heading p').forEach(node=>{if(/^Fuentes:/i.test(node.textContent||''))node.remove()});if(!toolbar.querySelector('[data-pending-reset]')){const button=document.createElement('button');button.type='button';button.className='secondary filter-reset';button.dataset.pendingReset='true';button.textContent='Limpiar filtros';button.addEventListener('click',resetPendingFilters);toolbar.appendChild(button)}}
+function ensurePendingControls(){const view=$('pending-view'),toolbar=view?.querySelector('.toolbar');if(!view||!toolbar)return;const peopleTabs=$('people-tabs');if(peopleTabs){peopleTabs.hidden=true;peopleTabs.setAttribute('aria-hidden','true');peopleTabs.innerHTML=''}let person=$('pending-person');if(!person){person=document.createElement('select');person.id='pending-person';person.setAttribute('aria-label','Persona o empresa');toolbar.insertBefore(person,toolbar.querySelector('#pending-priority')||null);person.addEventListener('change',event=>{window.person=event.target.value;renderPending()})}let sort=$('pending-sort');if(!sort){sort=document.createElement('select');sort.id='pending-sort';sort.setAttribute('aria-label','Ordenar seguimientos');sort.innerHTML='<option value="person">Ordenar: Persona</option><option value="priority">Ordenar: Prioridad</option><option value="date">Ordenar: Fecha objetivo</option>';toolbar.insertBefore(sort,toolbar.querySelector('[data-pending-reset]')||null);sort.addEventListener('change',renderPending)}const status=$('pending-status');if(status){const selectedStatus=status.value||'PENDIENTE';status.innerHTML='<option value="all">Todos los estados</option><option value="PENDIENTE">Pendientes</option><option value="EN PROCESO">En proceso</option><option value="REALIZADO">Realizadas</option>';status.value=selectedStatus;status.setAttribute('aria-label','Estado')}view.querySelectorAll('.panel-heading p').forEach(node=>{if(/^Fuentes:/i.test(node.textContent||''))node.remove()});if(!toolbar.querySelector('[data-pending-reset]')){const button=document.createElement('button');button.type='button';button.className='secondary filter-reset';button.dataset.pendingReset='true';button.textContent='Limpiar filtros';button.addEventListener('click',resetPendingFilters);toolbar.appendChild(button)}}
 
 
 
@@ -337,7 +337,10 @@ function renderPending(){
   const priority=$('pending-priority')?.value||'all';
   const state=$('pending-status')?.value||'all';
   window.person=person;
-  const rows=pendingRows.filter(r=>(person==='all'||String(r.person||'')===person)&&(priority==='all'||r.priority===priority)&&(state==='all'||r.status===state)&&[r.person,r.text,r.priority,r.comments].join(' ').toLocaleLowerCase('es').includes(q));
+  const rows=pendingRows.filter(r=>(person==='all'||String(r.person||'')===person)&&(priority==='all'||r.priority===priority)&&(state==='all'||r.status===state)&&[r.person,r.text,r.priority,r.date,r.comments].join(' ').toLocaleLowerCase('es').includes(q));
+  const sortMode=$('pending-sort')?.value||'person';
+  const priorityRank={ALTA:0,NORMAL:1};
+  rows.sort((a,b)=>{if(sortMode==='priority')return (priorityRank[a.priority]??9)-(priorityRank[b.priority]??9)||String(a.person||'').localeCompare(String(b.person||''),'es');if(sortMode==='date'){const parse=v=>{const m=String(v||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);return m?new Date(`${m[3]}-${m[2]}-${m[1]}`).getTime():Number.MAX_SAFE_INTEGER};return parse(a.date)-parse(b.date)||String(a.person||'').localeCompare(String(b.person||''),'es')}return String(a.person||'').localeCompare(String(b.person||''),'es')||String(a.date||'').localeCompare(String(b.date||''),'es')});
   table.innerHTML=rows.length?rows.map(r=>{
     const i=pendingRows.indexOf(r);
     const status=r.status==='REALIZADO'?'<span class="status done">REALIZADO</span>':r.status==='EN PROCESO'?'<span class="status process">EN PROCESO</span>':'<span class="status open"><span class="status-dot"></span>PENDIENTE</span>';
@@ -354,7 +357,7 @@ function refreshPendingPersonSelect(){
  select.innerHTML='<option value="all">Todas las personas</option>'+people.map(p=>`<option value="${htmlEscape(p)}">${htmlEscape(p)}</option>`).join('');
  select.value=people.includes(selected)?selected:'all';window.person=select.value;
 }
-function resetPendingFilters(){window.person='all';$('pending-search').value='';$('pending-priority').value='all';$('pending-status').value='all';renderPending()}
+function resetPendingFilters(){window.person='all';$('pending-search').value='';$('pending-priority').value='all';$('pending-status').value='all';if($('pending-sort'))$('pending-sort').value='person';renderPending()}
 function resetCenterFilters(){
  $('center-search').value='';$('center-category').value='all';$('center-status').value='all';
  if($('center-date-filter'))$('center-date-filter').value='all';window.centerQuickFilter=null;renderCenter();
@@ -395,7 +398,7 @@ function init(){
   if(button.dataset.view==='directory')loadDirectoryFromFirebase();
  }));
  ['center-search','center-category','center-status'].forEach(id=>$(id)?.addEventListener('input',renderCenter));
- ['pending-search','pending-priority','pending-status'].forEach(id=>$(id)?.addEventListener('input',renderPending));
+ ['pending-search','pending-priority','pending-status','pending-sort'].forEach(id=>$(id)?.addEventListener('input',renderPending));
  renderCenter();renderPending();renderDirectory();
 }
 
