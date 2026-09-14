@@ -416,6 +416,7 @@ function init(){
  document.addEventListener('change',event=>{if(event.target?.id==='pending-person'||event.target?.id==='pending-sort')saveViewFilters('pending')});
  ensureEvidenceControls();
  document.addEventListener('click',()=>{if($('center-editor')?.classList.contains('open')){if(centerEditorIndex<0)window.pendingEvidenceMetadata=null;showEvidence(centerEditorIndex>=0?centerRows[centerEditorIndex]?.evidence:null)}});
+ document.addEventListener('click',async event=>{const link=event.target?.closest?.('#edit-evidence-view');if(!link||link.hidden)return;event.preventDefault();try{const url=new URL(link.href);const prefix=`/v0/b/${FIREBASE_CONFIG.storageBucket}/o/`;if(url.hostname!=='firebasestorage.googleapis.com'||!url.pathname.startsWith(prefix))throw new Error();const response=await fetch(url.href,{headers:{Authorization:'Bearer '+restIdToken}});if(!response.ok)throw new Error();const blob=await response.blob();const objectUrl=URL.createObjectURL(blob);window.open(objectUrl,'_blank','noopener');setTimeout(()=>URL.revokeObjectURL(objectUrl),60000)}catch(error){showSyncToast('No se ha podido abrir la evidencia. Comprueba la sesión.')}});
  restoreViewFilters('center');restoreViewFilters('pending');restoreViewFilters('clients');
  $('pending-status').value='all';
  window.person=$('pending-person')?.value||'all';
