@@ -50,7 +50,7 @@ renderCenter();renderPending();
 
 // La próxima revisión se calcula por defecto, pero admite una fecha manual.
 $('edit-next')?.addEventListener('input',()=>{$('edit-next').dataset.manual='true'});
-const saveButton=$('save-center-editor');if(saveButton){const replacement=saveButton.cloneNode(true);saveButton.replaceWith(replacement);replacement.addEventListener('click',async()=>{if(pendingEvidenceFile){try{window.pendingEvidenceMetadata=await uploadEvidence(pendingEvidenceFile,centerEditorIndex>=0?(centerRows[centerEditorIndex]?.id||crypto.randomUUID()):crypto.randomUUID());pendingEvidenceFile=null}catch(error){editorMessage($('center-editor'),error.message);return}}saveCenterEditorFlexible()})}
+const saveButton=$('save-center-editor');if(saveButton){const replacement=saveButton.cloneNode(true);saveButton.replaceWith(replacement);replacement.addEventListener('click',async()=>{if(pendingEvidenceFile){try{window.pendingEvidenceMetadata=await uploadEvidence(pendingEvidenceFile,centerEditorIndex>=0?(centerRows[centerEditorIndex]?.id||crypto.randomUUID()):crypto.randomUUID());pendingEvidenceFile=null}catch(error){editorMessage($('center-editor'),'El archivo no se ha podido subir todavía. Puedes guardar los cambios y volver a intentarlo después.');pendingEvidenceFile=null}}saveCenterEditorFlexible()})}
 function setCenterStatus(state){$('center-status').value=state;window.centerQuickFilter=null;renderCenter();if(typeof saveViewFilters==='function')saveViewFilters('center')}
 function setCenterDateFilter(kind){window.centerQuickFilter=kind==='all'?null:kind;renderCenter();if(typeof saveViewFilters==='function')saveViewFilters('center')}
 
