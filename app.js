@@ -142,7 +142,7 @@ function renderDirectory(){
   directoryPage=Math.min(directoryPage,pageCount);
   const start=(directoryPage-1)*DIRECTORY_PAGE_SIZE;
   const visibleRows=rows.slice(start,start+DIRECTORY_PAGE_SIZE);
-  body.innerHTML=visibleRows.length?visibleRows.map(row=>{const index=directoryRows.indexOf(row);const c=directoryCanonicalRow(row);return `<tr><td><strong>${htmlEscape(c[0])}</strong></td><td>${htmlEscape([c[4],c[5]].filter(Boolean).join(' '))}</td><td>${htmlEscape(c[27])}</td><td>${htmlEscape(c[10])}</td><td>${htmlEscape(c[9])}</td><td>${htmlEscape(c[8])}</td><td>${htmlEscape(c[3])}</td><td>${htmlEscape([c[6],c[7]].filter(Boolean).join(' '))}</td><td>${htmlEscape(c[17])}</td><td><button class="edit-btn directory-detail-button" data-directory-index="${index}">Ver ficha</button></td></tr>`}).join(''):`<tr><td colspan="10" class="empty">No hay clientes que coincidan con la búsqueda.</td></tr>`;
+  body.innerHTML=visibleRows.length?visibleRows.map(row=>{const index=directoryRows.indexOf(row);const c=directoryCanonicalRow(row);const clientNumber=String(c[0]||'').trim();return `<tr><td><div class="client-number-cell"><strong>${htmlEscape(clientNumber)}</strong>${clientNumber?`<button type="button" class="copy-client-button" data-copy-client="${htmlEscape(clientNumber)}" aria-label="Copiar número de cliente" title="Copiar número">⧉</button>`:''}</div></td><td>${htmlEscape([c[4],c[5]].filter(Boolean).join(' '))}</td><td>${htmlEscape(c[27])}</td><td>${htmlEscape(c[10])}</td><td>${htmlEscape(c[9])}</td><td>${htmlEscape(c[8])}</td><td>${htmlEscape(c[3])}</td><td>${htmlEscape([c[6],c[7]].filter(Boolean).join(' '))}</td><td>${htmlEscape(c[17])}</td><td><button class="edit-btn directory-detail-button" data-directory-index="${index}">Ver ficha</button></td></tr>`}).join(''):`<tr><td colspan="10" class="empty">No hay clientes que coincidan con la búsqueda.</td></tr>`;
   $('directory-count').textContent=query?`${rows.length} resultados`:`${rows.length} clientes`;
   const pagination=$('directory-pagination');
   if(pagination){
@@ -153,7 +153,9 @@ function renderDirectory(){
   if($('directory-source'))$('directory-source').textContent=directoryRows.length?`Directorio guardado en Firebase · ${directoryRows.length} clientes · solo lectura`:'Directorio guardado en Firebase · solo lectura';
   if($('directory-metrics'))$('directory-metrics').innerHTML=metric('Clientes cargados',directoryRows.length,'Directorio completo')+metric('Campos de búsqueda',directoryHeaders.length,'Se revisan todos')+metric('Resultados',rows.length,'Coincidencias actuales')+metric('Fuente','Firebase','Sin Google Sheets');
   document.querySelectorAll('.directory-detail-button').forEach(button=>button.addEventListener('click',()=>openDirectoryDetail(button.dataset.directoryIndex)));
+  document.querySelectorAll('.copy-client-button').forEach(button=>button.addEventListener('click',()=>copyClientNumber(button.dataset.copyClient)));
 }
+async function copyClientNumber(value){try{if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(value);else{const area=document.createElement('textarea');area.value=value;area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);area.select();document.execCommand('copy');area.remove()}showSyncToast('Número de cliente copiado')}catch(error){showSyncToast('No se ha podido copiar el número')}}
 async function loadDirectoryFromFirebase(){
  if(directoryImportBusy)return false;
  if(!firebaseUser)return false;
