@@ -494,7 +494,7 @@ async function loadRemoteData(){
   const doc=await readDocument('appState','main');if(!doc)throw new Error('Firebase no contiene el documento de datos.');
   if(appRevision!==revisionBefore||editorBusy||document.querySelector('#center-editor.open,#pending-editor.open,#client-editor.open'))return false;
   applyConfirmedDocument(doc);
-  const seen={}; const restored=centerRows.map(row=>{const meta=maintenanceMetaFor(row,seen);if(!meta)return row;const next={...row};if(!String(next.type||'').trim()&&meta[0])next.type=meta[0];if(!String(next.provider||'').trim()&&meta[1])next.provider=meta[1];return next});
+  const seen={}; const restored=centerRows.map(row=>{const meta=maintenanceMetaFor(row,seen);if(!meta)return row;const next={...row};if(!String(next.type||'').trim()&&meta[0])next.type=meta[0];if(next.type==='INTERNO')next.provider='';else if(!String(next.provider||'').trim()&&meta[1])next.provider=meta[1];return next});
   if(JSON.stringify(restored)!==JSON.stringify(centerRows)){const payload=structuredClone(appDocument);payload.center=restored;payload.updated=new Date().toISOString();payload.lastMutation=crypto.randomUUID();try{const confirmed=await writeDocument('appState','main',payload,appRevision);applyConfirmedDocument(confirmed)}catch(error){console.warn('No se pudieron restaurar los campos de mantenimiento',error)}}
   return true;
  }catch(error){clientsLoading=false;renderClients();markSyncFailure();setDataAlert('No se han podido actualizar los datos de Firebase. Se conserva la última lectura de esta sesión. Pulsa Actualizar para reintentarlo.');return false}
