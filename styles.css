@@ -159,17 +159,17 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 .status{border:1px solid currentColor}.status.open{border-color:#efc8b0}.status.process{border-color:#bfd1e7}.status.done{border-color:#b9dfcc}
 .edit-btn{border:1px solid #b9ded0;background:#f5fbf8;color:#2f7068;border-radius:8px;padding:8px 11px;font-weight:750;cursor:pointer}.edit-btn:hover{background:#e7f5f0}
 @media(min-width:901px){
- .app-shell .table-wrap th{font-size:12px;letter-spacing:.035em;padding-left:10px;padding-right:10px}
- .app-shell .table-wrap td{font-size:14px;padding-left:10px;padding-right:10px}
- .app-shell .status,.app-shell .priority{font-size:12px;padding:4px 7px}
- .app-shell .group-label{font-size:14px}
- .app-shell .toolbar .search input{font-size:15px}
- .app-shell .toolbar select{font-size:14px}
- .app-shell .panel-heading p,.app-shell .count-pill,.app-shell .metric-note,.app-shell .sidebar-note small{font-size:12px}
+ .app-shell .table-wrap th{font-size:13px;letter-spacing:.03em;padding-left:9px;padding-right:9px}
+ .app-shell .table-wrap td{font-size:15px;padding-left:9px;padding-right:9px}
+ .app-shell .status,.app-shell .priority{font-size:13px;padding:4px 6px}
+ .app-shell .group-label{font-size:15px}
+ .app-shell .toolbar .search input{font-size:16px}
+ .app-shell .toolbar select{font-size:15px}
+ .app-shell .panel-heading p,.app-shell .count-pill,.app-shell .metric-note,.app-shell .sidebar-note small{font-size:13px}
  .app-shell .top-actions,.app-shell .sync-time{font-size:14px}
- .modal .editor-grid label{font-size:14px}
- .modal .editor-grid input,.modal .editor-grid select,.modal .editor-grid textarea{font-size:15px}
- .modal .pending-editor-note{font-size:14px}
+ .modal .editor-grid label{font-size:15px}
+ .modal .editor-grid input,.modal .editor-grid select,.modal .editor-grid textarea{font-size:16px}
+ .modal .pending-editor-note{font-size:15px}
  .eyebrow{font-size:12px}
 }
 @media(max-width:620px){.topbar{padding:12px 14px;min-height:68px}.top-actions{flex-wrap:wrap;justify-content:flex-end}.top-actions .refresh-button{padding:7px 9px;font-size:11px}.view{padding-top:18px}.hero-row{gap:14px;margin-bottom:16px}.hero-row .primary{width:100%;padding:11px 14px}.toolbar{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px}.toolbar .search{grid-column:1/-1;width:100%}.toolbar select,.toolbar button{width:100%;min-width:0}.toolbar-reset{grid-column:1/-1}.panel-heading{padding:15px 14px 12px}.table-wrap tr{padding:13px 14px}}
