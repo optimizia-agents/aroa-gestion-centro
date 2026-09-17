@@ -34,7 +34,7 @@ function nextDate(date,frequency){const d=new Date(date+'T12:00:00');const f=(fr
 function formatDate(d){return d?`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`:''}
 function normalizeSheetDate(value){const s=String(value||'').trim();let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return`${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[3]}`;m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);return m?`${m[3].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[1]}`:s}
 function isOverdue(r){if(!r.next)return false;const p=r.next.split('/');const due=new Date(`${p[2]}-${p[1]}-${p[0]}T23:59:59`);return due<new Date()}
-function dueTone(r){if(!r.next)return '';const p=r.next.split('/');const due=new Date(`${p[2]}-${p[1]}-${p[0]}T23:59:59`);const days=Math.ceil((due-new Date())/86400000);return days<0?'row-overdue':days<=30?'row-soon':'row-ok'}
+function dueTone(r){if(!r.next)return r.status==='done'?'row-ok':'';const p=r.next.split('/');const due=new Date(`${p[2]}-${p[1]}-${p[0]}T23:59:59`);const days=Math.ceil((due-new Date())/86400000);return days<0?'row-overdue':days<=30?'row-soon':'row-ok'}
 function effectiveStatus(r){return isOverdue(r)&&r.status==='done'?'open':r.status}
 function sortValue(r,key){if(key==='category')return r.category;if(key==='last')return r.last?new Date(r.last.split('/').reverse().join('-')):new Date(0);if(key==='next')return r.next?new Date(r.next.split('/').reverse().join('-')):new Date(8640000000000000);if(key==='frequency')return r.frequency||'zzzz';if(key==='status')return r.status;return r.activity}
 setTimeout(()=>renderPending(),0);
