@@ -232,7 +232,7 @@ function resetClientFilters(){
 // Conserva la configuración de cada vista al navegar por la aplicación.
 const VIEW_FILTERS_KEY='kurro-view-filters-v2';
 const VIEW_FILTER_FIELDS={
-  center:['center-search','center-category'],
+  center:['center-search','center-category','center-evidence-filter'],
   pending:['pending-search','pending-person','pending-priority','pending-status','pending-sort'],
   clients:['client-search','client-filter-client','client-priority','client-status']
 };
@@ -384,8 +384,9 @@ function refreshPendingPersonSelect(){
 function resetPendingFilters(){window.person='all';$('pending-search').value='';$('pending-priority').value='all';$('pending-status').value='all';if($('pending-person'))$('pending-person').value='all';if($('pending-sort'))$('pending-sort').value='person';renderPending();saveViewFilters('pending')}
 function resetCenterFilters(){
  $('center-search').value='';$('center-category').value='all';$('center-status').value='all';
- if($('center-date-filter'))$('center-date-filter').value='all';window.centerQuickFilter=null;renderCenter();
+ if($('center-date-filter'))$('center-date-filter').value='all';if($('center-evidence-filter'))$('center-evidence-filter').value='all';window.centerQuickFilter=null;renderCenter();
 }
+function centerHasEvidence(row){const value=String(row.sharepointUrl||row.evidence?.url||'').trim();try{return new URL(value).protocol==='https:'}catch{return false}}
 function centerEvidenceLink(row){
  const value=String(row.sharepointUrl||row.evidence?.url||'').trim();
  const missing='<span class="center-evidence-link evidence-missing" role="img" aria-label="Sin evidencia" title="Sin evidencia">▤</span>';
@@ -399,8 +400,8 @@ function renderCenter(){
  select.innerHTML='<option value="all">Todas las categorías</option>'+cats.map(c=>`<option value="${htmlEscape(c)}">${htmlEscape(c)}</option>`).join('');
  select.value=cats.includes(category)?category:'all';
  const q=($('center-search')?.value||'').trim().toLocaleLowerCase('es');
- const state=$('center-status')?.value||'all',date=$('center-date-filter')?.value||'all';
- const rows=centerRows.filter(r=>(select.value==='all'||canonicalCategory(r.category)===select.value)&&(state==='all'||effectiveStatus(r)===state)&&[r.activity,r.category,r.frequency,r.last,r.next,r.owner,r.type,r.provider,r.action].join(' ').toLocaleLowerCase('es').includes(q)&&
+ const state=$('center-status')?.value||'all',date=$('center-date-filter')?.value||'all',evidence=$('center-evidence-filter')?.value||'all';
+ const rows=centerRows.filter(r=>(select.value==='all'||canonicalCategory(r.category)===select.value)&&(state==='all'||effectiveStatus(r)===state)&&(evidence==='all'||evidence==='with'&&centerHasEvidence(r)||evidence==='without'&&!centerHasEvidence(r))&&[r.activity,r.category,r.frequency,r.last,r.next,r.owner,r.type,r.provider,r.action].join(' ').toLocaleLowerCase('es').includes(q)&&
  (date==='all'||date==='overdue'&&isOverdue(r)||date==='soon'&&dueTone(r)==='row-soon'||date==='nodate'&&!r.next||date==='dated'&&!!r.next)).sort((a,b)=>{const av=sortValue(a,'next'),bv=sortValue(b,'next');return av>bv?1:av<bv?-1:0});
  $('center-table').innerHTML=rows.length?rows.map(r=>`<tr class="${dueTone(r)}"><td>${htmlEscape(r.activity)}</td><td>${htmlEscape(canonicalCategory(r.category))}</td><td>${htmlEscape(canonicalFrequency(r.frequency))}</td><td><span class="maintenance-pill ${String(r.type||'').toLowerCase()}">${htmlEscape(r.type==='EXTERNO'?'Externo':r.type==='INTERNO'?'Interno':'Sin indicar')}</span>${r.type==='EXTERNO'&&r.provider?`<small class="provider-name">${htmlEscape(canonicalProvider(r.provider))}</small>`:''}</td><td class="date">${htmlEscape(displayDate(r.last)||'Sin fecha')}</td><td class="date">${htmlEscape(displayDate(r.next)||'Sin fecha')}${isOverdue(r)?' <span class="overdue-label">VENCIDA</span>':''}</td><td>${htmlEscape(canonicalOwner(r.owner)||'Sin asignar')}</td><td>${statusTag(effectiveStatus(r))}</td><td>${htmlEscape(r.action||'Sin comentarios')}</td><td><button class="edit-btn" onclick="openCenterEditor(${centerRows.indexOf(r)})">Editar</button>${centerEvidenceLink(r)}</td></tr>`).join(''):'<tr><td colspan="10" class="empty">No hay resultados con estos filtros.</td></tr>';
  $('center-count').textContent=`${rows.length} registros`;
@@ -416,6 +417,7 @@ try{init();ensureClientControls();ensurePendingControls()}catch(error){console.e
 $('pending-person').addEventListener('change',event=>{window.person=event.target.value;renderPending()});
 $('client-filter-client').addEventListener('change',renderClients);
 $('center-date-filter').addEventListener('change',renderCenter);
+$('center-evidence-filter')?.addEventListener('change',()=>{renderCenter();saveViewFilters('center')});
 $('center-sort')?.remove();
 renderCenter();renderPending();renderClients();
 startFirebaseRest();

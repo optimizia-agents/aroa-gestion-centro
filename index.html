@@ -104,7 +104,12 @@
       #center-table .center-evidence-link:hover{background:#d5efdf}
       #center-table .center-evidence-link.evidence-missing{background:#fff0f0;border-color:#e7aaaa;color:#b53737;cursor:default}
     </style>
-  </head>
+      <style>
+      #center-view .toolbar{flex-wrap:wrap}
+      #center-view .toolbar .search{flex:1 1 100%}
+      #center-view .toolbar select{flex:1 1 160px;min-width:150px}
+    </style>
+</head>
   <body>
     <div class="app-shell">
       <aside class="sidebar">
@@ -127,7 +132,7 @@
         <section id="center-view" class="view active-view">
           <div class="hero-row"><div><h2>Control del centro</h2><p>Revisiones, mantenimiento y acciones abiertas en Fuenlabrada.</p></div><button class="primary" data-new-center onclick="openNewCenterEditor()">＋ Nueva acción</button></div>
           <div class="metric-grid" id="center-metrics"></div>
-          <div class="toolbar"><div class="search"><span>⌕</span><input id="center-search" placeholder="Buscar actividad, categoría o responsable" /></div><select id="center-category"><option value="all">Todas las categorías</option></select><select id="center-status" aria-label="Estado"><option value="all">Estado: Todos</option><option value="open">Estado: Pendientes</option><option value="process">Estado: En proceso</option><option value="done">Estado: Realizadas</option></select><select id="center-date-filter" onchange="setCenterDateFilter(this.value)" aria-label="Fecha"><option value="all">Fecha: Todas</option><option value="overdue">Fecha: Vencidas</option><option value="soon">Fecha: Próximas</option><option value="nodate">Fecha: Sin fecha</option></select><select id="center-sort" hidden aria-hidden="true"><option value="next">Próxima revisión</option></select><button type="button" class="secondary filter-reset" onclick="resetCenterFilters()">Limpiar filtros</button></div>
+          <div class="toolbar"><div class="search"><span>⌕</span><input id="center-search" placeholder="Buscar actividad, categoría o responsable" /></div><select id="center-category"><option value="all">Todas las categorías</option></select><select id="center-status" aria-label="Estado"><option value="all">Estado: Todos</option><option value="open">Estado: Pendientes</option><option value="process">Estado: En proceso</option><option value="done">Estado: Realizadas</option></select><select id="center-date-filter" onchange="setCenterDateFilter(this.value)" aria-label="Fecha"><option value="all">Fecha: Todas</option><option value="overdue">Fecha: Vencidas</option><option value="soon">Fecha: Próximas</option><option value="nodate">Fecha: Sin fecha</option></select><select id="center-evidence-filter" aria-label="Evidencia"><option value="all">Evidencia: Todas</option><option value="with">Con evidencia</option><option value="without">Sin evidencia</option></select><select id="center-sort" hidden aria-hidden="true"><option value="next">Próxima revisión</option></select><button type="button" class="secondary filter-reset" onclick="resetCenterFilters()">Limpiar filtros</button></div>
           <div class="panel"><div class="panel-heading"><div><h3>Registro maestro</h3><p>Fuente: Firebase</p></div><span class="count-pill" id="center-count"></span></div><div class="table-wrap" tabindex="0" role="region" aria-label="Tabla de registros. Desplaza lateralmente para ver todas las columnas."><table><thead><tr><th>Actividad</th><th>Categoría</th><th>Periodicidad</th><th>Mantenimiento</th><th>Última revisión</th><th>Próxima revisión</th><th>Responsable</th><th>Estado</th><th>Comentarios</th><th>Acciones</th></tr></thead><tbody id="center-table"></tbody></table></div></div>
         </section>
 
@@ -155,7 +160,7 @@
 <style>body.auth-locked .app-shell{visibility:hidden}body.auth-locked #firebase-auth{display:flex!important}body.auth-locked #firebase-auth-fallback{display:flex!important}body:has(#firebase-auth) #firebase-auth-fallback{display:none!important}.auth-fallback{position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;background:rgba(23,61,76,.38);padding:24px}.auth-fallback-card{width:min(100%,520px);background:#fff;border:1px solid #dce8e8;border-radius:18px;box-shadow:0 24px 60px rgba(26,64,77,.22);padding:30px;color:#173d4c}.auth-fallback-card h1{font-size:24px;margin:6px 0 12px}.auth-fallback-card p{color:#557078;line-height:1.5;margin:0 0 14px}.auth-fallback-card button{border:0;border-radius:9px;background:#ed7651;color:#fff;font-weight:700;padding:11px 16px;cursor:pointer}.auth-fallback-status{font-size:14px!important;background:#fff6ed;border:1px solid #f2d3b8;border-radius:9px;padding:12px;margin-top:18px!important}.sync-time{font-size:11px;color:#81969a;white-space:nowrap}.refresh-button.busy{opacity:.65;pointer-events:none}@media(max-width:900px){.sync-time{display:none}}@media(max-width:620px){.top-actions{gap:7px}.top-actions .refresh-button{padding:8px 9px;font-size:11px}}</style>
 <script>document.body.classList.add('auth-locked')</script>
 <div id="firebase-auth-fallback" class="auth-fallback" role="status" aria-live="polite"><div class="auth-fallback-card"><p class="eyebrow">ACCESO PRIVADO</p><h1>Entrar en Aroa Gestión</h1><p>La pantalla de acceso está tardando en cargar. Tus datos están protegidos y no se ha modificado nada.</p><p class="auth-fallback-status">Pulsa «Reintentar carga» para volver a preparar la aplicación.</p><button type="button" onclick="window.location.reload()">Reintentar carga</button></div></div>
-<script src="app.js?v=20260917-contacto-editable-dos-columnas"></script>
+<script src="app.js?v=20260917-filtro-evidencia"></script>
 <script async src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
   </body>
