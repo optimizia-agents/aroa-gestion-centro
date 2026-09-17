@@ -35,7 +35,7 @@ function formatDate(d){return d?`${String(d.getDate()).padStart(2,'0')}/${String
 function normalizeSheetDate(value){const s=String(value||'').trim();let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return`${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[3]}`;m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);return m?`${m[3].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[1]}`:s}
 function isOverdue(r){if(!r.next)return false;const p=r.next.split('/');const due=new Date(`${p[2]}-${p[1]}-${p[0]}T23:59:59`);return due<new Date()}
 function dueTone(r){if(!r.next)return r.status==='done'?'row-ok':'';const p=r.next.split('/');const due=new Date(`${p[2]}-${p[1]}-${p[0]}T23:59:59`);const days=Math.ceil((due-new Date())/86400000);return days<0?'row-overdue':days<=30?'row-soon':'row-ok'}
-function effectiveStatus(r){return isOverdue(r)&&r.status==='done'?'open':r.status}
+function effectiveStatus(r){return r.status}
 function sortValue(r,key){if(key==='category')return r.category;if(key==='last')return r.last?new Date(r.last.split('/').reverse().join('-')):new Date(0);if(key==='next')return r.next?new Date(r.next.split('/').reverse().join('-')):new Date(8640000000000000);if(key==='frequency')return r.frequency||'zzzz';if(key==='status')return r.status;return r.activity}
 setTimeout(()=>renderPending(),0);
 
@@ -539,7 +539,7 @@ async function saveCenterEditorFlexible(){
  const frequency=$('edit-frequency').value==='custom'?$('edit-frequency-custom').value.trim():$('edit-frequency').value;
  const providerValue=$('edit-provider')?.value.trim()||'';const changes={activity:$('edit-activity').value.trim(),category:$('edit-category').value.trim()||'Otros',frequency,last:$('edit-last').value?dateFromEditor($('edit-last').value):'',next:$('edit-next').value?dateFromEditor($('edit-next').value):'',owner:$('edit-owner').value.trim(),type:$('edit-type')?.value||'INTERNO',provider:providerValue==='Ninguno'?'':providerValue,action:$('edit-action').value,status:$('edit-status').value};
  if(!changes.activity){editorMessage($('center-editor'),'Escribe una actividad.');return}
- if(changes.status==='done'&&(!changes.last||isOverdue(changes))){editorMessage($('center-editor'),'Para marcarla como realizada indica una fecha válida y revisa el próximo vencimiento.');return}
+ if(changes.status==='done'&&!changes.last){editorMessage($('center-editor'),'Para marcarla como realizada indica la fecha de la última revisión.');return}
  return commitEditor('center',centerEditorIndex,changes,'center-editor',closeCenterEditor);
 }
 async function savePendingEditor(){
