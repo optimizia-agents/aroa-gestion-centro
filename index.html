@@ -82,14 +82,18 @@
       @media(min-width:901px){#directory-table{width:100%!important;min-width:980px!important;table-layout:fixed!important}#directory-table th:nth-child(1),#directory-table td:nth-child(1){width:8%!important}#directory-table th:nth-child(2),#directory-table td:nth-child(2){width:17%!important}#directory-table th:nth-child(3),#directory-table td:nth-child(3){width:11%!important}#directory-table th:nth-child(4),#directory-table td:nth-child(4){width:9%!important}#directory-table th:nth-child(5),#directory-table td:nth-child(5){width:9%!important}#directory-table th:nth-child(6),#directory-table td:nth-child(6){width:8%!important}#directory-table th:nth-child(7),#directory-table td:nth-child(7){width:6%!important}#directory-table th:nth-child(8),#directory-table td:nth-child(8){width:15%!important}#directory-table th:nth-child(9),#directory-table td:nth-child(9){width:9%!important}#directory-table th:nth-child(10),#directory-table td:nth-child(10){width:8%!important}}
     </style>
     <style>
-      @media(min-width:621px){#center-editor .modal-card{width:min(920px,100%)}.provider-contact-form{display:grid;grid-template-columns:1fr 1fr 1fr auto;align-items:end;gap:10px}.provider-contact-form[hidden]{display:none}.provider-contact-form-actions{display:flex;gap:8px}.provider-contact-form-actions button{white-space:nowrap}}
-      .provider-contact-details{display:flex;gap:9px;align-items:center;min-height:16px;font-size:12px;font-weight:500;color:#526d75}.provider-contact-details a{color:#356b8a;text-decoration:none}.provider-contact-details a:hover{text-decoration:underline}.provider-contact-empty{color:#86999d}
+      @media(min-width:621px){#center-editor .modal-card{width:min(940px,100%)}.provider-contact-form{display:grid;grid-template-columns:1fr 1fr 1fr auto;align-items:end;gap:10px}.provider-contact-form[hidden]{display:none}.provider-contact-form-actions{display:flex;gap:8px}.provider-contact-form-actions button{white-space:nowrap}}
+      .provider-contact-details{display:flex;gap:12px;align-items:center;min-height:20px;font-size:14px;font-weight:500;color:#526d75}.provider-contact-details a{color:#356b8a;text-decoration:none}.provider-contact-details a:hover{text-decoration:underline}.provider-contact-empty{color:#86999d}
       @media(max-width:620px){.provider-contact-form{display:grid;grid-template-columns:1fr;gap:10px}.provider-contact-form[hidden]{display:none}.provider-contact-form-actions{display:flex;justify-content:flex-end;gap:8px}}
     </style>
     <style>
+      @media(min-width:901px) and (max-width:1099px){#center-editor .editor-grid{grid-template-columns:repeat(3,minmax(0,1fr))}#center-editor .editor-grid>label:has(#edit-activity){grid-column:span 2}}
+      @media(min-width:1100px){#center-editor .modal-card{width:min(1200px,100%);padding:28px 32px}#center-editor .modal-heading{margin-bottom:16px}#center-editor .editor-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}#center-editor .editor-grid>label:has(#edit-activity),#center-editor .editor-grid>label:has(#edit-category){grid-column:span 2}#center-editor #provider-contact-field{grid-column:span 1}#center-editor .editor-grid>label:has(#edit-action),#center-editor .editor-grid>label:has(#edit-sharepoint-url){grid-column:span 2}#center-editor .provider-contact-form{grid-column:1/-1}.provider-contact-form{grid-template-columns:1fr 1fr 1fr auto}}
+    </style>
+    <style>
       /* Ajuste compacto para que el editor entre completo sin perder información. */
-      #center-editor #edit-action{min-height:82px;height:82px}
-      #center-editor #edit-sharepoint-url{min-height:62px;height:62px}
+      #center-editor #edit-action{min-height:104px;height:104px}
+      #center-editor #edit-sharepoint-url{min-height:104px;height:104px}
     </style>
     <style>
       .client-number-cell{display:flex;align-items:center;gap:6px;min-width:0}
@@ -152,7 +156,7 @@
 <style>body.auth-locked .app-shell{visibility:hidden}body.auth-locked #firebase-auth{display:flex!important}body.auth-locked #firebase-auth-fallback{display:flex!important}body:has(#firebase-auth) #firebase-auth-fallback{display:none!important}.auth-fallback{position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;background:rgba(23,61,76,.38);padding:24px}.auth-fallback-card{width:min(100%,520px);background:#fff;border:1px solid #dce8e8;border-radius:18px;box-shadow:0 24px 60px rgba(26,64,77,.22);padding:30px;color:#173d4c}.auth-fallback-card h1{font-size:24px;margin:6px 0 12px}.auth-fallback-card p{color:#557078;line-height:1.5;margin:0 0 14px}.auth-fallback-card button{border:0;border-radius:9px;background:#ed7651;color:#fff;font-weight:700;padding:11px 16px;cursor:pointer}.auth-fallback-status{font-size:14px!important;background:#fff6ed;border:1px solid #f2d3b8;border-radius:9px;padding:12px;margin-top:18px!important}.sync-time{font-size:11px;color:#81969a;white-space:nowrap}.refresh-button.busy{opacity:.65;pointer-events:none}@media(max-width:900px){.sync-time{display:none}}@media(max-width:620px){.top-actions{gap:7px}.top-actions .refresh-button{padding:8px 9px;font-size:11px}}</style>
 <script>document.body.classList.add('auth-locked')</script>
 <div id="firebase-auth-fallback" class="auth-fallback" role="status" aria-live="polite"><div class="auth-fallback-card"><p class="eyebrow">ACCESO PRIVADO</p><h1>Entrar en Aroa Gestión</h1><p>La pantalla de acceso está tardando en cargar. Tus datos están protegidos y no se ha modificado nada.</p><p class="auth-fallback-status">Pulsa «Reintentar carga» para volver a preparar la aplicación.</p><button type="button" onclick="window.location.reload()">Reintentar carga</button></div></div>
-<script src="app.js?v=20260917-contactos-proveedor"></script>
+<script src="app.js?v=20260917-ficha-ancha-legible"></script>
 <script async src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
   </body>
