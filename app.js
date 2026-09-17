@@ -156,33 +156,7 @@ function renderDirectory(){
   document.querySelectorAll('.copy-client-button').forEach(button=>button.addEventListener('click',()=>copyClientNumber(button.dataset.copyClient)));
 }
 async function copyClientNumber(value){try{if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(value);else{const area=document.createElement('textarea');area.value=value;area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);area.select();document.execCommand('copy');area.remove()}showSyncToast('Número de cliente copiado')}catch(error){showSyncToast('No se ha podido copiar el número')}}
-async function loadDirectoryFromFirebase(){
- if(directoryImportBusy)return false;
- if(!firebaseUser)return false;
- if(directoryLoaded)return true;
- if(directoryLoadInFlight)return directoryLoadInFlight;
- directoryLoading=true;directoryError='';renderDirectory();
- const epoch=directoryEpoch;
- directoryLoadInFlight=(async()=>{
-  try{
-   const meta=(await readDocument(DIRECTORY_META_COLLECTION,'main'))?.value;
-   if(!meta||!Number.isInteger(Number(meta.chunks))||Number(meta.chunks)<0)throw new Error('Directorio no disponible');
-   const rows=[];
-   for(let i=1;i<=Number(meta.chunks);i++){
-    const value=(await readDocument(DIRECTORY_COLLECTION,meta.chunkIds?.[i-1]||`chunk-${String(i).padStart(4,'0')}`))?.value;
-    if(!value?.payload)throw new Error('Falta un bloque del directorio');
-    const parsed=JSON.parse(value.payload);
-    if(!Array.isArray(parsed))throw new Error('Bloque inválido');
-    rows.push(...parsed);
-   }
-   if(epoch!==directoryEpoch)return false;
-   if(Number.isFinite(meta.count)&&rows.length!==meta.count)throw new Error('Directorio incompleto');
-   directoryHeaders=Array.isArray(meta.headers)?meta.headers:[];
-   directoryRows.splice(0,directoryRows.length,...rows);directoryLoaded=true;return true;
-  }catch(error){directoryError='No se ha podido cargar el directorio completo. Pulsa Actualizar para reintentarlo.';return false}
-  finally{directoryLoading=false;directoryLoadInFlight=null;renderDirectory()}
- })();return directoryLoadInFlight;
-}
+async function loadDirectoryFromFirebase(){return false}
 document.querySelector('#directory-import-button')?.addEventListener('click',()=>{if(!firebaseUser){openFirebaseAuth();return}$('directory-file')?.click()});$('directory-file')?.addEventListener('change',event=>{const file=event.target.files?.[0];if(file)importDirectoryWorkbook(file);event.target.value=''});$('directory-search')?.addEventListener('input',()=>{directoryPage=1;renderDirectory()});$('directory-clear')?.addEventListener('click',()=>{$('directory-search').value='';directoryPage=1;renderDirectory()});$('directory-detail-close')?.addEventListener('click',closeDirectoryDetail);$('directory-detail-cancel')?.addEventListener('click',closeDirectoryDetail);
 $('delete-client-editor')?.addEventListener('click',deleteClientEditor);
 $('delete-pending-editor')?.addEventListener('click',deletePendingEditor);
@@ -317,8 +291,7 @@ function exportCurrentWorkbook(){
   [
     ['Centro',center],
     ['Mis pendientes',pending],
-    ['Pendientes clientes',clients],
-    ['Directorio clientes',directory]
+    ['Pendientes clientes',clients]
   ].forEach(([name,rows])=>{
     const sheet=XLSX.utils.aoa_to_sheet(rows);
     sheet['!freeze']={xSplit:0,ySplit:1};
@@ -400,7 +373,8 @@ function resetCenterFilters(){
 }
 function centerEvidenceLink(row){
  const value=String(row.sharepointUrl||row.evidence?.url||'').trim();
- try{if(new URL(value).protocol!=='https:')return ''}catch{return ''}
+ const missing='<span class="center-evidence-link evidence-missing" role="img" aria-label="Sin evidencia" title="Sin evidencia">▤</span>';
+ try{if(new URL(value).protocol!=='https:')return missing}catch{return missing}
  return `<a class="center-evidence-link" href="${htmlEscape(value)}" target="_blank" rel="noopener noreferrer" aria-label="Abrir evidencia" title="Abrir evidencia">▤</a>`;
 }
 function renderCenter(){
@@ -577,37 +551,7 @@ async function saveClientEditor(){
 }
 async function deleteCenterEditor(){if(centerEditorIndex>=0&&confirm('¿Quieres eliminar esta actividad?'))return commitEditor('center',centerEditorIndex,null,'center-editor',closeCenterEditor,true)}
 async function deleteClientEditor(){if(clientEditorIndex>=0&&confirm('¿Quieres eliminar esta gestión?'))return commitEditor('clients',clientEditorIndex,null,'client-editor',closeClientEditor,true)}
-async function importDirectoryWorkbook(file){
- if(directoryImportBusy)return;
- if(!firebaseUser){openFirebaseAuth();return}
- if(typeof XLSX==='undefined'){showSyncToast('No se puede leer el Excel en este momento.');return}
- directoryImportBusy=true;directoryEpoch++;const button=$('directory-import-button');if(button)button.disabled=true;
- let activated=false;
- try{
-  const book=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:false});
-  const values=XLSX.utils.sheet_to_json(book.Sheets[book.SheetNames[0]],{header:1,defval:'',raw:false});
-  const headers=(values.shift()||[]).map(v=>String(v??'').trim());
-  const rows=values.filter(row=>row.some(v=>String(v??'').trim())).map(row=>headers.map((_,i)=>String(row[i]??'').trim()));
-  const previous=await readDocument(DIRECTORY_META_COLLECTION,'main');
-  if(headers.length!==30||!rows.length)throw new Error('El archivo debe contener las 30 columnas del directorio y al menos un cliente.');
-  if(previous?.value.headers?.length&&JSON.stringify(previous.value.headers)!==JSON.stringify(headers))throw new Error('Las columnas no coinciden con el directorio actual. Usa el mismo orden y los mismos encabezados.');
-  if(!confirm(`Se importarán ${rows.length} clientes de ${file.name}. El archivo sustituirá al directorio actual solo cuando termine la carga. ¿Continuar?`))return;
-  showSyncToast('Importando directorio…');
-  const version=crypto.randomUUID(),chunkIds=[];
-  for(let offset=0;offset<rows.length;offset+=DIRECTORY_CHUNK_SIZE){
-   const id=`v-${version}-${chunkIds.length}`;chunkIds.push(id);
-   await writeDocument(DIRECTORY_COLLECTION,id,{payload:JSON.stringify(rows.slice(offset,offset+DIRECTORY_CHUNK_SIZE))},null);
-  }
-  const meta={headers,count:rows.length,chunks:chunkIds.length,chunkIds,version,updated:new Date().toISOString(),previous:previous?.value||null};
-  // Keep only one prior manifest; its immutable chunks remain recoverable.
-  if(meta.previous)delete meta.previous.previous;
-  try{await writeDocument(DIRECTORY_META_COLLECTION,'main',meta,previous?.revision||null);activated=true}
-  catch(error){const current=await readDocument(DIRECTORY_META_COLLECTION,'main');if(current?.value.version===version)activated=true;else throw error}
-  directoryHeaders=headers;directoryRows.splice(0,directoryRows.length,...rows);directoryLoaded=true;directoryError='';directoryPage=1;renderDirectory();
-  setDataAlert('');showSyncToast(`Directorio importado: ${rows.length} clientes`);
- }catch(error){showSyncToast(error.message==='CONFLICT'?'Otra importación ha actualizado el directorio. Recarga antes de reintentarlo.':error.message);setDataAlert('La importación no se ha confirmado. Pulsa Actualizar para comprobar qué directorio está activo.');}
- finally{directoryImportBusy=false;if(button)button.disabled=false}
-}
+async function importDirectoryWorkbook(){return}
 
 async function fetchWithTimeout(url,options={}){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);
