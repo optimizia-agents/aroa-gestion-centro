@@ -398,6 +398,11 @@ function resetCenterFilters(){
  $('center-search').value='';$('center-category').value='all';$('center-status').value='all';
  if($('center-date-filter'))$('center-date-filter').value='all';window.centerQuickFilter=null;renderCenter();
 }
+function centerEvidenceLink(row){
+ const value=String(row.sharepointUrl||row.evidence?.url||'').trim();
+ try{if(new URL(value).protocol!=='https:')return ''}catch{return ''}
+ return `<a class="center-evidence-link" href="${htmlEscape(value)}" target="_blank" rel="noopener noreferrer" aria-label="Abrir evidencia" title="Abrir evidencia">▤</a>`;
+}
 function renderCenter(){
  const category=canonicalCategory($('center-category')?.value)||'all';
  const cats=[...new Set(centerRows.map(r=>canonicalCategory(r.category)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
@@ -408,7 +413,7 @@ function renderCenter(){
  const state=$('center-status')?.value||'all',date=$('center-date-filter')?.value||'all';
  const rows=centerRows.filter(r=>(select.value==='all'||canonicalCategory(r.category)===select.value)&&(state==='all'||effectiveStatus(r)===state)&&[r.activity,r.category,r.frequency,r.last,r.next,r.owner,r.type,r.provider,r.action].join(' ').toLocaleLowerCase('es').includes(q)&&
  (date==='all'||date==='overdue'&&isOverdue(r)||date==='soon'&&dueTone(r)==='row-soon'||date==='nodate'&&!r.next||date==='dated'&&!!r.next)).sort((a,b)=>{const av=sortValue(a,'next'),bv=sortValue(b,'next');return av>bv?1:av<bv?-1:0});
- $('center-table').innerHTML=rows.length?rows.map(r=>`<tr class="${dueTone(r)}"><td>${htmlEscape(r.activity)}</td><td>${htmlEscape(canonicalCategory(r.category))}</td><td>${htmlEscape(r.frequency||'Sin periodicidad')}</td><td><span class="maintenance-pill ${String(r.type||'').toLowerCase()}">${htmlEscape(r.type==='EXTERNO'?'Externo':r.type==='INTERNO'?'Interno':'Sin indicar')}</span>${r.type==='EXTERNO'&&r.provider?`<small class="provider-name">${htmlEscape(r.provider)}</small>`:''}</td><td class="date">${htmlEscape(displayDate(r.last)||'Sin fecha')}</td><td class="date">${htmlEscape(displayDate(r.next)||'Sin fecha')}${isOverdue(r)?' <span class="overdue-label">VENCIDA</span>':''}</td><td>${htmlEscape(canonicalOwner(r.owner)||'Sin asignar')}</td><td>${statusTag(effectiveStatus(r))}</td><td>${htmlEscape(r.action||'Sin comentarios')}</td><td><button class="edit-btn" onclick="openCenterEditor(${centerRows.indexOf(r)})">Editar</button></td></tr>`).join(''):'<tr><td colspan="10" class="empty">No hay resultados con estos filtros.</td></tr>';
+ $('center-table').innerHTML=rows.length?rows.map(r=>`<tr class="${dueTone(r)}"><td>${htmlEscape(r.activity)}</td><td>${htmlEscape(canonicalCategory(r.category))}</td><td>${htmlEscape(r.frequency||'Sin periodicidad')}</td><td><span class="maintenance-pill ${String(r.type||'').toLowerCase()}">${htmlEscape(r.type==='EXTERNO'?'Externo':r.type==='INTERNO'?'Interno':'Sin indicar')}</span>${r.type==='EXTERNO'&&r.provider?`<small class="provider-name">${htmlEscape(r.provider)}</small>`:''}</td><td class="date">${htmlEscape(displayDate(r.last)||'Sin fecha')}</td><td class="date">${htmlEscape(displayDate(r.next)||'Sin fecha')}${isOverdue(r)?' <span class="overdue-label">VENCIDA</span>':''}</td><td>${htmlEscape(canonicalOwner(r.owner)||'Sin asignar')}</td><td>${statusTag(effectiveStatus(r))}</td><td>${htmlEscape(r.action||'Sin comentarios')}</td><td><button class="edit-btn" onclick="openCenterEditor(${centerRows.indexOf(r)})">Editar</button>${centerEvidenceLink(r)}</td></tr>`).join(''):'<tr><td colspan="10" class="empty">No hay resultados con estos filtros.</td></tr>';
  $('center-count').textContent=`${rows.length} registros`;
 }
 function refreshKURROMetrics(){renderSimpleCenterSummary()}
