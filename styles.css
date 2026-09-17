@@ -162,6 +162,7 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
  .app-shell .table-wrap th{font-size:13px;letter-spacing:.03em;padding-left:9px;padding-right:9px}
  .app-shell .table-wrap td{font-size:15px;padding-left:9px;padding-right:9px}
  .app-shell .status,.app-shell .priority{font-size:13px;padding:4px 6px}
+ .app-shell .maintenance-pill{font-size:13px;font-weight:700;line-height:1.4;padding:4px 6px;border-radius:7px;white-space:nowrap}
  .app-shell .group-label{font-size:15px}
  .app-shell .toolbar .search input{font-size:16px}
  .app-shell .toolbar select{font-size:15px}
