@@ -48,7 +48,7 @@ setTimeout(()=>renderPending(),0);
 function savedKurroLists(){return structuredClone(remoteKurroLists)}
 let remoteKurroLists={};
 let providerContactsByName={};
-const INTERNAL_CONTACTS_KEY="__INTERNAL__";
+const INTERNAL_CONTACTS_KEY="Interno";
 let providerContactEditingId="";
 function mergedKurroLists(){const local={};const merged={};Object.keys({...local,...remoteKurroLists}).forEach(k=>{merged[k]=[...new Set([...(remoteKurroLists[k]||[]),...(local[k]||[])].map(v=>String(v||'').trim()).filter(Boolean))]});return merged}
 function saveKurroLists(lists){remoteKurroLists=structuredClone(lists)}
