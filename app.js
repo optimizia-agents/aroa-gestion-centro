@@ -294,10 +294,6 @@ function exportCurrentWorkbook(){
     openFirebaseAuth();
     return;
   }
-  if(kurroPendingWrites){
-    showSyncToast('Espera a que termine el guardado');
-    return;
-  }
   if(typeof XLSX==='undefined'){
     showSyncToast('Excel todavía está cargando. Espera un momento y vuelve a intentarlo');
     return;
