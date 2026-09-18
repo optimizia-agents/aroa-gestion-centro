@@ -24,6 +24,7 @@ const $ = id => document.getElementById(id);
 if($('center-search'))$('center-search').placeholder='Buscar actividad, categoría, responsable o comentarios';
 const centerProcessOption=$('edit-status')?.querySelector('option[value="process"]');
 if(centerProcessOption)centerProcessOption.textContent='En curso';
+const retiredCenterCategories=['Almacén','Descripción puesto de trabajo','Emergencias/MAUs','Evaluación de Riesgos y Prevención','Legal / Licencias','Otros','Porton abatible','PRL / Evaluación de Riesgos'];
 const MONTH_NAMES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 function sentenceCaseIfAllCaps(value){const raw=String(value||'').trim().replace(/\s+/g,' ');if(!raw||!/[\p{L}]/u.test(raw)||raw!==raw.toLocaleUpperCase('es'))return raw;let text=raw.toLocaleLowerCase('es').replace(/(^|[.!?]\s+)([\p{L}])/gu,(_,before,letter)=>before+letter.toLocaleUpperCase('es'));const terms={'maus':'MAUs','ehs':'EHS','prl':'PRL','pci':'PCI','bie':'BIE','apq':'APQ','atex':'ATEX','cva':'CVA','cae':'CAE','cie':'CIE','reic':'REIC','rite':'RITE','apca':'APCA','cra':'CRA','epi':'EPI','sva':'SVA','qms':'QMS','hr':'HR','sc':'SC','linde':'Linde','iss':'ISS','jamae':'Jamae','antonio':'Antonio','aroa':'Aroa','miguel':'Miguel','federico':'Federico','carla':'Carla','sonia':'Sonia','james':'James','javier':'Javier','propervall':'Propervall','vitaly':'Vitaly','riscat':'Riscat','cyrasa':'Cyrasa','anticymex':'Anticymex','eurocontrol':'Eurocontrol','apave':'Apave'};const pattern=new RegExp(`(^|[^\\p{L}\\p{N}])(${Object.keys(terms).join('|')})(?=$|[^\\p{L}\\p{N}])`,'giu');return text.replace(pattern,(_,before,term)=>before+terms[term.toLocaleLowerCase('es')])}
 function canonicalCategory(value){const normalized=sentenceCaseIfAllCaps(value),key=normalized.replace(/\s+/g,' ').toLocaleLowerCase('es');return key==='linea provisional hasta que se haga'||key==='línea provisional hasta que se haga'?'Línea provisional hasta que se haga':normalized}
@@ -534,7 +535,7 @@ async function commitEditor(kind,index,changes,modalId,close,remove=false){
  if(remove)payload[kind].splice(index,1);
  else if(index<0)payload[kind].push({...changes,id:changes.id||crypto.randomUUID()});
  else payload[kind][index]={...payload[kind][index],...changes};
- payload.lists=mergedKurroLists();payload.providerContacts=structuredClone(providerContactsByName);payload.updated=new Date().toISOString();payload.lastMutation=crypto.randomUUID();
+ payload.lists=mergedKurroLists();if(kind==='center'&&Array.isArray(payload.lists.category))payload.lists.category=payload.lists.category.filter(value=>!retiredCenterCategories.includes(value));payload.providerContacts=structuredClone(providerContactsByName);payload.updated=new Date().toISOString();payload.lastMutation=crypto.randomUUID();
  const revision=appRevision,intent=JSON.stringify({kind,index,changes,remove});
  setEditorBusy(modal,true);editorMessage(modal,remove?'Eliminando…':'Guardando…');
  try{
