@@ -174,3 +174,21 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
  .eyebrow{font-size:12px}
 }
 @media(max-width:620px){.topbar{padding:12px 14px;min-height:68px}.top-actions{flex-wrap:wrap;justify-content:flex-end}.top-actions .refresh-button{padding:7px 9px;font-size:11px}.view{padding-top:18px}.hero-row{gap:14px;margin-bottom:16px}.hero-row .primary{width:100%;padding:11px 14px}.toolbar{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px}.toolbar .search{grid-column:1/-1;width:100%}.toolbar select,.toolbar button{width:100%;min-width:0}.toolbar-reset{grid-column:1/-1}.panel-heading{padding:15px 14px 12px}.table-wrap tr{padding:13px 14px}}
+
+/* Centra los valores breves para comparar filas; deja el texto descriptivo a la izquierda. */
+#center-view .table-wrap th:nth-child(4),#center-view .table-wrap td:nth-child(4),
+#center-view .table-wrap th:nth-child(5),#center-view .table-wrap td:nth-child(5),
+#center-view .table-wrap th:nth-child(6),#center-view .table-wrap td:nth-child(6),
+#center-view .table-wrap th:nth-child(8),#center-view .table-wrap td:nth-child(8),
+#center-view .table-wrap th:nth-child(10),#center-view .table-wrap td:nth-child(10),
+#pending-view .table-wrap th:nth-child(1),#pending-view .table-wrap td:nth-child(1),
+#pending-view .table-wrap th:nth-child(4),#pending-view .table-wrap td:nth-child(4),
+#pending-view .table-wrap th:nth-child(5),#pending-view .table-wrap td:nth-child(5),
+#pending-view .table-wrap th:nth-child(6),#pending-view .table-wrap td:nth-child(6),
+#pending-view .table-wrap th:nth-child(8),#pending-view .table-wrap td:nth-child(8),
+#clients-view .table-wrap th:nth-child(1),#clients-view .table-wrap td:nth-child(1),
+#clients-view .table-wrap th:nth-child(5),#clients-view .table-wrap td:nth-child(5),
+#clients-view .table-wrap th:nth-child(6),#clients-view .table-wrap td:nth-child(6),
+#clients-view .table-wrap th:nth-child(7),#clients-view .table-wrap td:nth-child(7),
+#clients-view .table-wrap th:nth-child(9),#clients-view .table-wrap td:nth-child(9){text-align:center}
+#center-view .center-row-actions{justify-content:center}

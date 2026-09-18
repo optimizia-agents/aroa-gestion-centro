@@ -299,9 +299,10 @@ function exportCurrentWorkbook(){
     return;
   }
   if(typeof XLSX==='undefined'){
-    showSyncToast('No se ha podido preparar el Excel. Comprueba la conexión y vuelve a intentarlo');
+    showSyncToast('Excel todavía está cargando. Espera un momento y vuelve a intentarlo');
     return;
   }
+  try{
   const statusLabel=value=>value==='done'?'REALIZADO':value==='process'?'EN CURSO':'PENDIENTE';
   const center=[['Actividad','Categoría','Periodicidad','Última revisión','Próxima revisión','Responsable','Estado','Comentarios'],...centerRows.map(r=>[r.activity||'',r.category||'',displayFrequency(r.frequency),r.last||'',r.next||'',r.owner||'',statusLabel(effectiveStatus(r)),r.action||''])];
   const pending=[['Estado','Pendiente / decisión','Persona o empresa','Prioridad','Fecha objetivo','Actualización','Comentarios'],...pendingRows.map(r=>[r.status||'PENDIENTE',r.text||'',r.person||'',r.priority||'NORMAL',r.date||'',r.updated||'',r.comments||''])];
@@ -322,6 +323,10 @@ function exportCurrentWorkbook(){
   const stamp=new Date().toISOString().slice(0,10);
   XLSX.writeFile(workbook,`Aroa_Gestion_Fuenlabrada_${stamp}.xlsx`);
   showSyncToast('Copia Excel descargada');
+  }catch(error){
+    console.error('No se ha podido generar la descarga Excel',error);
+    showSyncToast('No se ha podido generar el Excel. Vuelve a intentarlo');
+  }
 }
 document.querySelector('#download-workbook')?.addEventListener('click',exportCurrentWorkbook);
 
