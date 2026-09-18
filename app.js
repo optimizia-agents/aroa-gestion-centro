@@ -21,6 +21,9 @@ function maintenanceMetaFor(row,seen){const raw=String(row.activity||'').trim(),
 let firebaseDb=null,firebaseAuth=null,firebaseUser=null,firebaseWriteQueue=Promise.resolve();
 
 const $ = id => document.getElementById(id);
+if($('center-search'))$('center-search').placeholder='Buscar actividad, categoría, responsable o comentarios';
+const centerProcessOption=$('edit-status')?.querySelector('option[value="process"]');
+if(centerProcessOption)centerProcessOption.textContent='En curso';
 const MONTH_NAMES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 function sentenceCaseIfAllCaps(value){const raw=String(value||'').trim().replace(/\s+/g,' ');if(!raw||!/[\p{L}]/u.test(raw)||raw!==raw.toLocaleUpperCase('es'))return raw;let text=raw.toLocaleLowerCase('es').replace(/(^|[.!?]\s+)([\p{L}])/gu,(_,before,letter)=>before+letter.toLocaleUpperCase('es'));const terms={'maus':'MAUs','ehs':'EHS','prl':'PRL','pci':'PCI','bie':'BIE','apq':'APQ','atex':'ATEX','cva':'CVA','cae':'CAE','cie':'CIE','reic':'REIC','rite':'RITE','apca':'APCA','cra':'CRA','epi':'EPI','sva':'SVA','qms':'QMS','hr':'HR','sc':'SC','linde':'Linde','iss':'ISS','jamae':'Jamae','antonio':'Antonio','aroa':'Aroa','miguel':'Miguel','federico':'Federico','carla':'Carla','sonia':'Sonia','james':'James','javier':'Javier','propervall':'Propervall','vitaly':'Vitaly','riscat':'Riscat','cyrasa':'Cyrasa','anticymex':'Anticymex','eurocontrol':'Eurocontrol','apave':'Apave'};const pattern=new RegExp(`(^|[^\\p{L}\\p{N}])(${Object.keys(terms).join('|')})(?=$|[^\\p{L}\\p{N}])`,'giu');return text.replace(pattern,(_,before,term)=>before+terms[term.toLocaleLowerCase('es')])}
 function canonicalCategory(value){const normalized=sentenceCaseIfAllCaps(value),key=normalized.replace(/\s+/g,' ').toLocaleLowerCase('es');return key==='linea provisional hasta que se haga'||key==='línea provisional hasta que se haga'?'Línea provisional hasta que se haga':normalized}
@@ -391,7 +394,7 @@ function refreshPendingPersonSelect(){
 function resetPendingFilters(){window.person='all';$('pending-search').value='';$('pending-priority').value='all';$('pending-status').value='all';if($('pending-person'))$('pending-person').value='all';if($('pending-sort'))$('pending-sort').value='person';renderPending();saveViewFilters('pending')}
 function resetCenterFilters(){
  $('center-search').value='';$('center-category').value='all';$('center-status').value='all';
- if($('center-date-filter'))$('center-date-filter').value='all';if($('center-evidence-filter'))$('center-evidence-filter').value='all';window.centerQuickFilter=null;renderCenter();
+ if($('center-date-filter'))$('center-date-filter').value='all';if($('center-evidence-filter'))$('center-evidence-filter').value='all';window.centerQuickFilter=null;renderCenter();if(typeof saveViewFilters==='function')saveViewFilters('center');
 }
 function centerHasEvidence(row){return centerEvidenceItems(row).length>0}
 function centerEvidenceLink(row){
@@ -562,7 +565,6 @@ async function saveCenterEditorFlexible(){
  const frequency=$('edit-frequency').value==='custom'?$('edit-frequency-custom').value.trim():$('edit-frequency').value;
  const providerValue=$('edit-provider')?.value.trim()||'';const changes={activity:sentenceCaseIfAllCaps($('edit-activity').value),category:canonicalCategory($('edit-category').value)||'Otros',frequency:canonicalFrequency(frequency),last:$('edit-last').value?dateFromEditor($('edit-last').value):'',next:$('edit-next').value?dateFromEditor($('edit-next').value):'',owner:canonicalOwner($('edit-owner').value),type:$('edit-type')?.value||'INTERNO',provider:providerValue==='Ninguno'?'':canonicalProvider(providerValue),providerContactId:$('edit-type')?.value==='EXTERNO'?$('edit-provider-contact')?.value||'':'',action:sentenceCaseIfAllCaps($('edit-action').value),status:$('edit-status').value};
  if(!changes.activity){editorMessage($('center-editor'),'Escribe una actividad.');return}
- if(changes.status==='done'&&!changes.last){editorMessage($('center-editor'),'Para marcarla como realizada indica la fecha de la última revisión.');return}
  return commitEditor('center',centerEditorIndex,changes,'center-editor',closeCenterEditor);
 }
 async function savePendingEditor(){
