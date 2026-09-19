@@ -203,3 +203,49 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 #clients-view .table-wrap th:nth-child(7),#clients-view .table-wrap td:nth-child(7),
 #clients-view .table-wrap th:nth-child(9),#clients-view .table-wrap td:nth-child(9){text-align:center}
 #center-view .center-row-actions{justify-content:center}
+
+/* Coherencia visual de las vistas secundarias; Control del centro queda intacta. */
+#templates-view .hero-row,#procedures-view .hero-row,#pending-view .hero-row,#clients-view .hero-row{min-height:62px}
+#templates-view .hero-row p,#procedures-view .hero-row p,#pending-view .hero-row p,#clients-view .hero-row p{max-width:760px}
+#templates-view .toolbar,#procedures-view .toolbar,#pending-view .toolbar,#clients-view .toolbar{align-items:center}
+#templates-view .panel,#procedures-view .panel,#pending-view .panel,#clients-view .panel{overflow:hidden}
+#templates-view .panel-heading,#procedures-view .panel-heading,#pending-view .panel-heading,#clients-view .panel-heading{border-bottom:1px solid #e4eeeb}
+#templates-view .panel-heading h3,#procedures-view .panel-heading h3,#pending-view .panel-heading h3,#clients-view .panel-heading h3{color:var(--ui-ink);font-weight:750}
+#templates-view .panel-heading p,#procedures-view .panel-heading p,#pending-view .filter-summary,#clients-view .panel-heading p{margin-top:4px}
+#templates-view .template-grid{align-items:stretch}
+#templates-view .template-card{min-height:124px}
+#templates-view .template-card h4{font-size:16px;line-height:1.45}
+#templates-view .template-card-actions{min-height:36px}
+#templates-view .template-card-actions .edit-btn{min-height:36px}
+#procedures-view .procedure-table,#pending-view .table-wrap table,#clients-view .table-wrap table{border-collapse:separate;border-spacing:0}
+#procedures-view .procedure-table th,#pending-view .table-wrap th,#clients-view .table-wrap th{vertical-align:middle}
+#procedures-view .procedure-table td,#pending-view .table-wrap td,#clients-view .table-wrap td{vertical-align:middle}
+#procedures-view .procedure-table th:nth-child(1){width:42%}
+#procedures-view .procedure-table th:nth-child(2){width:7%}
+#procedures-view .procedure-table th:nth-child(3){width:8%}
+#procedures-view .procedure-table th:nth-child(4){width:9%}
+#procedures-view .procedure-table th:nth-child(5){width:22%}
+#procedures-view .procedure-table th:nth-child(6){width:6%}
+#procedures-view .procedure-table th:nth-child(7){width:6%}
+#procedures-view .procedure-table td:nth-child(6),#procedures-view .procedure-table td:nth-child(7){text-align:center}
+#pending-view .table-wrap table{width:100%;min-width:0;table-layout:fixed}
+#pending-view .table-wrap th:nth-child(1),#pending-view .table-wrap td:nth-child(1){width:9%}
+#pending-view .table-wrap th:nth-child(2),#pending-view .table-wrap td:nth-child(2){width:27%}
+#pending-view .table-wrap th:nth-child(3),#pending-view .table-wrap td:nth-child(3){width:14%}
+#pending-view .table-wrap th:nth-child(4),#pending-view .table-wrap td:nth-child(4){width:8%}
+#pending-view .table-wrap th:nth-child(5),#pending-view .table-wrap td:nth-child(5){width:10%}
+#pending-view .table-wrap th:nth-child(6),#pending-view .table-wrap td:nth-child(6){width:12%}
+#pending-view .table-wrap th:nth-child(7),#pending-view .table-wrap td:nth-child(7){width:15%}
+#pending-view .table-wrap th:nth-child(8),#pending-view .table-wrap td:nth-child(8){width:5%}
+#clients-view .table-wrap table{width:100%;min-width:0;table-layout:fixed}
+#clients-view .table-wrap th:nth-child(1),#clients-view .table-wrap td:nth-child(1){width:8%}
+#clients-view .table-wrap th:nth-child(2),#clients-view .table-wrap td:nth-child(2){width:12%}
+#clients-view .table-wrap th:nth-child(3),#clients-view .table-wrap td:nth-child(3){width:12%}
+#clients-view .table-wrap th:nth-child(4),#clients-view .table-wrap td:nth-child(4){width:23%}
+#clients-view .table-wrap th:nth-child(5),#clients-view .table-wrap td:nth-child(5){width:8%}
+#clients-view .table-wrap th:nth-child(6),#clients-view .table-wrap td:nth-child(6){width:10%}
+#clients-view .table-wrap th:nth-child(7),#clients-view .table-wrap td:nth-child(7){width:10%}
+#clients-view .table-wrap th:nth-child(8),#clients-view .table-wrap td:nth-child(8){width:12%}
+#clients-view .table-wrap th:nth-child(9),#clients-view .table-wrap td:nth-child(9){width:5%}
+#pending-view .table-wrap td:last-child,#clients-view .table-wrap td:last-child{white-space:nowrap;text-align:center}
+@media(max-width:1100px){#pending-view .table-wrap table,#clients-view .table-wrap table{min-width:1000px;table-layout:auto}}
