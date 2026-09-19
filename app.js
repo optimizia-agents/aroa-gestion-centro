@@ -529,7 +529,7 @@ async function writeDocument(collection,id,value,revision){
 function applyConfirmedDocument(doc){
  const value=doc.value;
  if(!doc.revision||!['center','pending','clients'].every(key=>Array.isArray(value[key])))throw new Error('Los datos recibidos están incompletos.');
- appRevision=doc.revision;appDocument=structuredClone(value);if(!Array.isArray(appDocument.templates))appDocument.templates=structuredClone(DEFAULT_TEMPLATE_ROWS);
+ appRevision=doc.revision;appDocument=structuredClone(value);if(!Array.isArray(appDocument.templates)||appDocument.templates.length===0)appDocument.templates=structuredClone(DEFAULT_TEMPLATE_ROWS);
  centerRows.splice(0,centerRows.length,...value.center);pendingRows.splice(0,pendingRows.length,...value.pending);clientRows.splice(0,clientRows.length,...value.clients);
  templateRows.splice(0,templateRows.length,...appDocument.templates);
  remoteKurroLists=structuredClone(value.lists||{});providerContactsByName=structuredClone(value.providerContacts||{});clientsLoading=false;
