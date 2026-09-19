@@ -2,6 +2,7 @@ const centerRows = [];
 const pendingRows = [];
 const directoryRows = [];
 const templateRows = [];
+const TEMPLATE_LIBRARY_REVISION = '20260919-biblioteca-15';
 const DEFAULT_TEMPLATE_ROWS = [
  {id:'template-01',name:'Registro de recepción',url:''},
  {id:'template-02',name:'Control de accesos al Sales Center',url:''},
