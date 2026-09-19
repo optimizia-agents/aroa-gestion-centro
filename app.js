@@ -2,7 +2,9 @@ const centerRows = [];
 const pendingRows = [];
 const directoryRows = [];
 const templateRows = [];
+const procedureRows = [];
 const TEMPLATE_LIBRARY_REVISION = '20260919-biblioteca-15';
+const PROCEDURE_LIBRARY_REVISION = '20260919-procedimientos-8';
 const DEFAULT_TEMPLATE_ROWS = [
  {id:'template-01',name:'Registro de recepción',url:''},
  {id:'template-02',name:'Control de accesos al Sales Center',url:''},
@@ -19,6 +21,16 @@ const DEFAULT_TEMPLATE_ROWS = [
  {id:'template-13',name:'Checklist de estanterías',url:''},
  {id:'template-14',name:'Registro de limpieza mensual',url:''},
  {id:'template-15',name:'Autocontrol de recepción de producto medicinal',url:''}
+];
+const DEFAULT_PROCEDURE_ROWS = [
+ {id:'procedure-01',name:'Plan de circulación del Sales Center Fuenlabrada',version:'',author:'Aroa Rodríguez',status:'Pendiente',notes:'',url:''},
+ {id:'procedure-02',name:'Funcionamiento de oficinas del Sales Center Fuenlabrada',version:'',author:'Aroa Rodríguez',status:'Pendiente',notes:'',url:''},
+ {id:'procedure-03',name:'Funcionamiento del almacén del Sales Center Fuenlabrada',version:'',author:'Aroa Rodríguez',status:'Pendiente',notes:'',url:''},
+ {id:'procedure-04',name:'Carga y descarga de producto en vehículo de cliente (ventanilla)',version:'',author:'Aroa Rodríguez',status:'Pendiente',notes:'',url:''},
+ {id:'procedure-05',name:'JSA: carga de botellas en furgonetas con estructura CVA',version:'',author:'',status:'Pendiente',notes:'',url:''},
+ {id:'procedure-06',name:'Registro de formación sobre uso de detectores personales',version:'',author:'',status:'Pendiente',notes:'',url:''},
+ {id:'procedure-07',name:'Cartel de Fuenlabrada con pasos de cebra',version:'',author:'',status:'Pendiente',notes:'',url:''},
+ {id:'procedure-08',name:'Cartel del plan de circulación del Sales Center Fuenlabrada',version:'',author:'',status:'Pendiente',notes:'',url:''}
 ];
 let directoryHeaders = [];
 let directoryLoaded = false;
@@ -277,7 +289,7 @@ function restoreViewFilters(view){
   (VIEW_FILTER_FIELDS[view]||[]).forEach(id=>{const node=$(id);if(node&&saved[id]!==undefined)node.value=saved[id]});
 }
 document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
- const titles={center:'Control del centro',templates:'Plantillas',pending:'Seguimientos',clients:'Gestiones de clientes',directory:'Directorio'};
+ const titles={center:'Control del centro',templates:'Plantillas',procedures:'Procedimientos',pending:'Seguimientos',clients:'Gestiones de clientes',directory:'Directorio'};
   if($('page-title'))$('page-title').textContent=titles[button.dataset.view]||'Centro';
 }));
 
@@ -453,7 +465,7 @@ $('client-filter-client').addEventListener('change',renderClients);
 $('center-date-filter').addEventListener('change',renderCenter);
 $('center-evidence-filter')?.addEventListener('change',()=>{renderCenter();saveViewFilters('center')});
 $('center-sort')?.remove();
- renderCenter();renderPending();renderClients();renderTemplates();
+ renderCenter();renderPending();renderClients();renderTemplates();renderProcedures();
 startFirebaseRest();
 function init(){
  window.person='all';
@@ -462,7 +474,7 @@ function init(){
  document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
   document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b===button);b.setAttribute('aria-current',b===button?'page':'false')});
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active-view',v.id===button.dataset.view+'-view'));
-  $('page-title').textContent={center:'Control del centro',templates:'Plantillas',pending:'Seguimientos',clients:'Gestiones de clientes',directory:'Directorio'}[button.dataset.view];
+  $('page-title').textContent={center:'Control del centro',templates:'Plantillas',procedures:'Procedimientos',pending:'Seguimientos',clients:'Gestiones de clientes',directory:'Directorio'}[button.dataset.view];
   if(button.dataset.view==='directory')loadDirectoryFromFirebase();
  }));
  ['center-search','center-category','center-status'].forEach(id=>$(id)?.addEventListener('input',()=>{renderCenter();saveViewFilters('center')}));
@@ -475,7 +487,7 @@ function init(){
  restoreViewFilters('center');restoreViewFilters('pending');restoreViewFilters('clients');
  $('pending-status').value='all';
  window.person=$('pending-person')?.value||'all';
- renderCenter();renderPending();renderClients();renderTemplates();renderDirectory();
+ renderCenter();renderPending();renderClients();renderTemplates();renderProcedures();renderDirectory();
 }
 
 // Allocate colors from the complete canonical list, consistently on every device.
@@ -513,6 +525,27 @@ async function saveTemplateEditor(){
 async function deleteTemplateEditor(){if(templateEditorIndex<0||!confirm('¿Quieres eliminar esta plantilla?'))return;const next=templateRows.filter((_,index)=>index!==templateEditorIndex);const payload=structuredClone(appDocument);payload.templates=next;payload.updated=new Date().toISOString();payload.lastMutation=crypto.randomUUID();try{const confirmed=await writeDocument('appState','main',payload,appRevision);applyConfirmedDocument(confirmed);closeTemplateEditor();showSyncToast('Plantilla eliminada')}catch(error){showSyncToast('No se ha podido eliminar la plantilla.')}}
 document.querySelector('[data-new-template]')?.addEventListener('click',()=>openTemplateEditor());document.querySelectorAll('[data-close-template]').forEach(button=>button.addEventListener('click',closeTemplateEditor));$('save-template-editor')?.addEventListener('click',saveTemplateEditor);$('delete-template-editor')?.addEventListener('click',deleteTemplateEditor);$('template-search')?.addEventListener('input',renderTemplates);$('template-clear-search')?.addEventListener('click',()=>{$('template-search').value='';renderTemplates()});
 
+let procedureEditorIndex=-1;
+function procedureStatusClass(status){return {'Implementado':'done','Aceptado':'process','Enviado':'process','En proceso':'process','Pendiente':'open'}[status]||'open'}
+function renderProcedures(){
+ const query=String($('procedure-search')?.value||'').trim().toLocaleLowerCase('es'), filter=$('procedure-status-filter')?.value||'all';
+ const rows=procedureRows.filter(row=>(filter==='all'||String(row.status||'Pendiente')===filter)&&[row.name,row.version,row.author,row.status,row.notes].join(' ').toLocaleLowerCase('es').includes(query));
+ const body=$('procedure-table'); if(!body)return;
+ body.innerHTML=rows.length?rows.map(row=>{const index=procedureRows.indexOf(row),status=row.status||'Pendiente';return `<tr><td>${htmlEscape(row.name||'Sin nombre')}</td><td>${htmlEscape(row.version||'Sin indicar')}</td><td>${htmlEscape(row.author||'Sin indicar')}</td><td><span class="status ${procedureStatusClass(status)}">${htmlEscape(status)}</span></td><td>${htmlEscape(row.notes||'Sin comentarios')}</td><td>${row.url?`<a class="procedure-open-link" href="${htmlEscape(row.url)}" target="_blank" rel="noopener noreferrer">ABRIR EN SHAREPOINT</a>`:'<span class="muted">Enlace pendiente</span>'}</td><td><button class="edit-btn" type="button" onclick="openProcedureEditor(${index})">EDITAR</button></td></tr>`}).join(''):'<tr><td colspan="7" class="empty">No hay procedimientos que coincidan con los filtros.</td></tr>';
+ $('procedure-count').textContent=`${rows.length} procedimientos`;
+}
+function openProcedureEditor(index=-1){procedureEditorIndex=index;const row=index<0?{}:procedureRows[index]||{};$('procedure-edit-name').value=row.name||'';$('procedure-edit-version').value=row.version||'';$('procedure-edit-author').value=row.author||'';$('procedure-edit-status').value=row.status||'Pendiente';$('procedure-edit-url').value=row.url||'';$('procedure-edit-notes').value=row.notes||'';$('procedure-editor-title').textContent=index<0?'Nuevo procedimiento':'Editar procedimiento';$('delete-procedure-editor').hidden=index<0;$('procedure-editor').classList.add('open');$('procedure-editor').setAttribute('aria-hidden','false');$('procedure-edit-name').focus()}
+function closeProcedureEditor(){if(!$('procedure-editor'))return;$('procedure-editor').classList.remove('open');$('procedure-editor').setAttribute('aria-hidden','true');procedureEditorIndex=-1}
+async function saveProcedureEditor(){
+ if(!firebaseUser||!appRevision){showSyncToast('Actualiza los datos de Firebase antes de guardar.');return}
+ const name=$('procedure-edit-name').value.trim(),url=$('procedure-edit-url').value.trim(); if(!name){showSyncToast('Escribe el nombre del procedimiento.');return}
+ if(url){try{if(new URL(url).protocol!=='https:')throw new Error()}catch{showSyncToast('Añade un enlace HTTPS válido de SharePoint.');return}}
+ const next=structuredClone(procedureRows),item={id:procedureEditorIndex<0?crypto.randomUUID():(next[procedureEditorIndex]?.id||crypto.randomUUID()),name,version:$('procedure-edit-version').value.trim(),author:$('procedure-edit-author').value.trim(),status:$('procedure-edit-status').value,notes:$('procedure-edit-notes').value.trim(),url};if(procedureEditorIndex<0)next.push(item);else next[procedureEditorIndex]=item;
+ const payload=structuredClone(appDocument);payload.procedures=next;payload.updated=new Date().toISOString();payload.lastMutation=crypto.randomUUID();try{const confirmed=await writeDocument('appState','main',payload,appRevision);applyConfirmedDocument(confirmed);closeProcedureEditor();showSyncToast('Procedimiento guardado')}catch(error){showSyncToast(error.message==='CONFLICT'?'Los datos han cambiado. Pulsa Actualizar e inténtalo de nuevo.':'No se ha podido guardar el procedimiento.')}
+}
+async function deleteProcedureEditor(){if(procedureEditorIndex<0||!confirm('¿Quieres eliminar este procedimiento?'))return;const next=procedureRows.filter((_,index)=>index!==procedureEditorIndex),payload=structuredClone(appDocument);payload.procedures=next;payload.updated=new Date().toISOString();payload.lastMutation=crypto.randomUUID();try{const confirmed=await writeDocument('appState','main',payload,appRevision);applyConfirmedDocument(confirmed);closeProcedureEditor();showSyncToast('Procedimiento eliminado')}catch(error){showSyncToast('No se ha podido eliminar el procedimiento.')}}
+document.querySelector('[data-new-procedure]')?.addEventListener('click',()=>openProcedureEditor());document.querySelectorAll('[data-close-procedure]').forEach(button=>button.addEventListener('click',closeProcedureEditor));$('save-procedure-editor')?.addEventListener('click',saveProcedureEditor);$('delete-procedure-editor')?.addEventListener('click',deleteProcedureEditor);$('procedure-search')?.addEventListener('input',renderProcedures);$('procedure-status-filter')?.addEventListener('change',renderProcedures);$('procedure-clear-search')?.addEventListener('click',()=>{$('procedure-search').value='';$('procedure-status-filter').value='all';renderProcedures()});
+
 // Confirmed application state and conditional writes. Drafts remain in forms.
 let appRevision=null, appDocument={}, editorBusy=false, directoryImportBusy=false;
 let uncertainSave=null,uncertainIntent=null;
@@ -536,10 +569,13 @@ function applyConfirmedDocument(doc){
  const value=doc.value;
  if(!doc.revision||!['center','pending','clients'].every(key=>Array.isArray(value[key])))throw new Error('Los datos recibidos están incompletos.');
  appRevision=doc.revision;appDocument=structuredClone(value);const storedTemplates=Array.isArray(appDocument.templates)?appDocument.templates:[];const legacyTemplateSeed=storedTemplates.length>0&&storedTemplates.every(row=>/^template-\d+$/.test(String(row.id||'')))&&!storedTemplates.some(row=>row.id==='template-15');if(storedTemplates.length===0||legacyTemplateSeed){const byId=new Map(storedTemplates.map(row=>[row.id,row]));appDocument.templates=DEFAULT_TEMPLATE_ROWS.map(row=>byId.has(row.id)?{id:row.id,name:byId.get(row.id).name||row.name,url:byId.get(row.id).url||''}:structuredClone(row));}else appDocument.templates=storedTemplates.map(row=>({id:row.id||crypto.randomUUID(),name:row.name||'',url:row.url||''}));
+ const storedProcedures=Array.isArray(appDocument.procedures)?appDocument.procedures:[], procedureById=new Map(storedProcedures.map(row=>[row.id,row]));
+ appDocument.procedures=(storedProcedures.length===0?DEFAULT_PROCEDURE_ROWS:storedProcedures).map(row=>{const saved=procedureById.get(row.id)||row;return {id:saved.id||crypto.randomUUID(),name:saved.name||row.name||'',version:saved.version||row.version||'',author:saved.author||row.author||'',status:saved.status||row.status||'Pendiente',notes:saved.notes||row.notes||'',url:saved.url||row.url||''}});
  centerRows.splice(0,centerRows.length,...value.center);pendingRows.splice(0,pendingRows.length,...value.pending);clientRows.splice(0,clientRows.length,...value.clients);
  templateRows.splice(0,templateRows.length,...appDocument.templates);
+ procedureRows.splice(0,procedureRows.length,...appDocument.procedures);
  remoteKurroLists=structuredClone(value.lists||{});providerContactsByName=structuredClone(value.providerContacts||{});clientsLoading=false;
- refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();renderCenter();renderPending();renderClients();renderTemplates();
+ refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();renderCenter();renderPending();renderClients();renderTemplates();renderProcedures();
  markSyncSuccess();setDataAlert('');
 }
 async function loadRemoteData(){
