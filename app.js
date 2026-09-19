@@ -3,16 +3,21 @@ const pendingRows = [];
 const directoryRows = [];
 const templateRows = [];
 const DEFAULT_TEMPLATE_ROWS = [
- {id:'template-01',name:'Registro de recepción',activity:'Registro de recepción del centro',url:''},
- {id:'template-02',name:'Control de accesos al Sales Center',activity:'Control de accesos',url:''},
- {id:'template-03',name:'Comprobaciones diarias de la carretilla',activity:'Lista de comprobación diaria de la carretilla elevadora',url:''},
- {id:'template-04',name:'Impreso de registro de entrega de EPI',activity:'Gestión y entrega de EPI establecida',url:''},
- {id:'template-05',name:'Registro de control de documentación',activity:'Registro de control de documentación',url:''},
- {id:'template-06',name:'Registro de horas de trabajo CVA',activity:'Formación CVA en carga/descarga de vehículos',url:''},
- {id:'template-07',name:'Lista de comprobaciones según RD 97/2020',activity:'Adecuación de equipos RD 1215',url:''},
- {id:'template-08',name:'Registro de trabajos en solitario',activity:'Trabajos en solitario',url:''},
- {id:'template-09',name:'Registro de entrega de la evaluación de riesgos',activity:'Evaluación de riesgos (PRL)',url:''},
- {id:'template-10',name:'Ficha de asistencia formativa en aula',activity:'Formación',url:''}
+ {id:'template-01',name:'Registro de recepción',url:''},
+ {id:'template-02',name:'Control de accesos al Sales Center',url:''},
+ {id:'template-03',name:'Comprobaciones diarias de la carretilla',url:''},
+ {id:'template-04',name:'Impreso de registro de entrega de EPI',url:''},
+ {id:'template-05',name:'Registro de control de documentación',url:''},
+ {id:'template-06',name:'Registro de horas de trabajo CVA',url:''},
+ {id:'template-07',name:'Lista de comprobaciones según RD 97/2020',url:''},
+ {id:'template-08',name:'Registro de trabajos en solitario',url:''},
+ {id:'template-09',name:'Registro de entrega de la evaluación de riesgos',url:''},
+ {id:'template-10',name:'Ficha de asistencia formativa en aula',url:''},
+ {id:'template-11',name:'Checklist anual de inspección de escaleras portátiles',url:''},
+ {id:'template-12',name:'Gestión de botiquines',url:''},
+ {id:'template-13',name:'Checklist de estanterías',url:''},
+ {id:'template-14',name:'Registro de limpieza mensual',url:''},
+ {id:'template-15',name:'Autocontrol de recepción de producto medicinal',url:''}
 ];
 let directoryHeaders = [];
 let directoryLoaded = false;
@@ -488,19 +493,19 @@ function groupColorStyle(name){
 let templateEditorIndex=-1;
 function renderTemplates(){
  const query=String($('template-search')?.value||'').trim().toLocaleLowerCase('es');
- const rows=templateRows.filter(row=>[row.name,row.activity].join(' ').toLocaleLowerCase('es').includes(query));
+ const rows=templateRows.filter(row=>String(row.name||'').toLocaleLowerCase('es').includes(query));
  const body=$('template-table'); if(!body)return;
- body.innerHTML=rows.length?rows.map(row=>{const index=templateRows.indexOf(row);return `<tr><td>${htmlEscape(row.name||'Sin nombre')}</td><td>${htmlEscape(row.activity||'Sin actividad')}</td><td>${row.url?`<a class="secondary template-open-link" href="${htmlEscape(row.url)}" target="_blank" rel="noopener noreferrer">Abrir en SharePoint</a>`:'<span class="muted">Sin enlace</span>'}</td><td><div class="center-row-actions"><button class="edit-btn" type="button" onclick="openTemplateEditor(${index})">EDITAR</button></div></td></tr>`}).join(''):'<tr><td colspan="4" class="empty">No hay plantillas que coincidan con la búsqueda.</td></tr>';
+ body.innerHTML=rows.length?rows.map(row=>{const index=templateRows.indexOf(row);return `<tr><td>${htmlEscape(row.name||'Sin nombre')}</td><td>${row.url?`<a class="secondary template-open-link" href="${htmlEscape(row.url)}" target="_blank" rel="noopener noreferrer">Abrir en SharePoint</a>`:'<span class="muted">Sin enlace</span>'}</td><td><div class="center-row-actions"><button class="edit-btn" type="button" onclick="openTemplateEditor(${index})">EDITAR</button></div></td></tr>`}).join(''):'<tr><td colspan="3" class="empty">No hay plantillas que coincidan con la búsqueda.</td></tr>';
  $('template-count').textContent=`${rows.length} plantillas`;
 }
-function openTemplateEditor(index=-1){templateEditorIndex=index;const row=index<0?{}:templateRows[index]||{};$('template-edit-name').value=row.name||'';$('template-edit-activity').value=row.activity||'';$('template-edit-url').value=row.url||'';$('template-editor-title').textContent=index<0?'Nueva plantilla':'Editar plantilla';$('delete-template-editor').hidden=index<0;$('template-editor').classList.add('open');$('template-editor').setAttribute('aria-hidden','false');$('template-edit-name').focus()}
+function openTemplateEditor(index=-1){templateEditorIndex=index;const row=index<0?{}:templateRows[index]||{};$('template-edit-name').value=row.name||'';$('template-edit-url').value=row.url||'';$('template-editor-title').textContent=index<0?'Nueva plantilla':'Editar plantilla';$('delete-template-editor').hidden=index<0;$('template-editor').classList.add('open');$('template-editor').setAttribute('aria-hidden','false');$('template-edit-name').focus()}
 function closeTemplateEditor(){if(!$('template-editor'))return;$('template-editor').classList.remove('open');$('template-editor').setAttribute('aria-hidden','true');templateEditorIndex=-1}
 async function saveTemplateEditor(){
  if(!firebaseUser||!appRevision){showSyncToast('Actualiza los datos de Firebase antes de guardar.');return}
- const name=$('template-edit-name').value.trim(),activity=$('template-edit-activity').value.trim(),url=$('template-edit-url').value.trim();
+ const name=$('template-edit-name').value.trim(),url=$('template-edit-url').value.trim();
  if(!name){showSyncToast('Escribe el nombre de la plantilla.');return}
  if(url){try{if(new URL(url).protocol!=='https:')throw new Error()}catch{showSyncToast('Añade un enlace HTTPS válido de SharePoint.');return}}
- const next=structuredClone(templateRows);const item={id:templateEditorIndex<0?crypto.randomUUID():(next[templateEditorIndex]?.id||crypto.randomUUID()),name,activity,url};if(templateEditorIndex<0)next.push(item);else next[templateEditorIndex]=item;
+ const next=structuredClone(templateRows);const item={id:templateEditorIndex<0?crypto.randomUUID():(next[templateEditorIndex]?.id||crypto.randomUUID()),name,url};if(templateEditorIndex<0)next.push(item);else next[templateEditorIndex]=item;
  const payload=structuredClone(appDocument);payload.templates=next;payload.updated=new Date().toISOString();payload.lastMutation=crypto.randomUUID();
  try{const confirmed=await writeDocument('appState','main',payload,appRevision);applyConfirmedDocument(confirmed);closeTemplateEditor();showSyncToast('Plantilla guardada')}catch(error){showSyncToast(error.message==='CONFLICT'?'Los datos han cambiado. Pulsa Actualizar e inténtalo de nuevo.':'No se ha podido guardar la plantilla.')}
 }
@@ -529,7 +534,7 @@ async function writeDocument(collection,id,value,revision){
 function applyConfirmedDocument(doc){
  const value=doc.value;
  if(!doc.revision||!['center','pending','clients'].every(key=>Array.isArray(value[key])))throw new Error('Los datos recibidos están incompletos.');
- appRevision=doc.revision;appDocument=structuredClone(value);if(!Array.isArray(appDocument.templates)||appDocument.templates.length===0)appDocument.templates=structuredClone(DEFAULT_TEMPLATE_ROWS);
+ appRevision=doc.revision;appDocument=structuredClone(value);const storedTemplates=Array.isArray(appDocument.templates)?appDocument.templates:[];const legacyTemplateSeed=storedTemplates.length>0&&storedTemplates.every(row=>/^template-\d+$/.test(String(row.id||'')))&&!storedTemplates.some(row=>row.id==='template-15');if(storedTemplates.length===0||legacyTemplateSeed){const byId=new Map(storedTemplates.map(row=>[row.id,row]));appDocument.templates=DEFAULT_TEMPLATE_ROWS.map(row=>byId.has(row.id)?{id:row.id,name:byId.get(row.id).name||row.name,url:byId.get(row.id).url||''}:structuredClone(row));}else appDocument.templates=storedTemplates.map(row=>({id:row.id||crypto.randomUUID(),name:row.name||'',url:row.url||''}));
  centerRows.splice(0,centerRows.length,...value.center);pendingRows.splice(0,pendingRows.length,...value.pending);clientRows.splice(0,clientRows.length,...value.clients);
  templateRows.splice(0,templateRows.length,...appDocument.templates);
  remoteKurroLists=structuredClone(value.lists||{});providerContactsByName=structuredClone(value.providerContacts||{});clientsLoading=false;
