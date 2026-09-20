@@ -217,6 +217,12 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 #templates-view .template-card h4{font-size:16px;line-height:1.45}
 #templates-view .template-card-actions{min-height:36px}
 #templates-view .template-card-actions .edit-btn{min-height:36px}
+#templates-view .template-card{grid-template-columns:38px minmax(0,1fr);align-items:stretch}
+#templates-view .template-card-content{gap:12px}
+#templates-view .template-card h4{min-height:46px}
+#templates-view .template-card-actions{justify-content:flex-start}
+.hero-summary{display:inline-block;margin-left:8px;color:#6b858a;font-size:13px;font-weight:650;white-space:nowrap}
+@media(max-width:620px){.hero-summary{display:block;margin:4px 0 0;white-space:normal}}
 #procedures-view .procedure-table,#pending-view .table-wrap table,#clients-view .table-wrap table{border-collapse:separate;border-spacing:0}
 #procedures-view .procedure-table th,#pending-view .table-wrap th,#clients-view .table-wrap th{vertical-align:middle}
 #procedures-view .procedure-table td,#pending-view .table-wrap td,#clients-view .table-wrap td{vertical-align:middle}
