@@ -95,6 +95,11 @@
       #center-editor #edit-sharepoint-url{min-height:104px;height:104px}
     </style>
     <style>
+      /* Los comentarios aprovechan toda la fila y ocupan menos altura para dejar visible el bloque de evidencias. */
+      @media(min-width:621px){#center-editor .editor-grid>label:has(#edit-action){grid-column:1/-1}}
+      #center-editor #edit-action{min-height:78px;height:78px}
+    </style>
+    <style>
       .client-number-cell{display:flex;align-items:center;gap:6px;min-width:0}
       .copy-client-button{width:25px;height:25px;padding:0;border:1px solid #cfe2df;background:#f4faf8;color:#2c706c;border-radius:6px;font-size:14px;line-height:1;cursor:pointer;flex:0 0 auto}
       .copy-client-button:hover{background:#e3f4ef;border-color:#8fc4b8}
@@ -260,7 +265,7 @@
 <script>document.body.classList.add('auth-locked')</script>
 <div id="firebase-auth-fallback" class="auth-fallback" role="status" aria-live="polite"><div class="auth-fallback-card"><p class="eyebrow">ACCESO PRIVADO</p><h1>Entrar en Aroa Gestión</h1><p>La pantalla de acceso está tardando en cargar. Tus datos están protegidos y no se ha modificado nada.</p><p class="auth-fallback-status">Pulsa «Reintentar carga» para volver a preparar la aplicación.</p><button type="button" onclick="window.location.reload()">Reintentar carga</button></div></div>
 <script defer src="vendor-xlsx.full.min.js?v=20260918"></script>
-<script defer src="app.js?v=20260920-sesion-inactividad-1"></script>
+<script defer src="app.js?v=20260920-comentarios-ancho-1"></script>
 
   </body>
 </html>
