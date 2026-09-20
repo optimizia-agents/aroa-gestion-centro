@@ -301,12 +301,33 @@ function logoutFirebaseRest(){if(editorBusy||document.querySelector('.modal.open
 function setFirebaseAuthBusy(busy,mode){const modal=$('firebase-auth');if(modal)modal.setAttribute('aria-busy',busy?'true':'false');['firebase-auth-login','firebase-auth-create'].forEach(id=>{const button=$(id);if(!button)return;if(!button.dataset.defaultText)button.dataset.defaultText=button.textContent;button.disabled=busy;if(busy&&((mode==='create'&&id==='firebase-auth-create')||(mode!=='create'&&id==='firebase-auth-login'))){button.classList.add('is-loading');button.innerHTML=`<span class="auth-spinner" aria-hidden="true"></span>${mode==='create'?'Creando…':'Entrando…'}`}else{button.classList.remove('is-loading');button.textContent=button.dataset.defaultText}});const password=$('firebase-password');if(password)password.disabled=busy}
 // Firebase REST fallback: algunos navegadores bloquean las librerías CDN de Firebase.
 // La aplicación puede autenticarse y leer/escribir Firestore sin depender de ellas.
-// La sesión se conserva en este navegador hasta que cierres sesión.
+// La sesión se conserva en este navegador hasta que cierres sesión o pase el límite de inactividad.
 let restIdToken='',restRefreshToken='';
+const IDLE_TIMEOUT_MS=60*60*1000;
+let idleTimer=null,idleActivityQueued=false;
 function saveRestSession(){try{localStorage.setItem('aroa_firebase_id_token',restIdToken);localStorage.setItem('aroa_firebase_refresh_token',restRefreshToken)}catch(error){}}
 function restoreRestSession(){try{restIdToken=localStorage.getItem('aroa_firebase_id_token')||sessionStorage.getItem('aroa_firebase_id_token')||'';restRefreshToken=localStorage.getItem('aroa_firebase_refresh_token')||sessionStorage.getItem('aroa_firebase_refresh_token')||''}catch(error){}}
 function clearRestSession(){try{localStorage.removeItem('aroa_firebase_id_token');localStorage.removeItem('aroa_firebase_refresh_token');sessionStorage.removeItem('aroa_firebase_id_token');sessionStorage.removeItem('aroa_firebase_refresh_token')}catch(error){}restIdToken='';restRefreshToken=''}
 restoreRestSession();
+function lockForInactivity(){
+  if(!firebaseUser)return;
+  clearTimeout(idleTimer);idleTimer=null;
+  const hadUnsavedChanges=!!document.querySelector('.modal.open[data-dirty="true"]');
+  document.querySelectorAll('.modal.open:not(#firebase-auth)').forEach(modal=>{modal.classList.remove('open');modal.setAttribute('aria-hidden','true');modal.dataset.dirty='false'});
+  clearRestSession();firebaseUser=null;appRevision=null;document.body.classList.add('auth-locked');
+  openFirebaseAuth();
+  firebaseAuthMessage(hadUnsavedChanges?'Sesión cerrada por inactividad. Los cambios sin guardar no se han guardado.':'Sesión cerrada por inactividad.');
+}
+function resetIdleTimer(){
+  clearTimeout(idleTimer);idleTimer=null;
+  if(firebaseUser)idleTimer=setTimeout(lockForInactivity,IDLE_TIMEOUT_MS);
+}
+function registerUserActivity(){
+  if(idleActivityQueued)return;
+  idleActivityQueued=true;setTimeout(()=>{idleActivityQueued=false;resetIdleTimer()},250);
+}
+['pointerdown','pointermove','keydown','scroll','touchstart','wheel'].forEach(event=>document.addEventListener(event,registerUserActivity,{passive:true}));
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')resetIdleTimer()});
 function fsEncode(value){if(value===null)return{nullValue:null};if(typeof value==='boolean')return{booleanValue:value};if(typeof value==='number')return{doubleValue:value};if(typeof value==='string')return{stringValue:value};if(Array.isArray(value))return{arrayValue:{values:value.map(fsEncode)}};if(typeof value==='object')return{mapValue:{fields:Object.fromEntries(Object.entries(value).map(([k,v])=>[k,fsEncode(v)]))}};return{nullValue:null}}
 function fsDecode(value){if(!value)return null;if('nullValue'in value)return null;if('booleanValue'in value)return value.booleanValue;if('integerValue'in value)return Number(value.integerValue);if('doubleValue'in value)return value.doubleValue;if('stringValue'in value)return value.stringValue;if('timestampValue'in value)return value.timestampValue;if('arrayValue'in value)return(value.arrayValue.values||[]).map(fsDecode);if('mapValue'in value)return Object.fromEntries(Object.entries(value.mapValue.fields||{}).map(([k,v])=>[k,fsDecode(v)]));return null}
 async function restAuth(mode,password){const endpoint=mode==='create'?'accounts:signUp':'accounts:signInWithPassword';const response=await fetchWithTimeout('https://identitytoolkit.googleapis.com/v1/'+endpoint+'?key='+FIREBASE_CONFIG.apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:FIREBASE_ALLOWED_EMAIL,password,returnSecureToken:true})});const data=await response.json();if(!response.ok)throw Object.assign(new Error(data.error?.message||'AUTH_ERROR'),{code:data.error?.message});restIdToken=data.idToken;restRefreshToken=data.refreshToken;saveRestSession();return data}
@@ -318,7 +339,7 @@ function addFirebaseRestUI(){if($('firebase-auth'))return;document.body.insertAd
 async function finishFirebaseRest(){
   firebaseUser={email:FIREBASE_ALLOWED_EMAIL};
   const ok=await loadRemoteData();
-  if(ok){closeFirebaseAuth(true);unlockPrivateApp();await ensureEvidenceTestLine()}
+  if(ok){closeFirebaseAuth(true);unlockPrivateApp();resetIdleTimer();await ensureEvidenceTestLine()}
   else{firebaseUser=null;document.body.classList.add('auth-locked');firebaseAuthMessage('No se han podido cargar los datos de Firebase. Pulsa Entrar para reintentarlo.');openFirebaseAuth()}
 }
 async function startFirebaseRest(){addFirebaseRestUI();if(restRefreshToken){try{await refreshRestSession();await finishFirebaseRest();return}catch(error){clearRestSession()}}openFirebaseAuth()}
