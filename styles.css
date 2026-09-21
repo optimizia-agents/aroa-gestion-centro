@@ -60,7 +60,7 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 :root{--ui-ink:#183442;--ui-muted:#557078;--ui-line:#d9e7e3;--ui-action:#bd5234;--ui-canvas:#f3f7f6}
 .app-shell .main{background:var(--ui-canvas)}
 .app-shell .topbar{height:auto;min-height:88px;gap:16px;flex-wrap:wrap;padding:20px 32px}
-.app-shell .topbar .eyebrow{font-size:12px;letter-spacing:.12em;line-height:1.5}
+.app-shell .topbar .eyebrow{font-size:15px;letter-spacing:.12em;line-height:1.5}
 .app-shell .top-actions{gap:10px;flex-wrap:wrap;justify-content:flex-end}
 .app-shell .refresh-button{min-height:36px;border-radius:8px;font-size:12px}
 .app-shell .sidebar{box-shadow:none}
