@@ -226,7 +226,7 @@ $('delete-pending-editor')?.addEventListener('click',deletePendingEditor);
 
 const openClientEditorWithConsistentCopy=openClientEditor;
 openClientEditor=function(index=-1){openClientEditorWithConsistentCopy(index);$('client-editor-title').textContent=index<0?'Nueva gestión':'Editar gestión';$('save-client-editor').textContent='Guardar gestión'};
-// Vista estable de Gestiones de clientes: filtros dinámicos y edición siempre visible.
+// Vista estable de Gestiones con clientes: filtros dinámicos y edición siempre visible.
 var clientFilterValue='all';
 function ensureClientControls(){
   const view=$('clients-view'),toolbar=view?.querySelector('.toolbar');
@@ -296,7 +296,7 @@ function restoreViewFilters(view){
   (VIEW_FILTER_FIELDS[view]||[]).forEach(id=>{const node=$(id);if(node&&saved[id]!==undefined)node.value=saved[id]});
 }
 document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
- const titles={center:'Control del centro',templates:'Plantillas',procedures:'Procedimientos',pending:'Agenda de trabajo',clients:'Gestiones de clientes',directory:'Directorio',improvements:'Compras y mejoras',analysis:'Análisis económico'};
+ const titles={center:'Control del centro',templates:'Plantillas',procedures:'Procedimientos',pending:'Agenda de trabajo',clients:'Gestiones con clientes',directory:'Directorio',improvements:'Compras y mejoras',analysis:'Análisis económico'};
   if($('page-title'))$('page-title').textContent=titles[button.dataset.view]||'Centro';
 }));
 
@@ -510,7 +510,7 @@ function init(){
  document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
   document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b===button);b.setAttribute('aria-current',b===button?'page':'false')});
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active-view',v.id===button.dataset.view+'-view'));
-  $('page-title').textContent={center:'Control del centro',templates:'Plantillas',procedures:'Procedimientos',pending:'Agenda de trabajo',clients:'Gestiones de clientes',directory:'Directorio',improvements:'Compras y mejoras',analysis:'Análisis económico'}[button.dataset.view];
+  $('page-title').textContent={center:'Control del centro',templates:'Plantillas',procedures:'Procedimientos',pending:'Agenda de trabajo',clients:'Gestiones con clientes',directory:'Directorio',improvements:'Compras y mejoras',analysis:'Análisis económico'}[button.dataset.view];
   if(button.dataset.view==='directory')loadDirectoryFromFirebase();
  }));
  ['center-search','center-category','center-status'].forEach(id=>$(id)?.addEventListener('input',()=>{renderCenter();saveViewFilters('center')}));
