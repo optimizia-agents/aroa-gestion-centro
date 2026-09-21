@@ -684,7 +684,7 @@ function applyConfirmedDocument(doc){
  templateRows.splice(0,templateRows.length,...appDocument.templates);
  procedureRows.splice(0,procedureRows.length,...appDocument.procedures);
  remoteKurroLists=structuredClone(value.lists||{});providerContactsByName=structuredClone(value.providerContacts||{});clientsLoading=false;
- refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();renderCenter();renderPending();renderClients();renderTemplates();renderProcedures();renderImprovements();
+ refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();renderCenter();renderPending();renderClients();renderTemplates();renderProcedures();renderImprovements();renderEconomicAnalysis();
  markSyncSuccess();setDataAlert('');
 }
 function sapCategory(provider){const name=String(provider||'').toLocaleUpperCase('es');if(/ESTRUCTURAS/.test(name))return 'Mejora';if(/NOVODINAMICA/.test(name))return 'Equipamiento';if(/ORION/.test(name))return 'Formación';if(/CYRASA|RISC|APAVE|EUROCONTROL|MOVISTAR|WATERFIRE|ESPAIS DE SALUT/.test(name))return 'Seguridad / cumplimiento';if(/LINDE|PROPERVALL|MANTENIMIENTOS|PUERTAS|BRICOLAJES/.test(name))return 'Reparación / mantenimiento';if(/DOMENECH|KALAMAZOO|VIVA AQUA|FIC SUMINISTROS/.test(name))return 'Suministro / consumible';if(/ANTICIMEX|ISS FACILITY|DIAGONAL|VITALIS|E COORDINA|IPAT/.test(name))return 'Servicio';return 'Otro'}
