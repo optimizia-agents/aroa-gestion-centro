@@ -275,3 +275,5 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 /* Alineación común del menú lateral */
 .app-shell .sidebar nav{grid-auto-rows:minmax(44px,auto)}
 .app-shell .nav-item{min-height:44px;line-height:1.25}
+
+.improvement-photo-links .evidence-link{display:inline-flex;align-items:center;justify-content:center;min-width:52px;padding:4px 7px;border:1px solid;border-radius:6px;font-size:10px;font-weight:800;text-decoration:none}.improvement-photo-links .evidence-present{color:#2f8069;background:#e9f7ef;border-color:#b9ded0}.improvement-photo-links .evidence-missing{color:#b94f36;background:#fff0eb;border-color:#efc0b5}
