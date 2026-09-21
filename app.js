@@ -3,6 +3,7 @@ const pendingRows = [];
 const directoryRows = [];
 const templateRows = [];
 const procedureRows = [];
+const improvementRows = [];
 const TEMPLATE_LIBRARY_REVISION = '20260919-biblioteca-15';
 const PROCEDURE_LIBRARY_REVISION = '20260919-procedimientos-8';
 const DEFAULT_TEMPLATE_ROWS = [
@@ -292,7 +293,7 @@ function restoreViewFilters(view){
   (VIEW_FILTER_FIELDS[view]||[]).forEach(id=>{const node=$(id);if(node&&saved[id]!==undefined)node.value=saved[id]});
 }
 document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
- const titles={center:'Control del centro',templates:'Plantillas',procedures:'Procedimientos',pending:'Seguimientos',clients:'Gestiones de clientes',directory:'Directorio'};
+ const titles={center:'Control del centro',templates:'Plantillas',procedures:'Procedimientos',pending:'Seguimientos',clients:'Gestiones de clientes',directory:'Directorio',improvements:'Mejoras del centro'};
   if($('page-title'))$('page-title').textContent=titles[button.dataset.view]||'Centro';
 }));
 
@@ -366,6 +367,7 @@ function exportCurrentWorkbook(){
   const pending=[['Estado','Pendiente / decisión','Persona o empresa','Prioridad','Fecha objetivo','Actualización','Comentarios'],...pendingRows.map(r=>[r.status||'PENDIENTE',r.text||'',r.person||'',r.priority||'NORMAL',r.date||'',r.updated||'',r.comments||''])];
   const clients=[['Estado','Cliente','Contacto','Pendiente / decisión','Prioridad','Fecha objetivo','Actualización','Comentarios'],...clientRows.map(r=>[r.status||'PENDIENTE',r.client||'',r.contact||'',r.text||'',r.priority||'NORMAL',r.date||'',r.updated||'',r.comments||''])];
   const procedures=[['N.º de procedimiento','N.º de EMOC','Procedimiento / documento','Revisión','Autor','Estado','Notas / siguiente acción','Enlace'],...procedureRows.map(r=>[r.number||'',r.emocNumber||'',r.name||'',r.version||'',r.author||'',r.status||'Pendiente',r.notes||'',r.url||''])];
+  const improvements=[['Mejora / actuación','Categoría','Fecha','Proveedor','Solicitud / pedido','Importe sin IVA','Estado','Justificación','Actuación realizada','Resultado','Fecha de detección','Fecha de finalización','Tipo de gasto','Foto anterior','Foto posterior','Observaciones'],...improvementRows.map(r=>[r.name||'',r.category||'',r.date||'',r.provider||'',r.request||'',r.amount||'',r.status||'Necesidad detectada',r.justification||'',r.action||'',r.result||'',r.detectionDate||'',r.completionDate||'',r.expenseType||'',r.beforeUrl||'',r.afterUrl||'',r.observations||''])];
   const directory=[directoryHeaders.length?directoryHeaders:['Customer','Search term 1','Search term 2','Plnt','Name 1','Name 2','Street','Calle 4','Código postal','City','Teléfono','Sold-to','Ship-to','Payer','Bill-to','MSDS','ZP Primary Sales Person','Name of Primary Sales Person','Sec.Sales Person','ZS Name of Sec. Sales Person','Global Acc Manager','ZG Name of Global Acct Mgr','Accouts Receivable','ZR Name of Accounts Receivable','Cust.Service Rep','AGENTE/PLANTA Name of Customer Service Rep','Cust Risk','N.I.F. comunitario','Ord Block Description','Incoterms'],...directoryRows];
   const templates=[['Plantilla','Enlace'],...templateRows.map(r=>[r.name||'',r.url||''])];
   const workbook=XLSX.utils.book_new();
@@ -374,6 +376,7 @@ function exportCurrentWorkbook(){
     ['Mis pendientes',pending],
     ['Pendientes clientes',clients],
     ['Procedimientos',procedures],
+    ['Mejoras del centro',improvements],
     ['Plantillas',templates],
     ['Directorio',directory]
   ].forEach(([name,rows])=>{
@@ -495,7 +498,7 @@ $('client-filter-client').addEventListener('change',renderClients);
 $('center-date-filter').addEventListener('change',renderCenter);
 $('center-evidence-filter')?.addEventListener('change',()=>{renderCenter();saveViewFilters('center')});
 $('center-sort')?.remove();
- renderCenter();renderPending();renderClients();renderTemplates();renderProcedures();
+ renderCenter();renderPending();renderClients();renderTemplates();renderProcedures();renderImprovements();
 startFirebaseRest();
 function init(){
  window.person='all';
@@ -504,7 +507,7 @@ function init(){
  document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
   document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b===button);b.setAttribute('aria-current',b===button?'page':'false')});
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active-view',v.id===button.dataset.view+'-view'));
-  $('page-title').textContent={center:'Control del centro',templates:'Plantillas',procedures:'Procedimientos',pending:'Seguimientos',clients:'Gestiones de clientes',directory:'Directorio'}[button.dataset.view];
+  $('page-title').textContent={center:'Control del centro',templates:'Plantillas',procedures:'Procedimientos',pending:'Seguimientos',clients:'Gestiones de clientes',directory:'Directorio',improvements:'Mejoras del centro'}[button.dataset.view];
   if(button.dataset.view==='directory')loadDirectoryFromFirebase();
  }));
  ['center-search','center-category','center-status'].forEach(id=>$(id)?.addEventListener('input',()=>{renderCenter();saveViewFilters('center')}));
@@ -517,7 +520,7 @@ function init(){
  restoreViewFilters('center');restoreViewFilters('pending');restoreViewFilters('clients');
  $('pending-status').value='all';
  window.person=$('pending-person')?.value||'all';
- renderCenter();renderPending();renderClients();renderTemplates();renderProcedures();renderDirectory();
+ renderCenter();renderPending();renderClients();renderTemplates();renderProcedures();renderImprovements();renderDirectory();
 }
 
 // Allocate colors from the complete canonical list, consistently on every device.
@@ -558,6 +561,21 @@ document.querySelector('[data-new-template]')?.addEventListener('click',()=>open
 
 let procedureEditorIndex=-1;
 function procedureStatusClass(status){return {'Implementado':'done','Aceptado':'process','Enviado':'process','En proceso':'process','Pendiente':'open'}[status]||'open'}
+let improvementEditorIndex=-1;
+function improvementStatusClass(status){return {'Necesidad detectada':'open','Solicitud creada':'process','Pedido creado':'process','En curso':'process','Finalizada':'done'}[status]||'open'}
+function improvementAmount(value){const raw=String(value||'').trim();return raw?(/€/.test(raw)?raw:`${raw} €`):'Sin indicar'}
+function renderImprovements(){
+ const query=String($('improvement-search')?.value||'').trim().toLocaleLowerCase('es'),filter=$('improvement-status-filter')?.value||'all';
+ const rows=improvementRows.filter(row=>(filter==='all'||String(row.status||'Necesidad detectada')===filter)&&[row.name,row.category,row.date,row.provider,row.request,row.amount,row.status,row.justification,row.action,row.result].join(' ').toLocaleLowerCase('es').includes(query));
+ const body=$('improvement-table');if(!body)return;
+ body.innerHTML=rows.length?rows.map(row=>{const index=improvementRows.indexOf(row);return `<tr><td>${htmlEscape(row.name||'Sin indicar')}</td><td>${htmlEscape(row.category||'Sin indicar')}</td><td class="date">${htmlEscape(row.date||'Sin fecha')}</td><td>${htmlEscape(row.provider||'Sin indicar')}</td><td>${htmlEscape(row.request||'Sin tramitar')}</td><td>${htmlEscape(improvementAmount(row.amount))}</td><td><span class="status ${improvementStatusClass(row.status)}">${htmlEscape(row.status||'Necesidad detectada')}</span></td><td><button class="edit-btn" type="button" onclick="openImprovementEditor(${index})">Editar</button></td></tr>`}).join(''):'<tr><td colspan="8" class="empty">No hay mejoras que coincidan con los filtros.</td></tr>';
+ $('improvement-count').textContent=`${rows.length} mejoras`;
+}
+function openImprovementEditor(index=-1){improvementEditorIndex=index;const r=index<0?{}:improvementRows[index]||{};editorMessage($('improvement-editor'),'');$('improvement-edit-name').value=r.name||'';$('improvement-edit-category').value=r.category||'';$('improvement-edit-status').value=r.status||'Necesidad detectada';$('improvement-edit-date').value=dateForEditor(r.date);$('improvement-edit-detection-date').value=dateForEditor(r.detectionDate||r.date);$('improvement-edit-completion-date').value=dateForEditor(r.completionDate);$('improvement-edit-justification').value=r.justification||'';$('improvement-edit-action').value=r.action||'';$('improvement-edit-result').value=r.result||'';$('improvement-edit-provider').value=r.provider||'';$('improvement-edit-request').value=r.request||'';$('improvement-edit-amount').value=r.amount||'';$('improvement-edit-expense').value=r.expenseType||'';$('improvement-edit-before').value=r.beforeUrl||'';$('improvement-edit-after').value=r.afterUrl||'';$('improvement-edit-observations').value=r.observations||'';$('delete-improvement-editor').hidden=index<0;$('improvement-editor-title').textContent=index<0?'Nueva mejora':'Editar mejora';$('improvement-editor').classList.add('open');$('improvement-editor').setAttribute('aria-hidden','false');$('improvement-edit-name').focus()}
+function closeImprovementEditor(){if(!$('improvement-editor')||!allowEditorClose('improvement-editor'))return;$('improvement-editor').classList.remove('open');$('improvement-editor').setAttribute('aria-hidden','true');improvementEditorIndex=-1}
+async function saveImprovementEditor(){const name=sentenceCaseIfAllCaps($('improvement-edit-name').value.trim());if(!name){editorMessage($('improvement-editor'),'Escribe la mejora o actuación.');return}const changes={name,category:sentenceCaseIfAllCaps($('improvement-edit-category').value.trim()),status:$('improvement-edit-status').value,date:$('improvement-edit-date').value?dateFromEditor($('improvement-edit-date').value):'',detectionDate:$('improvement-edit-detection-date').value?dateFromEditor($('improvement-edit-detection-date').value):'',completionDate:$('improvement-edit-completion-date').value?dateFromEditor($('improvement-edit-completion-date').value):'',justification:$('improvement-edit-justification').value.trim(),action:$('improvement-edit-action').value.trim(),result:$('improvement-edit-result').value.trim(),provider:$('improvement-edit-provider').value.trim(),request:$('improvement-edit-request').value.trim(),amount:$('improvement-edit-amount').value.trim(),expenseType:$('improvement-edit-expense').value,beforeUrl:$('improvement-edit-before').value.trim(),afterUrl:$('improvement-edit-after').value.trim(),observations:$('improvement-edit-observations').value.trim()};return commitEditor('improvements',improvementEditorIndex,changes,'improvement-editor',closeImprovementEditor)}
+async function deleteImprovementEditor(){if(improvementEditorIndex>=0&&confirm('¿Quieres eliminar esta mejora?'))return commitEditor('improvements',improvementEditorIndex,null,'improvement-editor',closeImprovementEditor,true)}
+document.querySelector('[data-new-improvement]')?.addEventListener('click',()=>openImprovementEditor());document.querySelectorAll('[data-close-improvement]').forEach(button=>button.addEventListener('click',closeImprovementEditor));$('save-improvement-editor')?.addEventListener('click',saveImprovementEditor);$('delete-improvement-editor')?.addEventListener('click',deleteImprovementEditor);$('improvement-search')?.addEventListener('input',renderImprovements);$('improvement-status-filter')?.addEventListener('change',renderImprovements);$('improvement-clear-search')?.addEventListener('click',()=>{$('improvement-search').value='';$('improvement-status-filter').value='all';renderImprovements()});
 function renderProcedures(){
  const query=String($('procedure-search')?.value||'').trim().toLocaleLowerCase('es'), filter=$('procedure-status-filter')?.value||'all';
  const rows=procedureRows.filter(row=>(filter==='all'||String(row.status||'Pendiente')===filter)&&[row.number,row.emocNumber,row.name,row.version,row.author,row.status,row.notes].join(' ').toLocaleLowerCase('es').includes(query)).sort((a,b)=>{const an=String(a.number||'').trim(),bn=String(b.number||'').trim();if(!an&&!bn)return 0;if(!an)return 1;if(!bn)return -1;return an.localeCompare(bn,'es',{sensitivity:'base',numeric:true})});
@@ -604,10 +622,11 @@ function applyConfirmedDocument(doc){
  const storedProcedures=Array.isArray(appDocument.procedures)?appDocument.procedures:[], procedureById=new Map(storedProcedures.map(row=>[row.id,row]));
  appDocument.procedures=(storedProcedures.length===0?DEFAULT_PROCEDURE_ROWS:storedProcedures).map(row=>{const saved=procedureById.get(row.id)||row;return {id:saved.id||crypto.randomUUID(),number:saved.number||row.number||'',emocNumber:saved.emocNumber||row.emocNumber||'',name:saved.name||row.name||'',version:saved.version||row.version||'',author:saved.author||row.author||'',status:saved.status||row.status||'Pendiente',notes:saved.notes||row.notes||'',url:saved.url||row.url||''}});
  centerRows.splice(0,centerRows.length,...value.center);pendingRows.splice(0,pendingRows.length,...value.pending);clientRows.splice(0,clientRows.length,...value.clients);
+ improvementRows.splice(0,improvementRows.length,...(Array.isArray(value.improvements)?value.improvements:[]));
  templateRows.splice(0,templateRows.length,...appDocument.templates);
  procedureRows.splice(0,procedureRows.length,...appDocument.procedures);
  remoteKurroLists=structuredClone(value.lists||{});providerContactsByName=structuredClone(value.providerContacts||{});clientsLoading=false;
- refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();renderCenter();renderPending();renderClients();renderTemplates();renderProcedures();
+ refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();renderCenter();renderPending();renderClients();renderTemplates();renderProcedures();renderImprovements();
  markSyncSuccess();setDataAlert('');
 }
 async function loadRemoteData(){
@@ -639,7 +658,7 @@ async function commitEditor(kind,index,changes,modalId,close,remove=false){
  if(editorBusy)return;
  const modal=$(modalId);
  if(!firebaseUser||!appRevision){editorMessage(modal,'Actualiza los datos de Firebase antes de guardar.');return}
- const rows={center:centerRows,pending:pendingRows,clients:clientRows}[kind];
+ const rows={center:centerRows,pending:pendingRows,clients:clientRows,improvements:improvementRows}[kind];
  const oldEvidence=kind==='center'&&index>=0?rows[index]?.evidence:null;
  if(index>=0&&!rows[index]){editorMessage(modal,'Este registro ya no está disponible.');return}
  const payload=structuredClone(appDocument);
@@ -705,7 +724,7 @@ function allowEditorClose(id){
  if(modal.dataset.dirty==='true'&&!confirm('Hay cambios sin guardar. ¿Quieres descartarlos y cerrar?'))return false;
  modal.dataset.dirty='false';uncertainSave=null;uncertainIntent=null;return true;
 }
-for(const id of ['center-editor','pending-editor','client-editor']){
+for(const id of ['center-editor','pending-editor','client-editor','improvement-editor']){
  const modal=$(id);for(const event of ['input','change'])modal.addEventListener(event,()=>{modal.dataset.dirty='true'});
 }
 window.addEventListener('beforeunload',event=>{
