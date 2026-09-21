@@ -277,3 +277,20 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 .app-shell .nav-item{min-height:44px;line-height:1.25}
 
 .improvement-photo-links .evidence-link{display:inline-flex;align-items:center;justify-content:center;min-width:52px;padding:4px 7px;border:1px solid;border-radius:6px;font-size:10px;font-weight:800;text-decoration:none}.improvement-photo-links .evidence-present{color:#2f8069;background:#e9f7ef;border-color:#b9ded0}.improvement-photo-links .evidence-missing{color:#b94f36;background:#fff0eb;border-color:#efc0b5}
+/* Ajuste compacto de la vista general de compras */
+.improvement-table th:nth-child(1){width:18%}
+.improvement-table th:nth-child(2){width:8%}
+.improvement-table th:nth-child(3){width:7%}
+.improvement-table th:nth-child(4){width:8%}
+.improvement-table th:nth-child(5){width:8%}
+.improvement-table th:nth-child(6){width:15%}
+.improvement-table th:nth-child(7){width:6%}
+.improvement-table th:nth-child(8){width:8%}
+.improvement-table th:nth-child(9){width:8%}
+.improvement-table th:nth-child(10){width:6%}
+.improvement-table th:nth-child(11){width:8%}
+.improvement-table th,.improvement-table td{padding-left:5px;padding-right:5px}
+.improvement-table td{font-size:12px}
+.improvement-table th{font-size:10px;letter-spacing:.04em}
+.improvement-table .copyable-id,.improvement-table .date{white-space:nowrap}
+.improvement-table .edit-btn{font-size:10px;padding:5px 6px}
