@@ -259,3 +259,4 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 #clients-view .table-wrap th:nth-child(9),#clients-view .table-wrap td:nth-child(9){width:5%}
 #pending-view .table-wrap td:last-child,#clients-view .table-wrap td:last-child{white-space:nowrap;text-align:center}
 @media(max-width:1100px){#pending-view .table-wrap table,#clients-view .table-wrap table{min-width:1000px;table-layout:auto}}
+#procedures-view .procedure-number{font-size:inherit;color:inherit}
