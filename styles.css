@@ -226,14 +226,18 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 #procedures-view .procedure-table,#pending-view .table-wrap table,#clients-view .table-wrap table{border-collapse:separate;border-spacing:0}
 #procedures-view .procedure-table th,#pending-view .table-wrap th,#clients-view .table-wrap th{vertical-align:middle}
 #procedures-view .procedure-table td,#pending-view .table-wrap td,#clients-view .table-wrap td{vertical-align:middle}
-#procedures-view .procedure-table th:nth-child(1){width:42%}
-#procedures-view .procedure-table th:nth-child(2){width:7%}
-#procedures-view .procedure-table th:nth-child(3){width:8%}
-#procedures-view .procedure-table th:nth-child(4){width:9%}
-#procedures-view .procedure-table th:nth-child(5){width:22%}
-#procedures-view .procedure-table th:nth-child(6){width:6%}
-#procedures-view .procedure-table th:nth-child(7){width:6%}
-#procedures-view .procedure-table td:nth-child(6),#procedures-view .procedure-table td:nth-child(7){text-align:center}
+#procedures-view .procedure-table{width:100%;min-width:0;table-layout:fixed}
+#procedures-view .procedure-table th:nth-child(1),#procedures-view .procedure-table td:nth-child(1){width:11%}
+#procedures-view .procedure-table th:nth-child(2),#procedures-view .procedure-table td:nth-child(2){width:10%}
+#procedures-view .procedure-table th:nth-child(3),#procedures-view .procedure-table td:nth-child(3){width:25%}
+#procedures-view .procedure-table th:nth-child(4),#procedures-view .procedure-table td:nth-child(4){width:8%}
+#procedures-view .procedure-table th:nth-child(5),#procedures-view .procedure-table td:nth-child(5){width:9%}
+#procedures-view .procedure-table th:nth-child(6),#procedures-view .procedure-table td:nth-child(6){width:9%}
+#procedures-view .procedure-table th:nth-child(7),#procedures-view .procedure-table td:nth-child(7){width:17%}
+#procedures-view .procedure-table th:nth-child(8),#procedures-view .procedure-table td:nth-child(8){width:5.5%}
+#procedures-view .procedure-table th:nth-child(9),#procedures-view .procedure-table td:nth-child(9){width:5.5%}
+#procedures-view .procedure-table td:nth-child(1),#procedures-view .procedure-table td:nth-child(2){overflow-wrap:anywhere}
+#procedures-view .procedure-table td:nth-child(8),#procedures-view .procedure-table td:nth-child(9){text-align:center}
 #pending-view .table-wrap table{width:100%;min-width:0;table-layout:fixed}
 #pending-view .table-wrap th:nth-child(1),#pending-view .table-wrap td:nth-child(1){width:9%}
 #pending-view .table-wrap th:nth-child(2),#pending-view .table-wrap td:nth-child(2){width:27%}
