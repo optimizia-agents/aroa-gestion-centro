@@ -260,3 +260,10 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 #pending-view .table-wrap td:last-child,#clients-view .table-wrap td:last-child{white-space:nowrap;text-align:center}
 @media(max-width:1100px){#pending-view .table-wrap table,#clients-view .table-wrap table{min-width:1000px;table-layout:auto}}
 #procedures-view .procedure-number{font-size:inherit;color:inherit}
+
+/* Seguimientos y gestiones: los nombres mantienen el estilo neutro de la tabla. */
+#pending-table tr.group-colored td,#client-table tr.group-colored td{background:#fff!important}
+#pending-table tr.group-colored td:first-child,#client-table tr.group-colored td:first-child{border-left:0!important;box-shadow:none!important}
+.group-colored .group-label{padding:0;background:transparent;color:inherit;border-left:0}
+#pending-table tr.group-colored:hover td,#client-table tr.group-colored:hover td{background:#f8fcfb!important}
+@media(max-width:620px){#pending-view .table-wrap tr.group-colored,#clients-view .table-wrap tr.group-colored{border-left:0;background:#fff;padding-left:16px;margin:0;border-radius:0}}
