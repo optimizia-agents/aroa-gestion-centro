@@ -69,9 +69,11 @@ function addMonths(date, months){const d=new Date(date+'T12:00:00');const day=d.
 function nextDate(date,frequency){const d=new Date(date+'T12:00:00');const f=(frequency||'').toLowerCase();if(f.includes('seman'))d.setDate(d.getDate()+7);else if(f.includes('bimes'))return addMonths(date,2);else if(f.includes('trimes'))return addMonths(date,3);else if(f.includes('semes'))return addMonths(date,6);else if(f.includes('mens'))return addMonths(date,1);else if(f.includes('quinquen'))return addMonths(date,60);else if(f.includes('trien'))return addMonths(date,36);else if(f.includes('5 años'))return addMonths(date,60);else if(f.includes('3 años'))return addMonths(date,36);else if(f.includes('año')||f.includes('anual'))return addMonths(date,12);else return null;return d}
 function formatDate(d){return d?`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`:''}
 function normalizeSheetDate(value){const s=String(value||'').trim();let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return`${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[3]}`;m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);return m?`${m[3].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[1]}`:s}
-function isOverdue(r){if(!r.next)return false;const p=r.next.split('/');const due=new Date(`${p[2]}-${p[1]}-${p[0]}T23:59:59`);return due<new Date()}
-function dueTone(r){if(!r.next)return r.status==='done'?'row-ok':'';const p=r.next.split('/');const due=new Date(`${p[2]}-${p[1]}-${p[0]}T23:59:59`);const days=Math.ceil((due-new Date())/86400000);return days<0?'row-overdue':days<=30?'row-soon':'row-ok'}
-function effectiveStatus(r){return r.status}
+function reviewDate(value){const p=String(value||'').split('/');return p.length===3?new Date(Number(p[2]),Number(p[1])-1,Number(p[0])):null}
+function startOfToday(){const today=new Date();today.setHours(0,0,0,0);return today}
+function isOverdue(r){const due=reviewDate(r.next);return !!due&&due<=startOfToday()}
+function dueTone(r){const due=reviewDate(r.next);if(!due)return r.status==='done'?'row-ok':'';const days=Math.round((due-startOfToday())/86400000);return days<=0?'row-overdue':days<=30?'row-soon':'row-ok'}
+function effectiveStatus(r){return isOverdue(r)?'open':r.status}
 function sortValue(r,key){if(key==='category')return r.category;if(key==='last')return r.last?new Date(r.last.split('/').reverse().join('-')):new Date(0);if(key==='next')return r.next?new Date(r.next.split('/').reverse().join('-')):new Date(8640000000000000);if(key==='frequency')return r.frequency||'zzzz';if(key==='status')return r.status;return r.activity}
 setTimeout(()=>renderPending(),0);
 
