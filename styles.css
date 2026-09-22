@@ -295,3 +295,5 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 .improvement-table .edit-btn{font-size:10px;padding:5px 6px}
 
 .analysis-inline-select{margin-top:10px;max-width:190px;padding:7px 10px;font-size:12px}
+
+.analysis-period-control{display:flex;align-items:center;gap:8px;margin-top:10px}.analysis-period-control label{font-size:12px;font-weight:700;color:#557078}.analysis-period-control.is-hidden{display:none}.analysis-inline-select{margin-top:0}.analysis-provider-link{border:0;background:none;padding:0;color:#45636a;font:inherit;text-align:left;cursor:pointer;text-decoration:underline;text-decoration-color:#a7cfc2;text-underline-offset:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.analysis-provider-link:hover{color:#286e58}.analysis-top-table th:nth-child(1){width:23%}.analysis-top-table th:nth-child(2){width:13%}.analysis-top-table th:nth-child(3){width:17%}.analysis-top-table th:nth-child(4){width:10%}.analysis-top-table th:nth-child(5){width:10%}.analysis-top-table th:nth-child(6){width:10%}.analysis-top-table th:nth-child(7){width:9%}.analysis-top-table th:nth-child(8){width:8%}
