@@ -293,3 +293,5 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 .improvement-table th{font-size:10px;letter-spacing:.04em}
 .improvement-table .copyable-id,.improvement-table .date{white-space:nowrap}
 .improvement-table .edit-btn{font-size:10px;padding:5px 6px}
+
+.analysis-inline-select{margin-top:10px;max-width:190px;padding:7px 10px;font-size:12px}
