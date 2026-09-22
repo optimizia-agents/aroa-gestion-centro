@@ -617,9 +617,19 @@ function renderEconomicAnalysis(){
  const palette=['#2f8069','#e47752','#6c8fbd','#c9a34e','#7c6db2','#4d9aa5','#d17a9c','#7c8d91'];
  const categoryNode=$('analysis-category-chart');
  if(categoryNode){if(!categoryEntries.length)categoryNode.innerHTML='<p class="empty">No hay importes para este filtro.</p>';else{let cursor=0;const stops=categoryEntries.slice(0,8).map(([label,value],i)=>{const start=cursor;cursor+=total?(value/total)*360:0;return `${palette[i%palette.length]} ${start}deg ${cursor}deg`}).join(',');categoryNode.innerHTML=`<div class="analysis-donut-wrap"><div class="analysis-donut" style="background:conic-gradient(${stops})"><span>${analysisCurrency(total)}</span></div><div class="analysis-legend">${categoryEntries.slice(0,8).map(([label,value],i)=>`<div><i style="background:${palette[i%palette.length]}"></i><span>${htmlEscape(label)}</span><strong>${Math.round(total?(value/total)*100:0)}%</strong></div>`).join('')}</div></div>`}}
+ const selectedAnalysisYear=yearSelect.value;
  const yearTotals=new Map();filtered.forEach(row=>{const label=analysisYear(row);yearTotals.set(label,(yearTotals.get(label)||0)+analysisAmount(row.amount))});
- const yearEntries=[...yearTotals.entries()].sort((a,b)=>String(a[0]).localeCompare(String(b[0]))),yearNode=$('analysis-year-chart');
- if(yearNode){if(!yearEntries.length)yearNode.innerHTML='<p class="empty">No hay años para este filtro.</p>';else{const maxYear=Math.max(...yearEntries.map(([,value])=>value),1);yearNode.innerHTML=`<div class="analysis-columns">${yearEntries.map(([label,value])=>`<div class="analysis-column"><strong>${analysisCurrency(value)}</strong><div class="analysis-column-track"><span style="height:${Math.max(5,(value/maxYear)*100)}%"></span></div><b>${htmlEscape(label)}</b></div>`).join('')}</div>`}}
+ let periodEntries=[...yearTotals.entries()].sort((a,b)=>String(a[0]).localeCompare(String(b[0]))),periodEmpty='No hay años para este filtro.';
+ const periodTitle=$('analysis-year-title');
+ if(selectedAnalysisYear!=='all'){
+  const monthNames=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const monthTotals=Array.from({length:12},(_,index)=>[monthNames[index],0]);
+  filtered.forEach(row=>{const match=analysisDate(row).match(/^\d{2}\/(\d{2})\/(\d{4})$/);if(match&&match[2]===selectedAnalysisYear)monthTotals[Number(match[1])-1][1]+=analysisAmount(row.amount)});
+  periodEntries=monthTotals;periodEmpty=`No hay importes registrados en ${selectedAnalysisYear}.`;
+  if(periodTitle)periodTitle.textContent=`Evolución mensual de ${selectedAnalysisYear}`;
+ }else if(periodTitle)periodTitle.textContent='Evolución por año';
+ const yearNode=$('analysis-year-chart');
+ if(yearNode){if(!periodEntries.length)yearNode.innerHTML=`<p class="empty">${periodEmpty}</p>`;else{const maxYear=Math.max(...periodEntries.map(([,value])=>value),1);yearNode.innerHTML=`<div class="analysis-columns">${periodEntries.map(([label,value])=>`<div class="analysis-column"><strong>${analysisCurrency(value)}</strong><div class="analysis-column-track"><span style="height:${Math.max(value?5:0,(value/maxYear)*100)}%"></span></div><b>${htmlEscape(label)}</b></div>`).join('')}</div>`}}
  renderAnalysisBars('analysis-provider-chart',aggregate('provider'),total,'No hay proveedores para este filtro.');
  const expenseEntries=['Fijo','Extra'].map(label=>[label,filtered.filter(row=>String(row.expenseType||'').toLocaleLowerCase('es')===label.toLocaleLowerCase('es')).reduce((sum,row)=>sum+analysisAmount(row.amount),0)]).filter(([,value])=>value>0);
  const expenseNode=$('analysis-expense-chart');
