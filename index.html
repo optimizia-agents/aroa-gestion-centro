@@ -411,5 +411,22 @@ document.addEventListener('DOMContentLoaded',()=>{
   enhanceProviderPicker('improvement-edit-provider','improvement-edit-provider-search','improvement-edit-provider-options','Buscar proveedor por nombre, SAP o actividad…');
 });
 </script>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  const select=document.getElementById('improvement-edit-contact');
+  if(!select||document.getElementById('add-improvement-contact'))return;
+  const wrap=select.parentElement;
+  if(!wrap)return;
+  wrap.classList.add('select-with-add');
+  const button=document.createElement('button');
+  button.type='button'; button.id='add-improvement-contact'; button.className='add-option-button'; button.setAttribute('aria-label','Añadir contacto'); button.textContent='+';
+  wrap.append(button);
+  button.addEventListener('click',()=>{
+    const provider=select.closest('#improvement-editor')?.querySelector('#improvement-edit-provider')?.value;
+    if(!provider){showSyncToast('Elige primero un proveedor');return;}
+    if(typeof openProviderEditor==='function')openProviderEditor(providerDirectoryKey(provider));
+  });
+});
+</script>
   </body>
 </html>
