@@ -356,5 +356,18 @@
 <script defer src="vendor-xlsx.full.min.js?v=20260918"></script>
 <script defer src="app.js?v=20260923-providers-25"></script>
 
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  [['add-provider','edit-provider-field'],['add-improvement-provider','improvement-edit-provider']].forEach(([buttonId,fieldId])=>{
+    const button=document.getElementById(buttonId), field=document.getElementById(fieldId)?.closest('label');
+    if(button){button.textContent='＋ Nuevo proveedor';button.classList.add('add-provider-link')}
+    if(field&&!field.querySelector('.field-help')){const help=document.createElement('small');help.className='field-help';help.textContent='Selecciona un proveedor del catálogo común.';field.append(help)}
+  });
+});
+</script>
+<style>
+.add-provider-link{font-size:12px!important;white-space:nowrap!important;padding:7px 9px!important}
+.field-help{display:block;margin-top:5px;color:#81969a;font-size:11px;line-height:1.35}
+</style>
   </body>
 </html>
