@@ -233,6 +233,16 @@
 .provider-contact-function{overflow-wrap:anywhere}
 </style><style>.copy-field{display:flex;gap:8px;align-items:center}.copy-field input{flex:1;min-width:0}.copy-field-button{min-height:44px!important;padding:10px 12px!important;white-space:nowrap}</style><style>
 .provider-directory-table .provider-directory-main{min-width:230px}.provider-directory-sap{display:block;margin-top:5px;font-size:12px;color:#557078}.provider-directory-table th:nth-child(1),.provider-directory-table td:nth-child(1){width:24%}.provider-directory-table th:nth-child(2),.provider-directory-table td:nth-child(2){width:24%}.provider-directory-table th:nth-child(3),.provider-directory-table td:nth-child(3){width:20%}.provider-directory-table th:nth-child(4),.provider-directory-table td:nth-child(4){width:24%}.provider-directory-table th:nth-child(5),.provider-directory-table td:nth-child(5){width:8%}
+</style><style>
+/* Columna SAP independiente y copiable */
+.provider-directory-table th:nth-child(1),.provider-directory-table td:nth-child(1){width:20%}
+.provider-directory-table th:nth-child(2),.provider-directory-table td:nth-child(2){width:12%;text-align:center}
+.provider-directory-table th:nth-child(3),.provider-directory-table td:nth-child(3){width:24%}
+.provider-directory-table th:nth-child(4),.provider-directory-table td:nth-child(4){width:18%;text-align:left}
+.provider-directory-table th:nth-child(5),.provider-directory-table td:nth-child(5){width:18%;text-align:left}
+.provider-directory-table th:nth-child(6),.provider-directory-table td:nth-child(6){width:8%;text-align:center}
+.provider-sap-copy{display:inline-flex;align-items:center;justify-content:center;border:1px solid #d5e6e1;border-radius:7px;background:#f7fbfa;color:#286e58;font:inherit;font-size:13px;line-height:1.2;padding:7px 8px;cursor:pointer;white-space:nowrap}
+.provider-sap-copy:hover{background:#e9f5f1;border-color:#a9cec1}
 </style></head>
   <body>
     <div class="app-shell">
@@ -280,7 +290,7 @@
         <section id="providers-view" class="view">
           <div class="hero-row"><div><h2>Proveedores</h2><p>Catálogo común de proveedores, contactos y gestiones habituales del centro.</p></div><button class="primary" data-new-provider>＋ Nuevo proveedor</button></div>
           <div class="toolbar"><div class="search"><span>⌕</span><input id="provider-search" placeholder="Buscar proveedor, contacto, número o gestión" /></div><button type="button" class="secondary filter-reset" id="provider-clear-search">Limpiar filtros</button></div>
-          <div class="panel"><div class="panel-heading"><div><h3>Catálogo de proveedores</h3><p>Los proveedores se comparten con Control del centro y Compras y mejoras.</p></div><span class="count-pill" id="provider-count"></span></div><div class="table-wrap"><table class="provider-directory-table"><thead><tr><th>Proveedor / N.º SAP</th><th>Contacto</th><th>Gestión con el contacto</th><th>Actividad del proveedor</th><th>Acciones</th></tr></thead><tbody id="provider-table"></tbody></table></div></div>
+          <div class="panel"><div class="panel-heading"><div><h3>Catálogo de proveedores</h3><p>Los proveedores se comparten con Control del centro y Compras y mejoras.</p></div><span class="count-pill" id="provider-count"></span></div><div class="table-wrap"><table class="provider-directory-table"><thead><tr><th>Proveedor</th><th>N.º SAP</th><th>Contacto</th><th>Gestión con el contacto</th><th>Actividad del proveedor</th><th>Acciones</th></tr></thead><tbody id="provider-table"></tbody></table></div></div>
         </section>
 
         <section id="improvements-view" class="view">
@@ -331,7 +341,7 @@
 <script>document.body.classList.add('auth-locked')</script>
 <div id="firebase-auth-fallback" class="auth-fallback" role="status" aria-live="polite"><div class="auth-fallback-card"><p class="eyebrow">ACCESO PRIVADO</p><h1>Entrar en Aroa Gestión</h1><p>La pantalla de acceso está tardando en cargar. Tus datos están protegidos y no se ha modificado nada.</p><p class="auth-fallback-status">Pulsa «Reintentar carga» para volver a preparar la aplicación.</p><button type="button" onclick="window.location.reload()">Reintentar carga</button></div></div>
 <script defer src="vendor-xlsx.full.min.js?v=20260918"></script>
-<script defer src="app.js?v=20260923-providers-20"></script>
+<script defer src="app.js?v=20260923-providers-21"></script>
 
   </body>
 </html>
