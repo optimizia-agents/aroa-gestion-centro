@@ -370,6 +370,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 .field-help{display:block;margin-top:5px;color:#81969a;font-size:11px;line-height:1.35}
 .contact-search-input{width:100%;min-width:0}
 .contact-select-hidden{display:none!important}
+.provider-search-input{width:100%;min-width:0}
+.provider-select-hidden{display:none!important}
 .provider-contact-count{display:none!important}
 .provider-directory-table th:nth-child(1),.provider-directory-table td:nth-child(1){width:23%}
 .provider-directory-table th:nth-child(2),.provider-directory-table td:nth-child(2){width:10%}
@@ -391,6 +393,22 @@ document.addEventListener('DOMContentLoaded',()=>{
   };
   enhanceContactPicker('edit-provider-contact','edit-provider-contact-search','edit-provider-contact-options','Buscar contacto del proveedor…');
   enhanceContactPicker('improvement-edit-contact','improvement-edit-contact-search','improvement-edit-contact-options','Buscar contacto del proveedor…');
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  const enhanceProviderPicker=(selectId,inputId,listId,placeholder)=>{
+    const select=document.getElementById(selectId); if(!select||document.getElementById(inputId))return;
+    const input=document.createElement('input'); input.id=inputId; input.className='provider-search-input'; input.setAttribute('list',listId); input.placeholder=placeholder; input.autocomplete='off';
+    const list=document.createElement('datalist'); list.id=listId;
+    select.classList.add('provider-select-hidden'); select.parentElement?.insertBefore(input,select); select.parentElement?.append(list);
+    const rows=()=>typeof providerDirectoryRows==='function'?providerDirectoryRows():[];
+    const sync=()=>{list.innerHTML=rows().map(row=>`<option value="${String(row.name||'').replaceAll('&','&amp;').replaceAll('"','&quot;')}"></option>`).join('');const current=select.options[select.selectedIndex];if(current&&current.value&&current.value!=='Ninguno')input.value=current.textContent;else if(!input.matches(':focus'))input.value=''};
+    input.addEventListener('input',()=>{const query=input.value.trim().toLocaleLowerCase('es');if(!query){select.value=selectId==='edit-provider'?'Ninguno':'';select.dispatchEvent(new Event('change',{bubbles:true}));return}const row=rows().find(item=>[item.name,item.supplierNumber,item.description].join(' ').toLocaleLowerCase('es').includes(query));if(row){const option=[...select.options].find(item=>item.value.toLocaleLowerCase('es')===String(row.name||'').toLocaleLowerCase('es'));if(option){select.value=option.value;select.dispatchEvent(new Event('change',{bubbles:true}))}}});
+    new MutationObserver(sync).observe(select,{childList:true}); select.addEventListener('change',sync); sync();
+  };
+  enhanceProviderPicker('edit-provider','edit-provider-search','edit-provider-options','Buscar proveedor por nombre, SAP o actividad…');
+  enhanceProviderPicker('improvement-edit-provider','improvement-edit-provider-search','improvement-edit-provider-options','Buscar proveedor por nombre, SAP o actividad…');
 });
 </script>
   </body>
