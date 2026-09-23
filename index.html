@@ -243,6 +243,18 @@
 .provider-directory-table th:nth-child(6),.provider-directory-table td:nth-child(6){width:8%;text-align:center}
 .provider-sap-copy{display:inline-flex;align-items:center;justify-content:center;border:1px solid #d5e6e1;border-radius:7px;background:#f7fbfa;color:#286e58;font:inherit;font-size:13px;line-height:1.2;padding:7px 8px;cursor:pointer;white-space:nowrap}
 .provider-sap-copy:hover{background:#e9f5f1;border-color:#a9cec1}
+/* Distribución compacta y alineada del catálogo */
+.provider-directory-table{table-layout:fixed}
+.provider-directory-table th,.provider-directory-table td{vertical-align:top}
+.provider-directory-table th:nth-child(1),.provider-directory-table td:nth-child(1){width:23%;text-align:left}
+.provider-directory-table th:nth-child(2),.provider-directory-table td:nth-child(2){width:10%;text-align:left}
+.provider-directory-table th:nth-child(3),.provider-directory-table td:nth-child(3){width:23%;text-align:left}
+.provider-directory-table th:nth-child(4),.provider-directory-table td:nth-child(4){width:17%;text-align:left}
+.provider-directory-table th:nth-child(5),.provider-directory-table td:nth-child(5){width:21%;text-align:left}
+.provider-directory-table th:nth-child(6),.provider-directory-table td:nth-child(6){width:6%;text-align:center}
+.provider-directory-table td{line-height:1.35}
+.provider-directory-table .provider-sap-copy{margin-top:0}
+.provider-directory-table .edit-btn{margin-top:0}
 </style></head>
   <body>
     <div class="app-shell">
@@ -341,7 +353,7 @@
 <script>document.body.classList.add('auth-locked')</script>
 <div id="firebase-auth-fallback" class="auth-fallback" role="status" aria-live="polite"><div class="auth-fallback-card"><p class="eyebrow">ACCESO PRIVADO</p><h1>Entrar en Aroa Gestión</h1><p>La pantalla de acceso está tardando en cargar. Tus datos están protegidos y no se ha modificado nada.</p><p class="auth-fallback-status">Pulsa «Reintentar carga» para volver a preparar la aplicación.</p><button type="button" onclick="window.location.reload()">Reintentar carga</button></div></div>
 <script defer src="vendor-xlsx.full.min.js?v=20260918"></script>
-<script defer src="app.js?v=20260923-providers-21"></script>
+<script defer src="app.js?v=20260923-providers-22"></script>
 
   </body>
 </html>
