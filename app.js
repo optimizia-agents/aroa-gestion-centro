@@ -889,7 +889,14 @@ document.addEventListener('keydown',event=>{
  const modal=open[open.length-1];
  if(!modal)return;
  const close=modal.querySelector('.modal-close');
- if(close){event.preventDefault();close.click()}
+ if(close){
+  const dirty=modal.dataset.dirty==='true';
+  const message=dirty?'Hay cambios sin guardar. ¿Quieres salir y perderlos?':'¿Quieres salir de esta ventana?';
+  if(!confirm(message))return;
+  event.preventDefault();
+  modal.dataset.dirty='false';
+  close.click();
+ }
 });
 
 window.addEventListener('beforeunload',event=>{
