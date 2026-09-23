@@ -82,12 +82,12 @@
       @media(min-width:901px){#directory-table{width:100%!important;min-width:980px!important;table-layout:fixed!important}#directory-table th:nth-child(1),#directory-table td:nth-child(1){width:8%!important}#directory-table th:nth-child(2),#directory-table td:nth-child(2){width:17%!important}#directory-table th:nth-child(3),#directory-table td:nth-child(3){width:11%!important}#directory-table th:nth-child(4),#directory-table td:nth-child(4){width:9%!important}#directory-table th:nth-child(5),#directory-table td:nth-child(5){width:9%!important}#directory-table th:nth-child(6),#directory-table td:nth-child(6){width:8%!important}#directory-table th:nth-child(7),#directory-table td:nth-child(7){width:6%!important}#directory-table th:nth-child(8),#directory-table td:nth-child(8){width:15%!important}#directory-table th:nth-child(9),#directory-table td:nth-child(9){width:9%!important}#directory-table th:nth-child(10),#directory-table td:nth-child(10){width:8%!important}}
     </style>
     <style>
-      @media(min-width:621px){#center-editor .modal-card{width:min(940px,100%)}.provider-contact-form{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;align-items:end;gap:10px}.provider-contact-form[hidden]{display:none}.provider-contact-form-actions{display:flex;gap:8px}.provider-contact-form-actions button{white-space:nowrap}}
+      @media(min-width:621px){#center-editor .modal-card{width:min(940px,100%)}.provider-contact-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end;gap:12px}.provider-contact-form[hidden]{display:none}.provider-contact-form-actions{display:flex;grid-column:1/-1;justify-content:flex-end;gap:8px}.provider-contact-form-actions button{white-space:nowrap}}
       .provider-contact-details{display:flex;gap:12px;align-items:center;min-height:20px;font-size:14px;font-weight:500;color:#526d75}.provider-contact-details a{color:#356b8a;text-decoration:none}.provider-contact-details a:hover{text-decoration:underline}.provider-contact-empty{color:#86999d}
       @media(max-width:620px){.provider-contact-form{display:grid;grid-template-columns:1fr;gap:10px}.provider-contact-form[hidden]{display:none}.provider-contact-form-actions{display:flex;justify-content:flex-end;gap:8px}}
     </style>
     <style>
-      @media(min-width:621px){#center-editor .modal-card{width:min(1100px,100%);padding:28px 32px}#center-editor .modal-heading{margin-bottom:18px}#center-editor .editor-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}#center-editor #provider-contact-field{grid-column:auto}#center-editor .editor-grid>label:has(#edit-action),#center-editor .editor-grid>label:has(#edit-sharepoint-url){grid-column:span 1}#center-editor .provider-contact-form{grid-column:1/-1}.provider-contact-form{grid-template-columns:1fr 1fr 1fr 1fr auto}}
+      @media(min-width:621px){#center-editor .modal-card{width:min(1100px,100%);padding:28px 32px}#center-editor .modal-heading{margin-bottom:18px}#center-editor .editor-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}#center-editor #provider-contact-field{grid-column:auto}#center-editor .editor-grid>label:has(#edit-action),#center-editor .editor-grid>label:has(#edit-sharepoint-url){grid-column:span 1}#center-editor .provider-contact-form{grid-column:1/-1}.provider-contact-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
     </style>
     <style>
       /* Ajuste compacto para que el editor entre completo sin perder información. */
@@ -295,7 +295,7 @@
 <script>document.body.classList.add('auth-locked')</script>
 <div id="firebase-auth-fallback" class="auth-fallback" role="status" aria-live="polite"><div class="auth-fallback-card"><p class="eyebrow">ACCESO PRIVADO</p><h1>Entrar en Aroa Gestión</h1><p>La pantalla de acceso está tardando en cargar. Tus datos están protegidos y no se ha modificado nada.</p><p class="auth-fallback-status">Pulsa «Reintentar carga» para volver a preparar la aplicación.</p><button type="button" onclick="window.location.reload()">Reintentar carga</button></div></div>
 <script defer src="vendor-xlsx.full.min.js?v=20260918"></script>
-<script defer src="app.js?v=20260923-providers-2"></script>
+<script defer src="app.js?v=20260923-providers-3"></script>
 
   </body>
 </html>
