@@ -100,6 +100,10 @@
       #center-editor #edit-action{min-height:78px;height:78px}
     </style>
     <style>
+      /* Mantiene alineados los campos de cada fila cuando un contacto muestra ayudas adicionales. */
+      @media(min-width:621px){#center-editor .editor-grid>label{align-self:start}}
+    </style>
+    <style>
       .client-number-cell{display:flex;align-items:center;gap:6px;min-width:0}
       .copy-client-button{width:25px;height:25px;padding:0;border:1px solid #cfe2df;background:#f4faf8;color:#2c706c;border-radius:6px;font-size:14px;line-height:1;cursor:pointer;flex:0 0 auto}
       .copy-client-button:hover{background:#e3f4ef;border-color:#8fc4b8}
