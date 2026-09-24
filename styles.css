@@ -283,10 +283,10 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 .improvement-table th:nth-child(4){width:7%}
 .improvement-table th:nth-child(5){width:7%}
 .improvement-table th:nth-child(6){width:18%}
-.improvement-table th:nth-child(7){width:6%}
-.improvement-table th:nth-child(8){width:7%}
+.improvement-table th:nth-child(7){width:5%}
+.improvement-table th:nth-child(8){width:6%}
 .improvement-table th:nth-child(9){width:7%}
-.improvement-table th:nth-child(10){width:6%}
+.improvement-table th:nth-child(10){width:8%}
 .improvement-table th:nth-child(11){width:8%}
 .improvement-table th,.improvement-table td{padding-left:5px;padding-right:5px}
 .improvement-table td{font-size:12px}
