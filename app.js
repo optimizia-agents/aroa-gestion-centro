@@ -816,7 +816,7 @@ async function writeDocument(collection,id,value,revision,retry=true){
    const latest=await readDocument(collection,id);
    if(latest?.revision)return writeDocument(collection,id,mergeConcurrentDocument(latest.value,value),latest.revision,false);
   }
-  const error=new Error(versionConflict?'CONFLICT':'No se pudo confirmar el guardado.');error.status=response.status;error.firebaseDetail=firebaseDetail;console.warn('Firebase save rejected',response.status,firebaseDetail);throw error
+  const error=new Error(versionConflict?'CONFLICT':'No se pudo confirmar el guardado.');error.status=response.status;throw error
  }
  const doc=await response.json();
  return {value:fsDecode({mapValue:{fields:doc.fields||{}}}),revision:doc.updateTime};
