@@ -886,7 +886,8 @@ async function commitEditor(kind,index,changes,modalId,close,remove=false){
  }catch(error){
   if(error.message==='CONFLICT')uncertainSave=null;
   markSyncFailure();
-  editorMessage(modal,error.message==='CONFLICT'?'Hay cambios más recientes en Firebase. Tu formulario sigue intacto: copia lo que necesites, cancela y pulsa Actualizar antes de volver a editar.':'No se ha confirmado el guardado. Tu formulario sigue intacto. Comprueba la conexión y vuelve a pulsar Guardar.');
+  const detail=error.status?` (${error.status})`:'';
+  editorMessage(modal,error.message==='CONFLICT'?'Hay cambios más recientes en Firebase. Tu formulario sigue intacto: copia lo que necesites, cancela y pulsa Actualizar antes de volver a editar.':`No se ha confirmado el guardado${detail}. Tu formulario sigue intacto. Comprueba la conexión y vuelve a pulsar Guardar.`);
  }finally{setEditorBusy(modal,false)}
 }
 async function saveCenterEditorFlexible(){
