@@ -118,7 +118,8 @@
       #cases-table .case-detail-row td{padding:0 14px 14px;border-top:0;background:#fbfdfc}
       #cases-table .case-detail-line{display:grid;grid-template-columns:135px minmax(0,1fr);gap:12px;padding:9px 12px;border-top:1px solid #e7efed;line-height:1.45;color:#314c58}
       #cases-table .case-detail-line strong{color:#183442;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
-      #cases-table .case-detail-line span{font-weight:400;font-size:12px}
+      #cases-table .case-detail-line span{font-weight:400}
+      #case-editor #case-edit-description,#case-editor #case-edit-action{font-size:13px}
       #case-edit-description{min-height:240px;resize:vertical;font-size:14px;line-height:1.55;color:var(--ink)}
       .case-evidence-box{padding:14px;border:1px solid #d9e7e3;border-radius:10px;background:#f8fbfa}
       .case-evidence-box>strong{display:block;color:#183442;font-size:14px;margin-bottom:2px}
@@ -392,7 +393,7 @@
 <script>document.body.classList.add('auth-locked')</script>
 <div id="firebase-auth-fallback" class="auth-fallback" role="status" aria-live="polite"><div class="auth-fallback-card"><p class="eyebrow">ACCESO PRIVADO</p><h1>Entrar en Aroa Gestión</h1><p>La pantalla de acceso está tardando en cargar. Tus datos están protegidos y no se ha modificado nada.</p><p class="auth-fallback-status">Pulsa «Reintentar carga» para volver a preparar la aplicación.</p><button type="button" onclick="window.location.reload()">Reintentar carga</button></div></div>
 <script defer src="vendor-xlsx.full.min.js?v=20260918"></script>
-<script defer src="app.js?v=20260924-cases-9"></script>
+<script defer src="app.js?v=20260924-cases-10"></script>
 
 <style>
 .editor-grid [hidden]{display:none!important}
