@@ -790,7 +790,7 @@ function applyConfirmedDocument(doc){
  appRevision=doc.revision;appDocument=structuredClone(value);const storedTemplates=Array.isArray(appDocument.templates)?appDocument.templates:[];const legacyTemplateSeed=storedTemplates.length>0&&storedTemplates.every(row=>/^template-\d+$/.test(String(row.id||'')))&&!storedTemplates.some(row=>row.id==='template-15');if(storedTemplates.length===0||legacyTemplateSeed){const byId=new Map(storedTemplates.map(row=>[row.id,row]));appDocument.templates=DEFAULT_TEMPLATE_ROWS.map(row=>byId.has(row.id)?{id:row.id,name:byId.get(row.id).name||row.name,url:byId.get(row.id).url||''}:structuredClone(row));}else appDocument.templates=storedTemplates.map(row=>({id:row.id||crypto.randomUUID(),name:row.name||'',url:row.url||''}));
  const storedProcedures=Array.isArray(appDocument.procedures)?appDocument.procedures:[], procedureById=new Map(storedProcedures.map(row=>[row.id,row]));
  appDocument.procedures=(storedProcedures.length===0?DEFAULT_PROCEDURE_ROWS:storedProcedures).map(row=>{const saved=procedureById.get(row.id)||row;return {id:saved.id||crypto.randomUUID(),number:saved.number||row.number||'',emocNumber:saved.emocNumber||row.emocNumber||'',name:saved.name||row.name||'',version:saved.version||row.version||'',author:saved.author||row.author||'',status:saved.status||row.status||'Pendiente',notes:saved.notes||row.notes||'',url:saved.url||row.url||''}});
- centerRows.splice(0,centerRows.length,...value.center);pendingRows.splice(0,pendingRows.length,...value.pending);clientRows.splice(0,clientRows.length,...value.clients);caseRows.splice(0,caseRows.length,...(Array.isArray(value.cases)?value.cases:[]));
+ centerRows.splice(0,centerRows.length,...value.center);pendingRows.splice(0,pendingRows.length,...value.pending);clientRows.splice(0,clientRows.length,...value.clients);caseRows.splice(0,caseRows.length,...(Array.isArray(value.cases)?value.cases:[]));appDocument.cases=structuredClone(caseRows);
  improvementRows.splice(0,improvementRows.length,...(Array.isArray(value.improvements)?value.improvements:[]));
  templateRows.splice(0,templateRows.length,...appDocument.templates);
  procedureRows.splice(0,procedureRows.length,...appDocument.procedures);
@@ -843,7 +843,7 @@ async function commitEditor(kind,index,changes,modalId,close,remove=false){
  if(kind==='center'&&window.pendingEvidenceMetadata)changes.evidence=window.pendingEvidenceMetadata;
  if(kind==='center'&&window._centerEvidencesToSave!==undefined){changes.evidences=window._centerEvidencesToSave;changes.sharepointUrl=window._sharepointUrlToSave||'';changes.evidence=null;window._centerEvidencesToSave=undefined;window._sharepointUrlToSave=undefined}
  if(kind==='center'&&index<0&&!changes.id)changes.id=crypto.randomUUID();
- payload[kind]=rows.map(row=>({...row}));
+ payload[kind]=(Array.isArray(rows)?rows:[]).map(row=>({...row}));
  if(remove)payload[kind].splice(index,1);
  else if(index<0)payload[kind].push({...changes,id:changes.id||crypto.randomUUID()});
  else payload[kind][index]={...payload[kind][index],...changes};
