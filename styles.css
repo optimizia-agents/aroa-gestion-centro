@@ -313,3 +313,9 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 /* Compactar el espacio horizontal del catálogo */
 .provider-directory-table th,.provider-directory-table td{padding-left:8px;padding-right:8px}.provider-directory-table th:nth-child(1){width:21%}.provider-directory-table th:nth-child(2){width:10%}.provider-directory-table th:nth-child(3){width:27%}.provider-directory-table th:nth-child(4){width:32%}.provider-directory-table th:nth-child(5){width:10%}
 .provider-directory-table th:nth-child(2){text-align:center}.provider-directory-table th:nth-child(1){width:22%}.provider-directory-table th:nth-child(2){width:10%}.provider-directory-table th:nth-child(3){width:22%}.provider-directory-table th:nth-child(4){width:24%}.provider-directory-table th:nth-child(5){width:16%}.provider-directory-table th:nth-child(6){width:6%}.provider-directory-table th{white-space:normal;overflow-wrap:anywhere;word-break:normal;line-height:1.25}
+
+/* Compras: contacto separado de la documentación para que la ficha se lea en orden. */
+.improvement-contact-field{grid-column:1/-1}
+.improvement-contact-field .provider-contact-details{width:100%;flex-wrap:wrap;gap:8px 18px;padding-top:2px}
+.improvement-document-link{min-width:0}
+@media(max-width:620px){.improvement-contact-field{grid-column:auto}.improvement-document-link{grid-column:auto}}
