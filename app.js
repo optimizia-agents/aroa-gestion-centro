@@ -4,6 +4,7 @@ const directoryRows = [];
 const templateRows = [];
 const procedureRows = [];
 const improvementRows = [];
+const caseRows = [];
 const TEMPLATE_LIBRARY_REVISION = '20260919-biblioteca-15';
 const PROCEDURE_LIBRARY_REVISION = '20260919-procedimientos-8';
 const DEFAULT_TEMPLATE_ROWS = [
@@ -320,12 +321,32 @@ function resetClientFilters(){
   if(typeof saveViewFilters==='function')saveViewFilters('clients');
 }
 
+let caseEditorIndex=-1;
+function caseStatusClass(status){return status==='SOLUCIONADO'?'done':status==='EN CURSO'?'process':'open'}
+function caseStatusTag(status){const value=status||'PENDIENTE';return `<span class="status ${caseStatusClass(value)}">${htmlEscape(value)}</span>`}
+function caseEvidenceHtml(items){const list=Array.isArray(items)?items.filter(item=>item&&item.url):[];if(!list.length)return '<span class="muted">Sin evidencias</span>';return list.map(item=>`<a class="center-evidence-link" href="${htmlEscape(item.url)}" target="_blank" rel="noopener noreferrer" title="Abrir evidencia">${htmlEscape(item.type||'Abrir')}</a>`).join(' ')}
+function renderCases(){
+ const table=$('case-table');if(!table)return;
+ const q=String($('case-search')?.value||'').trim().toLocaleLowerCase('es'),type=$('case-type-filter')?.value||'all',status=$('case-status-filter')?.value||'all';
+ const rows=caseRows.filter(row=>(type==='all'||row.type===type)&&(status==='all'||row.status===status)&&[row.title,row.description,row.client,row.owner,row.action,row.status,row.type].join(' ').toLocaleLowerCase('es').includes(q)).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+ table.innerHTML=rows.length?rows.map(row=>{const index=caseRows.indexOf(row);return `<tr><td>${caseStatusTag(row.status)}</td><td><strong>${htmlEscape(row.title||'Sin título')}</strong><small class="muted">${htmlEscape(row.description||'')}</small></td><td>${htmlEscape(row.type==='CLIENTE'?'Cliente':'Interno')}</td><td>${htmlEscape(row.client||'—')}</td><td class="date">${htmlEscape(displayDate(row.date)||'Sin fecha')}</td><td>${htmlEscape(row.owner||'Sin asignar')}</td><td>${htmlEscape(row.action||'Sin notas')}</td><td>${caseEvidenceHtml(row.evidence)}</td><td><button type="button" class="edit-btn" onclick="openCaseEditor(${index})">Editar</button></td></tr>`}).join(''):'<tr><td colspan="9" class="empty">No hay casos que coincidan con estos filtros.</td></tr>';
+ if($('case-count'))$('case-count').textContent=`${rows.length} casos`;
+}
+function renderCaseEvidenceFields(items=[]){const list=$('case-evidence-list');if(!list)return;const values=Array.isArray(items)&&items.length?items:[{type:'Documento',name:'',url:''}];list.innerHTML=values.map((item,index)=>`<div class="case-evidence-row"><select data-case-evidence-type><option ${item.type==='Foto'?'selected':''}>Foto</option><option ${item.type==='Correo'?'selected':''}>Correo</option><option ${item.type==='Documento'?'selected':''}>Documento</option><option ${item.type==='Otro'?'selected':''}>Otro</option></select><input data-case-evidence-name placeholder="Nombre" value="${htmlEscape(item.name||'')}"><input data-case-evidence-url type="url" placeholder="Enlace de SharePoint" value="${htmlEscape(item.url||'')}"><button type="button" class="secondary case-evidence-remove" data-case-evidence-remove aria-label="Quitar evidencia">×</button></div>`).join('');}
+function openCaseEditor(index=-1){caseEditorIndex=index;const row=index<0?{}:caseRows[index]||{};editorMessage($('case-editor'),'');$('delete-case-editor').hidden=index<0;$('case-edit-title').value=row.title||'';$('case-edit-type').value=row.type||'INTERNO';$('case-edit-status').value=row.status||'PENDIENTE';$('case-edit-client').value=row.client||'';$('case-edit-date').value=dateForEditor(row.date);$('case-edit-owner').value=row.owner||'';$('case-edit-description').value=row.description||'';$('case-edit-action').value=row.action||'';renderCaseEvidenceFields(row.evidence);$('case-editor-title').textContent=index<0?'Nuevo caso':'Editar caso';$('save-case-editor').textContent=index<0?'Guardar caso':'Guardar cambios';$('case-editor').classList.add('open');$('case-editor').setAttribute('aria-hidden','false');$('case-edit-title').focus()}
+function closeCaseEditor(){if(!allowEditorClose('case-editor'))return;$('case-editor').classList.remove('open');$('case-editor').setAttribute('aria-hidden','true');caseEditorIndex=-1}
+function readCaseEvidence(){return [...document.querySelectorAll('#case-evidence-list .case-evidence-row')].map(row=>({type:row.querySelector('[data-case-evidence-type]')?.value||'Documento',name:row.querySelector('[data-case-evidence-name]')?.value.trim()||'',url:row.querySelector('[data-case-evidence-url]')?.value.trim()||''})).filter(item=>item.name||item.url)}
+function saveCaseEditor(){const title=$('case-edit-title').value.trim();if(!title){editorMessage($('case-editor'),'Escribe un título para el caso.');return}return commitEditor('cases',caseEditorIndex,{title,type:$('case-edit-type').value,status:$('case-edit-status').value,client:$('case-edit-client').value.trim(),date:$('case-edit-date').value?dateFromEditor($('case-edit-date').value):'',owner:$('case-edit-owner').value.trim(),description:sentenceCaseIfAllCaps($('case-edit-description').value),action:sentenceCaseIfAllCaps($('case-edit-action').value),evidence:readCaseEvidence()},'case-editor',closeCaseEditor)}
+function deleteCaseEditor(){if(caseEditorIndex>=0&&confirm('¿Quieres eliminar este caso?'))return commitEditor('cases',caseEditorIndex,null,'case-editor',closeCaseEditor,true)}
+document.querySelector('[data-new-case]')?.addEventListener('click',()=>openCaseEditor());document.querySelectorAll('[data-close-case]').forEach(button=>button.addEventListener('click',closeCaseEditor));$('save-case-editor')?.addEventListener('click',saveCaseEditor);$('delete-case-editor')?.addEventListener('click',deleteCaseEditor);$('case-search')?.addEventListener('input',renderCases);$('case-type-filter')?.addEventListener('change',renderCases);$('case-status-filter')?.addEventListener('change',renderCases);$('case-clear-search')?.addEventListener('click',()=>{$('case-search').value='';$('case-type-filter').value='all';$('case-status-filter').value='all';renderCases()});$('add-case-evidence')?.addEventListener('click',()=>{const current=readCaseEvidence();current.push({type:'Documento',name:'',url:''});renderCaseEvidenceFields(current)});document.addEventListener('click',event=>{if(event.target.closest('[data-case-evidence-remove]')){const current=readCaseEvidence();const row=event.target.closest('.case-evidence-row');const index=[...document.querySelectorAll('#case-evidence-list .case-evidence-row')].indexOf(row);current.splice(index,1);renderCaseEvidenceFields(current)}});
+
 // Conserva la configuración de cada vista al navegar por la aplicación.
 const VIEW_FILTERS_KEY='kurro-view-filters-v2';
 const VIEW_FILTER_FIELDS={
   center:['center-search','center-category','center-evidence-filter'],
   pending:['pending-search','pending-person','pending-priority','pending-status','pending-sort'],
-  clients:['client-search','client-filter-client','client-priority','client-status']
+  clients:['client-search','client-filter-client','client-priority','client-status'],
+  cases:['case-search','case-type-filter','case-status-filter']
 };
 function readViewFilters(){try{return JSON.parse(localStorage.getItem(VIEW_FILTERS_KEY)||'{}')}catch(e){return {}}}
 function saveViewFilters(view){
@@ -338,7 +359,7 @@ function restoreViewFilters(view){
   (VIEW_FILTER_FIELDS[view]||[]).forEach(id=>{const node=$(id);if(node&&saved[id]!==undefined)node.value=saved[id]});
 }
 document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
- const titles={center:'Control del centro',templates:'Plantillas',procedures:'Procedimientos',providers:'Proveedores',pending:'Agenda de trabajo',clients:'Gestiones con clientes',directory:'Directorio',improvements:'Compras y mejoras',analysis:'Análisis económico'};
+ const titles={center:'Control del centro',templates:'Plantillas',procedures:'Procedimientos',providers:'Proveedores',pending:'Agenda de trabajo',clients:'Gestiones con clientes',cases:'Casos y acciones',directory:'Directorio',improvements:'Compras y mejoras',analysis:'Análisis económico'};
   if($('page-title'))$('page-title').textContent=titles[button.dataset.view]||'Centro';
 }));
 
@@ -549,7 +570,7 @@ $('client-filter-client').addEventListener('change',renderClients);
 $('center-date-filter').addEventListener('change',renderCenter);
 $('center-evidence-filter')?.addEventListener('change',()=>{renderCenter();saveViewFilters('center')});
 $('center-sort')?.remove();
- renderCenter();renderPending();renderClients();renderTemplates();renderProcedures();renderImprovements();
+ renderCenter();renderPending();renderClients();renderCases();renderTemplates();renderProcedures();renderImprovements();
 startFirebaseRest();
 function init(){
  window.person='all';
@@ -558,7 +579,7 @@ function init(){
  document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
   document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b===button);b.setAttribute('aria-current',b===button?'page':'false')});
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active-view',v.id===button.dataset.view+'-view'));
-  $('page-title').textContent={center:'Control del centro',templates:'Plantillas',procedures:'Procedimientos',pending:'Agenda de trabajo',clients:'Gestiones con clientes',directory:'Directorio',improvements:'Compras y mejoras',analysis:'Análisis económico'}[button.dataset.view];
+  $('page-title').textContent={center:'Control del centro',templates:'Plantillas',procedures:'Procedimientos',pending:'Agenda de trabajo',clients:'Gestiones con clientes',cases:'Casos y acciones',directory:'Directorio',improvements:'Compras y mejoras',analysis:'Análisis económico'}[button.dataset.view];
   if(button.dataset.view==='directory')loadDirectoryFromFirebase();if(button.dataset.view==='providers')renderProviders();
  }));
  ['center-search','center-category','center-status'].forEach(id=>$(id)?.addEventListener('input',()=>{renderCenter();saveViewFilters('center')}));
@@ -570,10 +591,10 @@ function init(){
  if(EVIDENCE_ENABLED)ensureEvidenceControls();
  if(EVIDENCE_ENABLED)document.addEventListener('click',event=>{if(!$('center-editor')?.classList.contains('open'))return;const target=event.target?.closest?.('.edit-btn,[data-new-center]');if(!target)return;if(centerEditorIndex<0)window.pendingEvidenceMetadata=null;showEvidence(centerEditorIndex>=0?centerRows[centerEditorIndex]?.evidence:null)});
  if(EVIDENCE_ENABLED)document.addEventListener('click',async event=>{const link=event.target?.closest?.('#edit-evidence-view');if(!link||link.hidden)return;event.preventDefault();const popup=window.open('about:blank','_blank');try{const url=new URL(link.href);const prefix=`/v0/b/${FIREBASE_CONFIG.storageBucket}/o/`;if(url.hostname!=='firebasestorage.googleapis.com'||!url.pathname.startsWith(prefix))throw new Error();const response=await fetch(url.href,{headers:{Authorization:'Bearer '+restIdToken}});if(!response.ok)throw new Error();const blob=await response.blob();const objectUrl=URL.createObjectURL(blob);if(popup&&!popup.closed)popup.location.href=objectUrl;else window.location.href=objectUrl;setTimeout(()=>URL.revokeObjectURL(objectUrl),60000)}catch(error){if(popup&&!popup.closed)popup.close();showSyncToast('No se ha podido abrir la evidencia. Comprueba la sesión.')}});
- restoreViewFilters('center');restoreViewFilters('pending');restoreViewFilters('clients');
+ restoreViewFilters('center');restoreViewFilters('pending');restoreViewFilters('clients');restoreViewFilters('cases');
  $('pending-status').value='all';
  window.person=$('pending-person')?.value||'all';
- renderCenter();renderPending();renderClients();renderTemplates();renderProcedures();renderProviders();renderImprovements();renderDirectory();
+ renderCenter();renderPending();renderClients();renderCases();renderTemplates();renderProcedures();renderProviders();renderImprovements();renderDirectory();
 }
 
 // Allocate colors from the complete canonical list, consistently on every device.
@@ -769,12 +790,12 @@ function applyConfirmedDocument(doc){
  appRevision=doc.revision;appDocument=structuredClone(value);const storedTemplates=Array.isArray(appDocument.templates)?appDocument.templates:[];const legacyTemplateSeed=storedTemplates.length>0&&storedTemplates.every(row=>/^template-\d+$/.test(String(row.id||'')))&&!storedTemplates.some(row=>row.id==='template-15');if(storedTemplates.length===0||legacyTemplateSeed){const byId=new Map(storedTemplates.map(row=>[row.id,row]));appDocument.templates=DEFAULT_TEMPLATE_ROWS.map(row=>byId.has(row.id)?{id:row.id,name:byId.get(row.id).name||row.name,url:byId.get(row.id).url||''}:structuredClone(row));}else appDocument.templates=storedTemplates.map(row=>({id:row.id||crypto.randomUUID(),name:row.name||'',url:row.url||''}));
  const storedProcedures=Array.isArray(appDocument.procedures)?appDocument.procedures:[], procedureById=new Map(storedProcedures.map(row=>[row.id,row]));
  appDocument.procedures=(storedProcedures.length===0?DEFAULT_PROCEDURE_ROWS:storedProcedures).map(row=>{const saved=procedureById.get(row.id)||row;return {id:saved.id||crypto.randomUUID(),number:saved.number||row.number||'',emocNumber:saved.emocNumber||row.emocNumber||'',name:saved.name||row.name||'',version:saved.version||row.version||'',author:saved.author||row.author||'',status:saved.status||row.status||'Pendiente',notes:saved.notes||row.notes||'',url:saved.url||row.url||''}});
- centerRows.splice(0,centerRows.length,...value.center);pendingRows.splice(0,pendingRows.length,...value.pending);clientRows.splice(0,clientRows.length,...value.clients);
+ centerRows.splice(0,centerRows.length,...value.center);pendingRows.splice(0,pendingRows.length,...value.pending);clientRows.splice(0,clientRows.length,...value.clients);caseRows.splice(0,caseRows.length,...(Array.isArray(value.cases)?value.cases:[]));
  improvementRows.splice(0,improvementRows.length,...(Array.isArray(value.improvements)?value.improvements:[]));
  templateRows.splice(0,templateRows.length,...appDocument.templates);
  procedureRows.splice(0,procedureRows.length,...appDocument.procedures);
  remoteKurroLists=structuredClone(value.lists||{});providerContactsByName=structuredClone(value.providerContacts||{});providerDirectory=Array.isArray(value.providerDirectory)?structuredClone(value.providerDirectory):[];clientsLoading=false;
- refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();renderCenter();renderPending();renderClients();renderTemplates();renderProcedures();renderProviders();renderImprovements();renderEconomicAnalysis();renderAccessLogs();
+ refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();renderCenter();renderPending();renderClients();renderCases();renderTemplates();renderProcedures();renderProviders();renderImprovements();renderEconomicAnalysis();renderAccessLogs();
  markSyncSuccess();setDataAlert('');
 }
 function sapCategory(provider){const name=String(provider||'').toLocaleUpperCase('es');if(/ESTRUCTURAS/.test(name))return 'Mejora';if(/NOVODINAMICA/.test(name))return 'Equipamiento';if(/ORION/.test(name))return 'Formación';if(/CYRASA|RISC|APAVE|EUROCONTROL|MOVISTAR|WATERFIRE|ESPAIS DE SALUT/.test(name))return 'Seguridad / cumplimiento';if(/LINDE|PROPERVALL|MANTENIMIENTOS|PUERTAS|BRICOLAJES/.test(name))return 'Reparación / mantenimiento';if(/DOMENECH|KALAMAZOO|VIVA AQUA|FIC SUMINISTROS/.test(name))return 'Suministro / consumible';if(/ANTICIMEX|ISS FACILITY|DIAGONAL|VITALIS|E COORDINA|IPAT/.test(name))return 'Servicio';return 'Otro'}
@@ -783,12 +804,12 @@ async function mergeImportedImprovementRows(importRows){const sapByOrder=new Map
 async function importSapWorkbook(file){if(!firebaseUser){showSyncToast('Inicia sesión para importar el Excel');openFirebaseAuth();return}if(typeof XLSX==='undefined'){showSyncToast('Excel todavía está cargando. Espera un momento y vuelve a intentarlo');return}try{const data=await file.arrayBuffer(),book=XLSX.read(data,{type:'array',cellDates:false}),sheet=book.Sheets[book.SheetNames[0]],matrix=XLSX.utils.sheet_to_json(sheet,{header:1,defval:''});const headers=(matrix.shift()||[]).map(v=>String(v).trim()),idx=key=>headers.indexOf(key),z=idx('Documento de compras'),supplier=idx('Acreedor'),provider=idx('Nombre del proveedor'),reference=idx('Referencia'),gross=idx('Impte.bruto factura'),posted=idx('Fecha contabiliz.'),invoice=idx('Nº documento factura MM');if([z,supplier,provider,reference,gross,posted].some(i=>i<0))throw new Error('No se han encontrado las columnas SAP necesarias.');const groups=new Map();matrix.forEach(row=>{const order=String(row[z]??'').trim();if(!/^4\d{6,}$/.test(order))return;if(!groups.has(order))groups.set(order,[]);groups.get(order).push(row)});const rows=[...groups.entries()].map(([order,items])=>{const first=items[0],refs=[...new Set(items.map(r=>String(r[reference]??'').trim()).filter(Boolean))],invoices=invoice>=0?[...new Set(items.map(r=>String(r[invoice]??'').trim()).filter(Boolean))]:[],amount=items.reduce((sum,r)=>sum+(Number(String(r[gross]??'').replace(',','.'))||0),0),notes=`Importado del export SAP; referencias de factura: ${refs.join(', ')}`+(invoices.length?`; documentos factura MM: ${invoices.join(', ')}`:'');return{id:`sapx-${order}`,name:`Factura ${refs[0]||order}`,category:sapCategory(first[provider]),status:'Finalizado',date:excelSerialDate(first[posted]),provider:String(first[provider]??'').trim(),supplierNumber:String(first[supplier]??'').trim(),orderNumber:order,amount:`${amount.toFixed(2).replace('.',',')} €`,observations:notes,source:'sap-export-importado'}});const count=await mergeImportedImprovementRows(rows);showSyncToast(`${rows.length} pedidos leídos; ${count} líneas nuevas o actualizadas`)}catch(error){showSyncToast(error.message||'No se ha podido importar el Excel')}finally{if($('improvement-sap-import'))$('improvement-sap-import').value=''}}
 function normalizeImprovementOrderDates(){let changed=false;const rows=improvementRows.map(row=>{const order=String(row.orderNumber||'').trim(),documentDate=SAP_DOCUMENT_DATES[order];if(!documentDate)return row;const next={...row};/* SAP supplies a default only for empty fields; manual dates must remain editable. */if(!String(next.date||'').trim()){next.date=documentDate;next.detectionDate=next.detectionDate||documentDate;changed=true}if(!String(next.orderDate||'').trim()){next.orderDate=documentDate;changed=true}return next});return{rows,changed}}
 async function loadRemoteData(){
- if(!firebaseUser||editorBusy||document.querySelector('#center-editor.open,#pending-editor.open,#client-editor.open'))return false;
+ if(!firebaseUser||editorBusy||document.querySelector('#center-editor.open,#pending-editor.open,#client-editor.open,#case-editor.open'))return false;
  if(dataLoadInFlight)return dataLoadInFlight;
  const revisionBefore=appRevision;
  dataLoadInFlight=(async()=>{try{
   const doc=await readDocument('appState','main');if(!doc)throw new Error('Firebase no contiene el documento de datos.');
-  if(appRevision!==revisionBefore||editorBusy||document.querySelector('#center-editor.open,#pending-editor.open,#client-editor.open'))return false;
+  if(appRevision!==revisionBefore||editorBusy||document.querySelector('#center-editor.open,#pending-editor.open,#client-editor.open,#case-editor.open'))return false;
   applyConfirmedDocument(doc);
   const dated=normalizeImprovementOrderDates();
   if(dated.changed){const payload=structuredClone(appDocument);payload.improvements=dated.rows;payload.updated=new Date().toISOString();payload.lastMutation=crypto.randomUUID();try{const confirmed=await writeDocument('appState','main',payload,appRevision);applyConfirmedDocument(confirmed)}catch(error){console.warn('No se pudieron actualizar las fechas de pedido',error)}}
@@ -815,7 +836,7 @@ async function commitEditor(kind,index,changes,modalId,close,remove=false){
  if(editorBusy)return;
  const modal=$(modalId);
  if(!firebaseUser||!appRevision){editorMessage(modal,'Actualiza los datos de Firebase antes de guardar.');return}
- const rows={center:centerRows,pending:pendingRows,clients:clientRows,improvements:improvementRows}[kind];
+ const rows={center:centerRows,pending:pendingRows,clients:clientRows,improvements:improvementRows,cases:caseRows}[kind];
  const oldEvidence=kind==='center'&&index>=0?rows[index]?.evidence:null;
  if(index>=0&&!rows[index]){editorMessage(modal,'Este registro ya no está disponible.');return}
  const payload=structuredClone(appDocument);
@@ -881,7 +902,7 @@ function allowEditorClose(id){
  if(modal.dataset.dirty==='true'&&!confirm('Hay cambios sin guardar. ¿Quieres descartarlos y cerrar?'))return false;
  modal.dataset.dirty='false';uncertainSave=null;uncertainIntent=null;return true;
 }
-for(const id of ['center-editor','pending-editor','client-editor','improvement-editor','provider-editor','template-editor','procedure-editor','firebase-auth']){
+for(const id of ['center-editor','pending-editor','client-editor','case-editor','improvement-editor','provider-editor','template-editor','procedure-editor','firebase-auth']){
  const modal=$(id);for(const event of ['input','change'])modal.addEventListener(event,()=>{modal.dataset.dirty='true'});
 }
 document.addEventListener('keydown',event=>{
