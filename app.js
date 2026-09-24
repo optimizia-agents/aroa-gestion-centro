@@ -5,6 +5,7 @@ const templateRows = [];
 const procedureRows = [];
 const improvementRows = [];
 const caseRows = [];
+const applicationRows = [];
 const TEMPLATE_LIBRARY_REVISION = '20260919-biblioteca-15';
 const PROCEDURE_LIBRARY_REVISION = '20260919-procedimientos-8';
 const DEFAULT_TEMPLATE_ROWS = [
@@ -334,6 +335,23 @@ function renderCases(){
  table.innerHTML=rows.length?rows.map(row=>{const index=caseRows.indexOf(row);const description=row.description||'Sin descripción';const action=row.action||'Sin notas';return `<tr><td>${caseStatusTag(row.status)}</td><td><strong>${htmlEscape(row.title||'Sin título')}</strong></td><td>${htmlEscape(row.type==='CLIENTE'?'Cliente':'Interno')}</td><td>${htmlEscape(row.client||'—')}</td><td class="date">${htmlEscape(displayDate(row.date)||'Sin fecha')}</td><td>${htmlEscape(row.owner||'Sin asignar')}</td><td>${caseEvidenceHtml(row.evidence)}</td><td><button type="button" class="edit-btn" onclick="openCaseEditor(${index})">Editar</button></td></tr><tr class="case-detail-row"><td colspan="8"><div class="case-detail-line"><strong>Descripción</strong><span>${htmlEscape(description)}</span></div><div class="case-detail-line"><strong>Acción / notas</strong><span>${htmlEscape(action)}</span></div></td></tr>`}).join(''):'<tr><td colspan="8" class="empty">No hay casos que coincidan con estos filtros.</td></tr>';
  if($('case-count'))$('case-count').textContent=`${rows.length} casos`;
 }
+let applicationEditorIndex=-1;
+function renderApplications(){
+ const grid=$('application-grid');if(!grid)return;
+ const rows=applicationRows.slice().sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'es'));
+ if($('application-count'))$('application-count').textContent=`${rows.length} aplicación${rows.length===1?'':'es'}`;
+ if(!rows.length){grid.innerHTML='<div class="application-empty"><strong>Aún no hay aplicaciones guardadas</strong><span>Añade aquí los enlaces de trabajo que uses habitualmente.</span></div>';return}
+ grid.innerHTML=rows.map(row=>{const index=applicationRows.indexOf(row);return `<article class="application-card" role="listitem"><div class="application-card-head"><span class="application-icon" aria-hidden="true">🔗</span><div><h4>${htmlEscape(row.name||'Sin nombre')}</h4>${row.category?`<span class="application-category">${htmlEscape(row.category)}</span>`:''}</div></div><p class="application-description">${htmlEscape(row.description||'')}</p><div class="application-card-actions"><a class="application-open-link" href="${htmlEscape(row.url||'#')}" target="_blank" rel="noopener noreferrer">Abrir aplicación ↗</a><button type="button" class="secondary application-edit-button" data-application-edit="${index}">Editar</button></div></article>`}).join('');
+ grid.querySelectorAll('[data-application-edit]').forEach(button=>button.addEventListener('click',()=>openApplicationEditor(Number(button.dataset.applicationEdit))));
+}
+function openApplicationEditor(index=-1){
+ applicationEditorIndex=index;const row=index<0?{}:applicationRows[index]||{};const modal=$('application-editor');if(!modal)return;
+ editorMessage(modal,'');$('delete-application-editor').hidden=index<0;$('application-edit-name').value=row.name||'';$('application-edit-category').value=row.category||'';$('application-edit-description').value=row.description||'';$('application-edit-url').value=row.url||'';$('application-editor-title').textContent=index<0?'Nueva aplicación':'Editar aplicación';$('save-application-editor').textContent=index<0?'Guardar aplicación':'Guardar cambios';modal.classList.add('open');modal.setAttribute('aria-hidden','false');$('application-edit-name').focus();
+}
+function closeApplicationEditor(){if(!allowEditorClose('application-editor'))return;const modal=$('application-editor');modal?.classList.remove('open');modal?.setAttribute('aria-hidden','true');applicationEditorIndex=-1}
+function saveApplicationEditor(){const modal=$('application-editor'),name=$('application-edit-name').value.trim(),url=$('application-edit-url').value.trim();if(!name){editorMessage(modal,'Escribe el nombre de la aplicación.');return}if(!/^https?:\/\//i.test(url)){editorMessage(modal,'Escribe un enlace válido que empiece por http:// o https://.');return}return commitEditor('applications',applicationEditorIndex,{name,category:$('application-edit-category').value.trim(),description:$('application-edit-description').value.trim(),url},'application-editor',closeApplicationEditor)}
+function deleteApplicationEditor(){if(applicationEditorIndex>=0&&confirm('¿Quieres eliminar esta aplicación?'))return commitEditor('applications',applicationEditorIndex,null,'application-editor',closeApplicationEditor,true)}
+document.querySelector('[data-new-application]')?.addEventListener('click',()=>openApplicationEditor());document.querySelectorAll('[data-close-application]').forEach(button=>button.addEventListener('click',closeApplicationEditor));$('save-application-editor')?.addEventListener('click',saveApplicationEditor);$('delete-application-editor')?.addEventListener('click',deleteApplicationEditor);
 function renderCaseEvidenceFields(items=[]){const list=$('case-evidence-list');if(!list)return;const values=Array.isArray(items)&&items.length?items:[{type:'Documento',name:'',url:''}];list.innerHTML=values.map((item,index)=>`<div class="case-evidence-row"><select data-case-evidence-type><option ${item.type==='Foto'?'selected':''}>Foto</option><option ${item.type==='Correo'?'selected':''}>Correo</option><option ${item.type==='Documento'?'selected':''}>Documento</option><option ${item.type==='Otro'?'selected':''}>Otro</option></select><input data-case-evidence-name placeholder="Nombre" value="${htmlEscape(item.name||'')}"><input data-case-evidence-url type="url" placeholder="Enlace de SharePoint" value="${htmlEscape(item.url||'')}"><button type="button" class="secondary case-evidence-remove" data-case-evidence-remove aria-label="Quitar evidencia">×</button></div>`).join('');}
 function openCaseEditor(index=-1){caseEditorIndex=index;const row=index<0?{}:caseRows[index]||{};editorMessage($('case-editor'),'');$('delete-case-editor').hidden=index<0;$('case-edit-title').value=row.title||'';$('case-edit-type').value=row.type||'INTERNO';$('case-edit-status').value=row.status||'PENDIENTE';$('case-edit-client').value=row.client||'';$('case-edit-date').value=dateForEditor(row.date);$('case-edit-owner').value=row.owner||'';$('case-edit-description').value=row.description||'';$('case-edit-action').value=row.action||'';renderCaseEvidenceFields(row.evidence);$('case-editor-title').textContent=index<0?'Nuevo caso':'Editar caso';$('save-case-editor').textContent=index<0?'Guardar caso':'Guardar cambios';$('case-editor').classList.add('open');$('case-editor').setAttribute('aria-hidden','false');$('case-edit-title').focus()}
 function closeCaseEditor(){if(!allowEditorClose('case-editor'))return;$('case-editor').classList.remove('open');$('case-editor').setAttribute('aria-hidden','true');caseEditorIndex=-1}
@@ -361,7 +379,7 @@ function restoreViewFilters(view){
   (VIEW_FILTER_FIELDS[view]||[]).forEach(id=>{const node=$(id);if(node&&saved[id]!==undefined)node.value=saved[id]});
 }
 document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
- const titles={center:'Control del centro',templates:'Plantillas',procedures:'Procedimientos',providers:'Proveedores',pending:'Agenda de trabajo',clients:'Gestiones con clientes',cases:'Casos y acciones',directory:'Directorio',improvements:'Compras y mejoras',analysis:'Análisis económico'};
+ const titles={center:'Control del centro',templates:'Plantillas',procedures:'Procedimientos',providers:'Proveedores',pending:'Agenda de trabajo',clients:'Gestiones con clientes',cases:'Casos y acciones',applications:'Aplicaciones',directory:'Directorio',improvements:'Compras y mejoras',analysis:'Análisis económico'};
   if($('page-title'))$('page-title').textContent=titles[button.dataset.view]||'Centro';
 }));
 
@@ -572,7 +590,7 @@ $('client-filter-client').addEventListener('change',renderClients);
 $('center-date-filter').addEventListener('change',renderCenter);
 $('center-evidence-filter')?.addEventListener('change',()=>{renderCenter();saveViewFilters('center')});
 $('center-sort')?.remove();
- renderCenter();renderPending();renderClients();renderCases();renderTemplates();renderProcedures();renderImprovements();
+ renderCenter();renderPending();renderClients();renderCases();renderApplications();renderTemplates();renderProcedures();renderImprovements();
 startFirebaseRest();
 function init(){
  window.person='all';
@@ -582,7 +600,7 @@ function init(){
   document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b===button);b.setAttribute('aria-current',b===button?'page':'false')});
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active-view',v.id===button.dataset.view+'-view'));
   $('page-title').textContent={center:'Control del centro',templates:'Plantillas',procedures:'Procedimientos',pending:'Agenda de trabajo',clients:'Gestiones con clientes',cases:'Casos y acciones',directory:'Directorio',improvements:'Compras y mejoras',analysis:'Análisis económico'}[button.dataset.view];
-  if(button.dataset.view==='directory')loadDirectoryFromFirebase();if(button.dataset.view==='providers')renderProviders();
+  if(button.dataset.view==='directory')loadDirectoryFromFirebase();if(button.dataset.view==='providers')renderProviders();if(button.dataset.view==='applications')renderApplications();
  }));
  ['center-search','center-category','center-status'].forEach(id=>$(id)?.addEventListener('input',()=>{renderCenter();saveViewFilters('center')}));
  ['pending-search','pending-priority','pending-status'].forEach(id=>$(id)?.addEventListener('input',()=>{renderPending();saveViewFilters('pending')}));
@@ -596,7 +614,7 @@ function init(){
  restoreViewFilters('center');restoreViewFilters('pending');restoreViewFilters('clients');restoreViewFilters('cases');
  $('pending-status').value='all';
  window.person=$('pending-person')?.value||'all';
- renderCenter();renderPending();renderClients();renderCases();renderTemplates();renderProcedures();renderProviders();renderImprovements();renderDirectory();
+ renderCenter();renderPending();renderClients();renderCases();renderApplications();renderTemplates();renderProcedures();renderProviders();renderImprovements();renderDirectory();
 }
 
 // Allocate colors from the complete canonical list, consistently on every device.
@@ -807,12 +825,12 @@ function applyConfirmedDocument(doc){
  appRevision=doc.revision;appDocument=structuredClone(value);const storedTemplates=Array.isArray(appDocument.templates)?appDocument.templates:[];const legacyTemplateSeed=storedTemplates.length>0&&storedTemplates.every(row=>/^template-\d+$/.test(String(row.id||'')))&&!storedTemplates.some(row=>row.id==='template-15');if(storedTemplates.length===0||legacyTemplateSeed){const byId=new Map(storedTemplates.map(row=>[row.id,row]));appDocument.templates=DEFAULT_TEMPLATE_ROWS.map(row=>byId.has(row.id)?{id:row.id,name:byId.get(row.id).name||row.name,url:byId.get(row.id).url||''}:structuredClone(row));}else appDocument.templates=storedTemplates.map(row=>({id:row.id||crypto.randomUUID(),name:row.name||'',url:row.url||''}));
  const storedProcedures=Array.isArray(appDocument.procedures)?appDocument.procedures:[], procedureById=new Map(storedProcedures.map(row=>[row.id,row]));
  appDocument.procedures=(storedProcedures.length===0?DEFAULT_PROCEDURE_ROWS:storedProcedures).map(row=>{const saved=procedureById.get(row.id)||row;return {id:saved.id||crypto.randomUUID(),number:saved.number||row.number||'',emocNumber:saved.emocNumber||row.emocNumber||'',name:saved.name||row.name||'',version:saved.version||row.version||'',author:saved.author||row.author||'',status:saved.status||row.status||'Pendiente',notes:saved.notes||row.notes||'',url:saved.url||row.url||''}});
- centerRows.splice(0,centerRows.length,...value.center);pendingRows.splice(0,pendingRows.length,...value.pending);clientRows.splice(0,clientRows.length,...value.clients);caseRows.splice(0,caseRows.length,...(Array.isArray(value.cases)?value.cases:[]));appDocument.cases=structuredClone(caseRows);
+ centerRows.splice(0,centerRows.length,...value.center);pendingRows.splice(0,pendingRows.length,...value.pending);clientRows.splice(0,clientRows.length,...value.clients);caseRows.splice(0,caseRows.length,...(Array.isArray(value.cases)?value.cases:[]));appDocument.cases=structuredClone(caseRows);applicationRows.splice(0,applicationRows.length,...(Array.isArray(value.applications)?value.applications:[]));appDocument.applications=structuredClone(applicationRows);
  improvementRows.splice(0,improvementRows.length,...(Array.isArray(value.improvements)?value.improvements:[]));
  templateRows.splice(0,templateRows.length,...appDocument.templates);
  procedureRows.splice(0,procedureRows.length,...appDocument.procedures);
  remoteKurroLists=structuredClone(value.lists||{});providerContactsByName=structuredClone(value.providerContacts||{});providerDirectory=Array.isArray(value.providerDirectory)?structuredClone(value.providerDirectory):[];clientsLoading=false;
- refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();renderCenter();renderPending();renderClients();renderCases();renderTemplates();renderProcedures();renderProviders();renderImprovements();renderEconomicAnalysis();renderAccessLogs();
+ refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();renderCenter();renderPending();renderClients();renderCases();renderApplications();renderTemplates();renderProcedures();renderProviders();renderImprovements();renderEconomicAnalysis();renderAccessLogs();
  markSyncSuccess();setDataAlert('');
 }
 function sapCategory(provider){const name=String(provider||'').toLocaleUpperCase('es');if(/ESTRUCTURAS/.test(name))return 'Mejora';if(/NOVODINAMICA/.test(name))return 'Equipamiento';if(/ORION/.test(name))return 'Formación';if(/CYRASA|RISC|APAVE|EUROCONTROL|MOVISTAR|WATERFIRE|ESPAIS DE SALUT/.test(name))return 'Seguridad / cumplimiento';if(/LINDE|PROPERVALL|MANTENIMIENTOS|PUERTAS|BRICOLAJES/.test(name))return 'Reparación / mantenimiento';if(/DOMENECH|KALAMAZOO|VIVA AQUA|FIC SUMINISTROS/.test(name))return 'Suministro / consumible';if(/ANTICIMEX|ISS FACILITY|DIAGONAL|VITALIS|E COORDINA|IPAT/.test(name))return 'Servicio';return 'Otro'}
@@ -821,12 +839,12 @@ async function mergeImportedImprovementRows(importRows){const sapByOrder=new Map
 async function importSapWorkbook(file){if(!firebaseUser){showSyncToast('Inicia sesión para importar el Excel');openFirebaseAuth();return}if(typeof XLSX==='undefined'){showSyncToast('Excel todavía está cargando. Espera un momento y vuelve a intentarlo');return}try{const data=await file.arrayBuffer(),book=XLSX.read(data,{type:'array',cellDates:false}),sheet=book.Sheets[book.SheetNames[0]],matrix=XLSX.utils.sheet_to_json(sheet,{header:1,defval:''});const headers=(matrix.shift()||[]).map(v=>String(v).trim()),idx=key=>headers.indexOf(key),z=idx('Documento de compras'),supplier=idx('Acreedor'),provider=idx('Nombre del proveedor'),reference=idx('Referencia'),gross=idx('Impte.bruto factura'),posted=idx('Fecha contabiliz.'),invoice=idx('Nº documento factura MM');if([z,supplier,provider,reference,gross,posted].some(i=>i<0))throw new Error('No se han encontrado las columnas SAP necesarias.');const groups=new Map();matrix.forEach(row=>{const order=String(row[z]??'').trim();if(!/^4\d{6,}$/.test(order))return;if(!groups.has(order))groups.set(order,[]);groups.get(order).push(row)});const rows=[...groups.entries()].map(([order,items])=>{const first=items[0],refs=[...new Set(items.map(r=>String(r[reference]??'').trim()).filter(Boolean))],invoices=invoice>=0?[...new Set(items.map(r=>String(r[invoice]??'').trim()).filter(Boolean))]:[],amount=items.reduce((sum,r)=>sum+(Number(String(r[gross]??'').replace(',','.'))||0),0),notes=`Importado del export SAP; referencias de factura: ${refs.join(', ')}`+(invoices.length?`; documentos factura MM: ${invoices.join(', ')}`:'');return{id:`sapx-${order}`,name:`Factura ${refs[0]||order}`,category:sapCategory(first[provider]),status:'Finalizado',date:excelSerialDate(first[posted]),provider:String(first[provider]??'').trim(),supplierNumber:String(first[supplier]??'').trim(),orderNumber:order,amount:`${amount.toFixed(2).replace('.',',')} €`,observations:notes,source:'sap-export-importado'}});const count=await mergeImportedImprovementRows(rows);showSyncToast(`${rows.length} pedidos leídos; ${count} líneas nuevas o actualizadas`)}catch(error){showSyncToast(error.message||'No se ha podido importar el Excel')}finally{if($('improvement-sap-import'))$('improvement-sap-import').value=''}}
 function normalizeImprovementOrderDates(){let changed=false;const rows=improvementRows.map(row=>{const order=String(row.orderNumber||'').trim(),documentDate=SAP_DOCUMENT_DATES[order];if(!documentDate)return row;const next={...row};/* SAP supplies a default only for empty fields; manual dates must remain editable. */if(!String(next.date||'').trim()){next.date=documentDate;next.detectionDate=next.detectionDate||documentDate;changed=true}if(!String(next.orderDate||'').trim()){next.orderDate=documentDate;changed=true}return next});return{rows,changed}}
 async function loadRemoteData(){
- if(!firebaseUser||editorBusy||document.querySelector('#center-editor.open,#pending-editor.open,#client-editor.open,#case-editor.open'))return false;
+ if(!firebaseUser||editorBusy||document.querySelector('#center-editor.open,#pending-editor.open,#client-editor.open,#case-editor.open,#application-editor.open'))return false;
  if(dataLoadInFlight)return dataLoadInFlight;
  const revisionBefore=appRevision;
  dataLoadInFlight=(async()=>{try{
   const doc=await readDocument('appState','main');if(!doc)throw new Error('Firebase no contiene el documento de datos.');
-  if(appRevision!==revisionBefore||editorBusy||document.querySelector('#center-editor.open,#pending-editor.open,#client-editor.open,#case-editor.open'))return false;
+  if(appRevision!==revisionBefore||editorBusy||document.querySelector('#center-editor.open,#pending-editor.open,#client-editor.open,#case-editor.open,#application-editor.open'))return false;
   applyConfirmedDocument(doc);
   const dated=normalizeImprovementOrderDates();
   if(dated.changed){const payload=structuredClone(appDocument);payload.improvements=dated.rows;payload.updated=new Date().toISOString();payload.lastMutation=crypto.randomUUID();try{const confirmed=await writeDocument('appState','main',payload,appRevision);applyConfirmedDocument(confirmed)}catch(error){console.warn('No se pudieron actualizar las fechas de pedido',error)}}
@@ -853,7 +871,7 @@ async function commitEditor(kind,index,changes,modalId,close,remove=false){
  if(editorBusy)return;
  const modal=$(modalId);
  if(!firebaseUser||!appRevision){editorMessage(modal,'Actualiza los datos de Firebase antes de guardar.');return}
- const rows={center:centerRows,pending:pendingRows,clients:clientRows,improvements:improvementRows,cases:caseRows}[kind];
+ const rows={center:centerRows,pending:pendingRows,clients:clientRows,improvements:improvementRows,cases:caseRows,applications:applicationRows}[kind];
  const oldEvidence=kind==='center'&&index>=0?rows[index]?.evidence:null;
  if(index>=0&&!rows[index]){editorMessage(modal,'Este registro ya no está disponible.');return}
  const payload=structuredClone(appDocument);
@@ -920,7 +938,7 @@ function allowEditorClose(id){
  if(modal.dataset.dirty==='true'&&!confirm('Hay cambios sin guardar. ¿Quieres descartarlos y cerrar?'))return false;
  modal.dataset.dirty='false';uncertainSave=null;uncertainIntent=null;return true;
 }
-for(const id of ['center-editor','pending-editor','client-editor','case-editor','improvement-editor','provider-editor','template-editor','procedure-editor','firebase-auth']){
+for(const id of ['center-editor','pending-editor','client-editor','case-editor','application-editor','improvement-editor','provider-editor','template-editor','procedure-editor','firebase-auth']){
  const modal=$(id);for(const event of ['input','change'])modal.addEventListener(event,()=>{modal.dataset.dirty='true'});
 }
 document.addEventListener('keydown',event=>{
