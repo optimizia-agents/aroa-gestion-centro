@@ -354,7 +354,7 @@
 <script>document.body.classList.add('auth-locked')</script>
 <div id="firebase-auth-fallback" class="auth-fallback" role="status" aria-live="polite"><div class="auth-fallback-card"><p class="eyebrow">ACCESO PRIVADO</p><h1>Entrar en Aroa Gestión</h1><p>La pantalla de acceso está tardando en cargar. Tus datos están protegidos y no se ha modificado nada.</p><p class="auth-fallback-status">Pulsa «Reintentar carga» para volver a preparar la aplicación.</p><button type="button" onclick="window.location.reload()">Reintentar carga</button></div></div>
 <script defer src="vendor-xlsx.full.min.js?v=20260918"></script>
-<script defer src="app.js?v=20260924-purchases-layout-2"></script>
+<script defer src="app.js?v=20260924-purchases-layout-3"></script>
 
 <style>
 .editor-grid [hidden]{display:none!important}
@@ -363,13 +363,13 @@
 document.addEventListener('DOMContentLoaded',()=>{
   [['add-provider','edit-provider-field'],['add-improvement-provider','improvement-edit-provider']].forEach(([buttonId,fieldId])=>{
     const button=document.getElementById(buttonId), field=document.getElementById(fieldId)?.closest('label');
-    if(button){button.textContent='＋ Nuevo proveedor';button.classList.add('add-provider-link')}
+    if(button){button.textContent='+';button.classList.add('add-provider-link')}
     if(field&&!field.querySelector('.field-help')){const help=document.createElement('small');help.className='field-help';help.textContent='Selecciona un proveedor del catálogo común.';field.append(help)}
   });
 });
 </script>
 <style>
-.add-provider-link{font-size:12px!important;white-space:nowrap!important;padding:7px 9px!important}
+.add-provider-link{flex:0 0 42px!important;width:42px!important;min-width:42px!important;height:42px!important;padding:0!important;display:inline-flex!important;align-items:center;justify-content:center;font-size:20px!important;line-height:1!important;white-space:nowrap!important}
 .field-help{display:block;margin-top:5px;color:#81969a;font-size:11px;line-height:1.35}
 .contact-search-input{width:100%;min-width:0}
 .contact-select-hidden{display:none!important}
