@@ -354,7 +354,7 @@
 <script>document.body.classList.add('auth-locked')</script>
 <div id="firebase-auth-fallback" class="auth-fallback" role="status" aria-live="polite"><div class="auth-fallback-card"><p class="eyebrow">ACCESO PRIVADO</p><h1>Entrar en Aroa Gestión</h1><p>La pantalla de acceso está tardando en cargar. Tus datos están protegidos y no se ha modificado nada.</p><p class="auth-fallback-status">Pulsa «Reintentar carga» para volver a preparar la aplicación.</p><button type="button" onclick="window.location.reload()">Reintentar carga</button></div></div>
 <script defer src="vendor-xlsx.full.min.js?v=20260918"></script>
-<script defer src="app.js?v=20260924-save-fix-1"></script>
+<script defer src="app.js?v=20260924-provider-search-1"></script>
 
 <style>
 .editor-grid [hidden]{display:none!important}
@@ -375,6 +375,12 @@ document.addEventListener('DOMContentLoaded',()=>{
 .contact-select-hidden{display:none!important}
 .provider-search-input{width:100%;min-width:0}
 .provider-select-hidden{display:none!important}
+.provider-search-wrap{position:relative;min-width:0}
+.provider-search-results{position:absolute;z-index:20;top:calc(100% + 4px);left:0;right:0;display:grid;gap:2px;padding:5px;background:#fff;border:1px solid #cfe1dc;border-radius:9px;box-shadow:0 12px 28px rgba(23,61,76,.16);max-height:240px;overflow:auto}
+.provider-search-results[hidden]{display:none}
+.provider-search-result{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;width:100%;padding:8px 9px;border:0;border-radius:6px;background:transparent;color:#173d4c;text-align:left;cursor:pointer;font:inherit}
+.provider-search-result:hover,.provider-search-result:focus{background:#edf7f3;outline:none}
+.provider-search-result small{color:#71878b;font-size:11px;white-space:nowrap}
 .provider-contact-count{display:none!important}
 .provider-directory-table th:nth-child(1),.provider-directory-table td:nth-child(1){width:23%}
 .provider-directory-table th:nth-child(2),.provider-directory-table td:nth-child(2){width:10%}
@@ -402,12 +408,14 @@ document.addEventListener('DOMContentLoaded',()=>{
 document.addEventListener('DOMContentLoaded',()=>{
   const enhanceProviderPicker=(selectId,inputId,listId,placeholder)=>{
     const select=document.getElementById(selectId); if(!select||document.getElementById(inputId))return;
-    const input=document.createElement('input'); input.id=inputId; input.className='provider-search-input'; input.setAttribute('list',listId); input.placeholder=placeholder; input.autocomplete='off';
+    const input=document.createElement('input'); input.id=inputId; input.className='provider-search-input'; input.placeholder=placeholder; input.autocomplete='off'; input.setAttribute('role','combobox'); input.setAttribute('aria-autocomplete','list');
     const list=document.createElement('datalist'); list.id=listId;
-    select.classList.add('provider-select-hidden'); select.parentElement?.insertBefore(input,select); select.parentElement?.append(list);
+    const results=document.createElement('div'); results.className='provider-search-results'; results.hidden=true; results.setAttribute('role','listbox');
+    const wrap=select.parentElement; wrap?.classList.add('provider-search-wrap'); select.classList.add('provider-select-hidden'); wrap?.insertBefore(input,select); wrap?.append(list,results);
     const rows=()=>typeof providerDirectoryRows==='function'?providerDirectoryRows():[];
-    const sync=()=>{list.innerHTML=rows().map(row=>`<option value="${String(row.name||'').replaceAll('&','&amp;').replaceAll('"','&quot;')}"></option>`).join('');const current=select.options[select.selectedIndex];if(current&&current.value&&current.value!=='Ninguno')input.value=current.textContent;else if(!input.matches(':focus'))input.value=''};
-    input.addEventListener('input',()=>{const query=input.value.trim().toLocaleLowerCase('es');if(!query){select.value=selectId==='edit-provider'?'Ninguno':'';select.dispatchEvent(new Event('change',{bubbles:true}));return}const row=rows().find(item=>[item.name,item.supplierNumber,item.description].join(' ').toLocaleLowerCase('es').includes(query));if(row){const option=[...select.options].find(item=>item.value.toLocaleLowerCase('es')===String(row.name||'').toLocaleLowerCase('es'));if(option){select.value=option.value;select.dispatchEvent(new Event('change',{bubbles:true}))}}});
+    const renderResults=()=>{const query=input.value.trim().toLocaleLowerCase('es');const matches=rows().filter(item=>!query||[item.name,item.supplierNumber,item.description].join(' ').toLocaleLowerCase('es').includes(query)).slice(0,8);results.innerHTML=matches.map(item=>`<button type="button" class="provider-search-result" data-provider-value="${String(item.name||'').replaceAll('&','&amp;').replaceAll('"','&quot;')}"><span>${String(item.name||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')}</span><small>${String(item.supplierNumber||'').replaceAll('&','&amp;')}</small></button>`).join('');results.hidden=!matches.length||!document.activeElement?.matches(`#${inputId}`)};
+    const sync=()=>{const current=select.options[select.selectedIndex];if(current&&current.value&&current.value!=='Ninguno')input.value=current.textContent;else if(!input.matches(':focus'))input.value='';renderResults()};
+    input.addEventListener('focus',renderResults); input.addEventListener('input',()=>{if(!input.value.trim()){select.value=selectId==='edit-provider'?'Ninguno':'';select.dispatchEvent(new Event('change',{bubbles:true}))}else renderResults()}); input.addEventListener('keydown',event=>{if(event.key==='Escape'){results.hidden=true;return}if(event.key==='Enter'){const first=results.querySelector('.provider-search-result');if(first){event.preventDefault();first.click()}}}); results.addEventListener('mousedown',event=>{const button=event.target.closest('.provider-search-result');if(!button)return;event.preventDefault();select.value=button.dataset.providerValue||'';select.dispatchEvent(new Event('change',{bubbles:true}));input.value=button.dataset.providerValue||'';results.hidden=true}); document.addEventListener('click',event=>{if(!wrap.contains(event.target))results.hidden=true});
     new MutationObserver(sync).observe(select,{childList:true}); select.addEventListener('change',sync); sync();
   };
   enhanceProviderPicker('edit-provider','edit-provider-search','edit-provider-options','Buscar proveedor por nombre, SAP o actividad…');
