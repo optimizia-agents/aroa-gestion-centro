@@ -810,11 +810,13 @@ async function writeDocument(collection,id,value,revision,retry=true){
  const condition=revision?{'currentDocument.updateTime':revision}:{'currentDocument.exists':'false'};
  const response=await restFetch(documentURL(collection,id)+'?'+new URLSearchParams(condition),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:fireFields(value)})});
  if(!response.ok){
-  if([409,412].includes(response.status)&&retry&&revision){
+  let firebaseDetail='';try{firebaseDetail=await response.clone().text()}catch(detailError){}
+  const versionConflict=[409,412].includes(response.status)||(response.status===400&&/FAILED_PRECONDITION|stored version|required base version/i.test(firebaseDetail));
+  if(versionConflict&&retry&&revision){
    const latest=await readDocument(collection,id);
    if(latest?.revision)return writeDocument(collection,id,mergeConcurrentDocument(latest.value,value),latest.revision,false);
   }
-  const error=new Error([409,412].includes(response.status)?'CONFLICT':'No se pudo confirmar el guardado.');error.status=response.status;try{error.firebaseDetail=await response.clone().text();console.warn('Firebase save rejected',response.status,error.firebaseDetail)}catch(detailError){}throw error
+  const error=new Error(versionConflict?'CONFLICT':'No se pudo confirmar el guardado.');error.status=response.status;error.firebaseDetail=firebaseDetail;console.warn('Firebase save rejected',response.status,firebaseDetail);throw error
  }
  const doc=await response.json();
  return {value:fsDecode({mapValue:{fields:doc.fields||{}}}),revision:doc.updateTime};
