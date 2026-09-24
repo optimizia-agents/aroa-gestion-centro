@@ -319,3 +319,5 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 .improvement-contact-field .provider-contact-details{width:100%;flex-wrap:wrap;gap:8px 18px;padding-top:2px}
 .improvement-document-link{min-width:0}
 @media(max-width:620px){.improvement-contact-field{grid-column:auto}.improvement-document-link{grid-column:auto}}
+
+.improvement-contact-section-label{margin-top:2px}.improvement-documents-section-label{margin-top:4px}
