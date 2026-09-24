@@ -412,7 +412,7 @@ function exportCurrentWorkbook(){
   }
   try{
   const statusLabel=value=>value==='done'?'REALIZADO':value==='process'?'EN CURSO':'PENDIENTE';
-  const center=[['Actividad','Categoría','Periodicidad','Tipo / contacto','Última revisión','Próxima revisión','Responsable','Estado','Notas / siguiente acción','Evidencia'],...centerRows.map(r=>{const type=r.type==='EXTERNO'?'EXTERNO':r.type==='INTERNO'?'INTERNO':'Sin indicar';const contact=r.type==='EXTERNO'?canonicalProvider(r.provider):r.type==='INTERNO'?centerInternalContactName(r):'';const typeContact=contact?`${type} · ${contact}`:type;const evidence=centerEvidenceItems(r).map(item=>item.url).filter(Boolean).join(' | ');return [r.activity||'',r.category||'',displayFrequency(r.frequency),typeContact,r.last||'',r.next||'',r.owner||'',statusLabel(effectiveStatus(r)),r.action||'',evidence]})];
+  const center=[['Actividad','Categoría','Periodicidad','Tipo de mantenimiento','Proveedor externo','Contacto interno','Última revisión','Próxima revisión','Responsable','Estado','Notas / siguiente acción','Evidencia'],...centerRows.map(r=>{const type=r.type==='EXTERNO'?'EXTERNO':r.type==='INTERNO'?'INTERNO':'Sin indicar';const provider=r.type==='EXTERNO'?canonicalProvider(r.provider):'';const internalContact=r.type==='INTERNO'?centerInternalContactName(r):'';const evidence=centerEvidenceItems(r).map(item=>item.url).filter(Boolean).join(' | ');return [r.activity||'',r.category||'',displayFrequency(r.frequency),type,provider,internalContact,r.last||'',r.next||'',r.owner||'',statusLabel(effectiveStatus(r)),r.action||'',evidence]})];
   const pending=[['Estado','Pendiente / decisión','Persona o empresa','Prioridad','Fecha objetivo','Actualización','Comentarios'],...pendingRows.map(r=>[r.status||'PENDIENTE',r.text||'',r.person||'',r.priority||'NORMAL',r.date||'',r.updated||'',r.comments||''])];
   const clients=[['Estado','Cliente','Contacto','Pendiente / decisión','Prioridad','Fecha objetivo','Actualización','Comentarios'],...clientRows.map(r=>[r.status||'PENDIENTE',r.client||'',r.contact||'',r.text||'',r.priority||'NORMAL',r.date||'',r.updated||'',r.comments||''])];
   const procedures=[['N.º de procedimiento','N.º de EMOC','Procedimiento / documento','Revisión','Autor','Estado','Notas / siguiente acción','Enlace'],...procedureRows.map(r=>[r.number||'',r.emocNumber||'',r.name||'',r.version||'',r.author||'',r.status||'Pendiente',r.notes||'',r.url||''])];
@@ -881,7 +881,7 @@ function allowEditorClose(id){
  if(modal.dataset.dirty==='true'&&!confirm('Hay cambios sin guardar. ¿Quieres descartarlos y cerrar?'))return false;
  modal.dataset.dirty='false';uncertainSave=null;uncertainIntent=null;return true;
 }
-for(const id of ['center-editor','pending-editor','client-editor','improvement-editor']){
+for(const id of ['center-editor','pending-editor','client-editor','improvement-editor','provider-editor','template-editor','procedure-editor','firebase-auth']){
  const modal=$(id);for(const event of ['input','change'])modal.addEventListener(event,()=>{modal.dataset.dirty='true'});
 }
 document.addEventListener('keydown',event=>{
