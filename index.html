@@ -388,16 +388,24 @@ document.addEventListener('DOMContentLoaded',()=>{
 .provider-directory-table th:nth-child(4),.provider-directory-table td:nth-child(4){width:22%}
 .provider-directory-table th:nth-child(5),.provider-directory-table td:nth-child(5){width:16%}
 .provider-directory-table th:nth-child(6),.provider-directory-table td:nth-child(6){width:6%}
+.contact-search-wrap,.provider-search-wrap{position:relative}
+.contact-search-results{position:absolute;z-index:20;top:calc(100% + 4px);left:0;right:0;display:grid;gap:2px;padding:5px;background:#fff;border:1px solid #cfe1dc;border-radius:9px;box-shadow:0 12px 28px rgba(23,61,76,.16);max-height:240px;overflow:auto}
+.contact-search-results[hidden]{display:none}
+.contact-search-result{display:grid;gap:2px;width:100%;padding:8px 10px;border:0;border-radius:6px;background:#fff;color:#183442;text-align:left;font:inherit;cursor:pointer}
+.contact-search-result:hover,.contact-search-result:focus-visible{background:#edf7f4;outline:0}
+.contact-search-result small{color:#6b858b;font-size:11px;line-height:1.35}
+#improvements-view .status{max-width:100%;justify-content:center;text-align:center;white-space:normal;line-height:1.15;overflow-wrap:anywhere}
 </style>
 <script>
 document.addEventListener('DOMContentLoaded',()=>{
   const enhanceContactPicker=(selectId,inputId,listId,placeholder)=>{
     const select=document.getElementById(selectId); if(!select||document.getElementById(inputId))return;
-    const input=document.createElement('input'); input.id=inputId; input.className='contact-search-input'; input.setAttribute('list',listId); input.placeholder=placeholder; input.autocomplete='off';
-    const list=document.createElement('datalist'); list.id=listId;
-    select.classList.add('contact-select-hidden'); select.parentElement?.insertBefore(input,select); select.parentElement?.append(list);
-    const sync=()=>{list.innerHTML=[...select.options].filter(option=>option.value).map(option=>`<option value="${option.textContent.replaceAll('&','&amp;').replaceAll('"','&quot;')}"></option>`).join('');const current=select.options[select.selectedIndex];if(current&&current.value)input.value=current.textContent;else if(!input.matches(':focus'))input.value=''};
-    input.addEventListener('input',()=>{const query=input.value.trim().toLocaleLowerCase('es');const match=[...select.options].find(option=>option.value&&option.textContent.trim().toLocaleLowerCase('es')===query);select.value=match?.value||'';select.dispatchEvent(new Event('change',{bubbles:true}))});
+    const input=document.createElement('input'); input.id=inputId; input.className='contact-search-input'; input.placeholder=placeholder; input.autocomplete='off'; input.setAttribute('role','combobox'); input.setAttribute('aria-autocomplete','list');
+    const results=document.createElement('div'); results.className='contact-search-results'; results.hidden=true; results.setAttribute('role','listbox');
+    const wrap=select.parentElement; wrap?.classList.add('contact-search-wrap'); select.classList.add('contact-select-hidden'); wrap?.insertBefore(input,select); wrap?.append(results);
+    const renderResults=()=>{const query=input.value.trim().toLocaleLowerCase('es');const matches=[...select.options].filter(option=>option.value&&(!query||option.textContent.toLocaleLowerCase('es').includes(query))).slice(0,8);results.innerHTML=matches.map(option=>`<button type="button" class="contact-search-result" data-contact-value="${String(option.value).replaceAll('&','&amp;').replaceAll('"','&quot;')}"><span>${String(option.textContent).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')}</span></button>`).join('');results.hidden=!matches.length||!document.activeElement?.matches(`#${inputId}`)};
+    const sync=()=>{const current=select.options[select.selectedIndex];if(current&&current.value)input.value=current.textContent;else if(!input.matches(':focus'))input.value='';renderResults()};
+    input.addEventListener('focus',renderResults); input.addEventListener('input',()=>{if(!input.value.trim()){select.value='';select.dispatchEvent(new Event('change',{bubbles:true}))}else renderResults()}); input.addEventListener('keydown',event=>{if(event.key==='Escape'){results.hidden=true;return}if(event.key==='Enter'){const first=results.querySelector('.contact-search-result');if(first){event.preventDefault();first.click()}}}); results.addEventListener('mousedown',event=>{const button=event.target.closest('.contact-search-result');if(!button)return;event.preventDefault();select.value=button.dataset.contactValue||'';select.dispatchEvent(new Event('change',{bubbles:true}));input.value=select.options[select.selectedIndex]?.textContent||'';results.hidden=true}); document.addEventListener('click',event=>{if(!wrap.contains(event.target))results.hidden=true});
     new MutationObserver(sync).observe(select,{childList:true}); select.addEventListener('change',sync); sync();
   };
   enhanceContactPicker('edit-provider-contact','edit-provider-contact-search','edit-provider-contact-options','Buscar contacto del proveedor…');
