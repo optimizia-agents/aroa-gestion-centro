@@ -413,7 +413,7 @@ async function recordAccess(){if(!firebaseUser||!appRevision)return;try{if(sessi
 async function finishFirebaseRest(){
   firebaseUser={email:FIREBASE_ALLOWED_EMAIL};
   const ok=await loadRemoteData();
-  if(ok){closeFirebaseAuth(true);unlockPrivateApp();resetIdleTimer();await recordAccess();await ensureEvidenceTestLine()}
+  if(ok){closeFirebaseAuth(true);resetIdleTimer();await recordAccess();await ensureEvidenceTestLine();unlockPrivateApp()}
   else{firebaseUser=null;document.body.classList.add('auth-locked');firebaseAuthMessage('No se han podido cargar los datos de Firebase. Pulsa Entrar para reintentarlo.');openFirebaseAuth()}
 }
 async function startFirebaseRest(){addFirebaseRestUI();if(restRefreshToken){try{await refreshRestSession();await finishFirebaseRest();return}catch(error){clearRestSession()}}openFirebaseAuth()}
@@ -777,10 +777,25 @@ async function readDocument(collection,id){
  const doc=await response.json();
  return {value:fsDecode({mapValue:{fields:doc.fields||{}}}),revision:doc.updateTime};
 }
-async function writeDocument(collection,id,value,revision){
+function mergeConcurrentDocument(latest,next){
+ const base=appDocument||{};
+ const merged=structuredClone(latest||{});
+ for(const key of new Set([...Object.keys(merged),...Object.keys(next||{})])){
+  const nextValue=next?.[key],baseValue=base?.[key];
+  if(JSON.stringify(nextValue)!==JSON.stringify(baseValue))merged[key]=structuredClone(nextValue);
+ }
+ return merged;
+}
+async function writeDocument(collection,id,value,revision,retry=true){
  const condition=revision?{'currentDocument.updateTime':revision}:{'currentDocument.exists':'false'};
  const response=await restFetch(documentURL(collection,id)+'?'+new URLSearchParams(condition),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:fireFields(value)})});
- if(!response.ok){const error=new Error([409,412].includes(response.status)?'CONFLICT':'No se pudo confirmar el guardado.');error.status=response.status;throw error}
+ if(!response.ok){
+  if([409,412].includes(response.status)&&retry&&revision){
+   const latest=await readDocument(collection,id);
+   if(latest?.revision)return writeDocument(collection,id,mergeConcurrentDocument(latest.value,value),latest.revision,false);
+  }
+  const error=new Error([409,412].includes(response.status)?'CONFLICT':'No se pudo confirmar el guardado.');error.status=response.status;throw error
+ }
  const doc=await response.json();
  return {value:fsDecode({mapValue:{fields:doc.fields||{}}}),revision:doc.updateTime};
 }
