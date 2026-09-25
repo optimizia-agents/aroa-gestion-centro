@@ -334,8 +334,8 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 .app-shell #clients-view #clients-table{display:table;width:100%!important;min-width:0;table-layout:fixed!important}
 .app-shell #clients-view #clients-table th,.app-shell #clients-view #clients-table td{min-width:0;padding:12px 6px;white-space:normal;overflow-wrap:anywhere;word-break:normal;vertical-align:top;text-align:left}
 .app-shell #clients-view #clients-table th{font-size:11px;line-height:1.35;letter-spacing:0;overflow-wrap:normal}
-.app-shell #clients-view #clients-table td{font-size:14px;line-height:1.45}
-.app-shell #clients-view #clients-table .group-label{font-size:14px;overflow-wrap:anywhere}
+.app-shell #clients-view #clients-table td{font-size:15px;line-height:1.45}
+.app-shell #clients-view #clients-table .group-label{font-size:15px;overflow-wrap:anywhere}
 .app-shell #clients-view #clients-table .status,.app-shell #clients-view #clients-table .priority{font-size:11px;padding:5px 7px;white-space:normal}
 .app-shell #clients-view #clients-table .edit-btn{padding:8px 9px;font-size:12px}
 .app-shell #clients-view #clients-table .client-number-copy{border:0;border-bottom:1px dotted #79a99d;border-radius:0;background:transparent;padding:2px 0;color:#34535c;font:inherit;font-variant-numeric:tabular-nums;cursor:pointer;max-width:100%;overflow-wrap:anywhere;text-align:left}
@@ -359,4 +359,4 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
  .app-shell #clients-view #clients-table td:before{display:none;content:none}
 }
 
-.app-shell #clients-view #clients-table .date{white-space:nowrap;font-size:13px}
+.app-shell #clients-view #clients-table .date{white-space:nowrap;font-size:14px}
