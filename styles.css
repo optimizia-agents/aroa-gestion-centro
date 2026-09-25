@@ -349,8 +349,7 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 .app-shell #clients-view #clients-table th:nth-child(6),.app-shell #clients-view #clients-table td:nth-child(6){width:7%}
 .app-shell #clients-view #clients-table th:nth-child(7),.app-shell #clients-view #clients-table td:nth-child(7){width:10%}
 .app-shell #clients-view #clients-table th:nth-child(8),.app-shell #clients-view #clients-table td:nth-child(8){width:10%}
-.app-shell #clients-view #clients-table th:nth-child(9),.app-shell #clients-view #clients-table td:nth-child(9){width:12%}
-.app-shell #clients-view #clients-table th:nth-child(10),.app-shell #clients-view #clients-table td:nth-child(10){width:7%}
+.app-shell #clients-view #clients-table th:nth-child(9),.app-shell #clients-view #clients-table td:nth-child(9){width:10%}
 @media(max-width:1100px){.app-shell #clients-view #clients-table{min-width:1000px}}
 @media(max-width:620px){
  .app-shell #clients-view #clients-table thead{display:table-header-group}

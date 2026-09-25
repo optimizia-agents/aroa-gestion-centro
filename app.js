@@ -303,15 +303,15 @@ function renderClients(){
   const priority=$('client-priority')?.value||'all';
   const status=$('client-status')?.value||'all';
   clientFilterValue=client;
-  if(clientsLoading&&!clientRows.length){table.innerHTML='<tr><td colspan="10" class="empty">Cargando gestiones reales desde Firebase…</td></tr>';if($('client-count'))$('client-count').textContent='Cargando…';return}
+  if(clientsLoading&&!clientRows.length){table.innerHTML='<tr><td colspan="9" class="empty">Cargando gestiones reales desde Firebase…</td></tr>';if($('client-count'))$('client-count').textContent='Cargando…';return}
   const rows=clientRows.filter(row=>(client==='all'||String(row.client||'')===client)&&(priority==='all'||row.priority===priority)&&(status==='all'||row.status===status)&&[row.clientNumber,row.client,row.contact,row.text,row.priority,row.status,row.comments].join(' ').toLocaleLowerCase('es').includes(q));
   table.innerHTML=rows.length?rows.map(row=>{
     const index=clientRows.indexOf(row);
     const number=String(row.clientNumber??'').trim();
     const numberHtml=number?`<button type="button" class="client-number-copy" data-copy-client-number="${htmlEscape(number)}" aria-label="Copiar número de cliente ${htmlEscape(number)}" title="Copiar número de cliente">${htmlEscape(number)}</button>`:'<span class="muted">Sin indicar</span>';
     const statusHtml=row.status==='REALIZADO'?'<span class="status done">REALIZADO</span>':row.status==='EN PROCESO'?'<span class="status process">EN CURSO</span>':'<span class="status open">PENDIENTE</span>';
-    return `<tr class="group-colored" style="${groupColorStyle(row.client)}"><td>${statusHtml}</td><td>${numberHtml}</td><td><strong class="group-label">${htmlEscape(row.client||'Sin asignar')}</strong></td><td>${htmlEscape(row.contact||'Sin contacto')}</td><td>${htmlEscape(row.text||'')}</td><td><span class="priority ${row.priority==='ALTA'?'priority-high':''}">${htmlEscape(row.priority||'NORMAL')}</span></td><td class="date">${htmlEscape(row.date||'Sin fecha')}</td><td class="date">${htmlEscape(row.updated||'Sin fecha')}</td><td>${htmlEscape(row.comments||'Sin comentarios')}</td><td><button type="button" class="edit-btn" onclick="openClientEditor(${index})">Editar</button></td></tr>`;
-  }).join(''):'<tr><td colspan="10" class="empty">No hay resultados con estos filtros.</td></tr>';
+    return `<tr class="group-colored" style="${groupColorStyle(row.client)}"><td>${statusHtml}</td><td>${numberHtml}</td><td><strong class="group-label">${htmlEscape(row.client||'Sin asignar')}</strong></td><td>${htmlEscape(row.contact||'Sin contacto')}</td><td>${htmlEscape(row.text||'')}</td><td><span class="priority ${row.priority==='ALTA'?'priority-high':''}">${htmlEscape(row.priority||'NORMAL')}</span></td><td class="date">${htmlEscape(row.date||'Sin fecha')}</td><td class="date">${htmlEscape(row.updated||'Sin fecha')}</td><td><button type="button" class="edit-btn" onclick="openClientEditor(${index})">Ver ficha</button></td></tr>`;
+  }).join(''):'<tr><td colspan="9" class="empty">No hay resultados con estos filtros.</td></tr>';
   table.querySelectorAll('[data-copy-client-number]').forEach(button=>button.addEventListener('click',()=>copyClientNumber(button.dataset.copyClientNumber)));
   if($('client-heading'))$('client-heading').textContent=client==='all'?'Todas las gestiones':`Gestiones con ${client}`;
   if($('client-count'))$('client-count').textContent=`${rows.length} registros`;
