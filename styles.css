@@ -89,6 +89,7 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 .modal .danger-button{border:1px solid #e2bdb6;background:#fff7f5;color:#a13f2c}
 .modal #firebase-password,.modal #firebase-auth input{width:100%;min-height:44px;border:1px solid var(--ui-line);border-radius:9px;padding:10px 12px;font:inherit}
 .modal .password-field{display:flex;align-items:stretch;gap:6px}.modal .password-field input{flex:1;min-width:0}.modal .password-eye{min-width:44px;border:1px solid var(--ui-line);border-radius:9px;background:#f7fbfa;color:#315b64;cursor:pointer;font-size:18px;line-height:1}.modal .password-eye:hover{background:#eaf5f1}
+.modal .password-field input{ text-transform:none!important; font-variant:normal; letter-spacing:normal; }
 .modal #firebase-auth input:disabled{background:#f3f7f6;color:var(--ui-muted)}
 .modal#firebase-auth .editor-grid{grid-template-columns:1fr}
 .app-shell .data-alert{margin-left:32px;margin-right:32px}
