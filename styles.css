@@ -91,6 +91,7 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 .modal .password-field{display:flex;align-items:stretch;gap:6px}.modal .password-field input{flex:1;min-width:0}.modal .password-eye{min-width:44px;border:1px solid var(--ui-line);border-radius:9px;background:#f7fbfa;color:#315b64;cursor:pointer;font-size:18px;line-height:1}.modal .password-eye:hover{background:#eaf5f1}
 .modal .password-field input{ text-transform:none!important; font-variant:normal; letter-spacing:normal; }
 .modal .account-profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.modal .account-profile-grid label{display:grid;gap:6px;color:#557078;font-size:13px;font-weight:700}.modal .account-profile-grid .editor-wide{grid-column:1/-1}.modal .account-profile-grid input{width:100%;min-height:44px;border:1px solid var(--ui-line);border-radius:9px;padding:10px 12px;font:inherit;background:#f3f7f6;color:var(--ui-muted)}.modal .account-password-note{margin:16px 0 4px;color:var(--ui-muted);font-size:13px;line-height:1.5}@media(max-width:620px){.modal .account-profile-grid{grid-template-columns:1fr}.modal .account-profile-grid .editor-wide{grid-column:auto}}
+.brand#brand-account{cursor:pointer;border-radius:12px}.brand#brand-account:hover,.brand#brand-account:focus-visible{background:rgba(255,255,255,.08);outline:none}
 .modal #firebase-auth input:disabled{background:#f3f7f6;color:var(--ui-muted)}
 .modal#firebase-auth .editor-grid{grid-template-columns:1fr}
 .app-shell .data-alert{margin-left:32px;margin-right:32px}
