@@ -1,3 +1,4 @@
+const DEMO_MODE = new URLSearchParams(window.location.search).get('demo') === '1';
 const centerRows = [];
 const pendingRows = [];
 const directoryRows = [];
@@ -65,6 +66,38 @@ const ORIGINAL_MAINTENANCE_META={
 function maintenanceMetaFor(row,seen){const raw=String(row.activity||'').trim(), entry=ORIGINAL_MAINTENANCE_META[raw];if(!entry)return null;if(Array.isArray(entry[0])){const i=seen[raw]||0;seen[raw]=i+1;return entry[Math.min(i,entry.length-1)]}return entry}
 
 let firebaseDb=null,firebaseAuth=null,firebaseUser=null,firebaseWriteQueue=Promise.resolve();
+
+const DEMO_DOCUMENT={
+ center:[
+  {id:'demo-center-1',activity:'Revisión mensual del inventario',category:'Operaciones',frequency:'Mensual',last:'01/09/2026',next:'01/10/2026',owner:'Responsable del centro',type:'INTERNO',provider:'',action:'Comprobar diferencias y cerrar el registro.',status:'open'},
+  {id:'demo-center-2',activity:'Mantenimiento de la puerta de acceso',category:'Mantenimiento',frequency:'Anual',last:'15/02/2026',next:'15/02/2027',owner:'Mantenimiento',type:'EXTERNO',provider:'Proveedor Demo',action:'Solicitar fecha de revisión.',status:'process'}
+ ],
+ pending:[
+  {id:'demo-pending-1',text:'Confirmar fecha de entrega del material',person:'Cliente Demo Norte',priority:'ALTA',status:'PENDIENTE',date:'05/10/2026',updated:'02/10/2026',comments:'Llamar después de las 10:00.'},
+  {id:'demo-pending-2',text:'Revisar propuesta de mejora',person:'Equipo del centro',priority:'NORMAL',status:'EN PROCESO',date:'10/10/2026',updated:'01/10/2026',comments:''}
+ ],
+ clients:[
+  {id:'demo-client-1',clientNumber:'CLI-001',client:'Cliente Demo Norte',contact:'Persona de contacto',text:'Confirmar condiciones de entrega',priority:'ALTA',status:'PENDIENTE',date:'06/10/2026',updated:'02/10/2026',comments:'Seguimiento pendiente.'},
+  {id:'demo-client-2',clientNumber:'CLI-002',client:'Cliente Demo Sur',contact:'Contacto de ejemplo',text:'Enviar información solicitada',priority:'NORMAL',status:'EN PROCESO',date:'08/10/2026',updated:'01/10/2026',comments:''}
+ ],
+ cases:[{id:'demo-case-1',title:'Caso de ejemplo',status:'Abierto',priority:'Normal',owner:'Responsable del centro',description:'Registro ficticio para mostrar el seguimiento.'}],
+ applications:[{id:'demo-application-1',name:'Aplicación de ejemplo',description:'Herramienta interna de muestra',status:'Activa',url:''}],
+ improvements:[{id:'demo-improvement-1',name:'Mejora de organización',category:'Mejora',date:'02/10/2026',provider:'Proveedor Demo',status:'Necesidad detectada',justification:'Ejemplo de compra y mejora',action:'Pendiente de valorar',result:'',amount:'125,00 €'}],
+ templates:DEFAULT_TEMPLATE_ROWS.map((row,index)=>({...row,id:`demo-${row.id}`,url:''})).slice(0,5),
+ procedures:[{id:'demo-procedure-1',number:'DEMO-001',name:'Procedimiento de ejemplo',version:'1.0',author:'Equipo Demo',status:'Pendiente',notes:'Contenido ficticio para la demostración.',url:''}],
+ lists:{category:['Operaciones','Mantenimiento','Mejora'],owner:['Responsable del centro','Mantenimiento','Equipo del centro'],provider:['Proveedor Demo'],person:['Cliente Demo Norte','Equipo del centro']},
+ providerContacts:{},providerDirectory:[{name:'Proveedor Demo',supplierNumber:'SUP-001',description:'Proveedor ficticio para la demostración.'}],accessLogs:[]
+};
+function loadDemoData(){
+ document.body.dataset.demo='true';
+ document.body.classList.remove('auth-locked');
+ const value=structuredClone(DEMO_DOCUMENT);appRevision='demo';appDocument=value;firebaseUser={email:'demo@example.com'};
+ centerRows.splice(0,centerRows.length,...value.center);pendingRows.splice(0,pendingRows.length,...value.pending);clientRows.splice(0,clientRows.length,...value.clients);caseRows.splice(0,caseRows.length,...value.cases);applicationRows.splice(0,applicationRows.length,...value.applications);improvementRows.splice(0,improvementRows.length,...value.improvements);templateRows.splice(0,templateRows.length,...value.templates);procedureRows.splice(0,procedureRows.length,...value.procedures);remoteKurroLists=structuredClone(value.lists);providerContactsByName={};providerDirectory=structuredClone(value.providerDirectory);directoryRows.splice(0,directoryRows.length);
+ refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();renderCenter();renderPending();renderClients();renderCases();renderApplications();renderTemplates();renderProcedures();renderProviders();renderImprovements();renderEconomicAnalysis();renderAccessLogs();
+ document.querySelectorAll('[data-new-center],[data-new-pending],[data-new-client],[data-new-case],[data-new-application],[data-new-improvement],[data-new-provider],[data-new-template],[data-new-procedure]').forEach(node=>node.remove());
+ const account=$('firebase-auth-open');if(account)account.remove();
+ const badge=document.createElement('span');badge.className='demo-badge';badge.textContent='DEMO · datos ficticios';document.querySelector('.top-actions')?.prepend(badge);
+}
 
 const $ = id => document.getElementById(id);
 if($('center-search'))$('center-search').placeholder='Buscar actividad, categoría, responsable, proveedor o comentarios';
@@ -440,7 +473,7 @@ async function finishFirebaseRest(){
   if(ok){closeFirebaseAuth(true);resetIdleTimer();await recordAccess();await ensureEvidenceTestLine();unlockPrivateApp()}
   else{firebaseUser=null;document.body.classList.add('auth-locked');firebaseAuthMessage('No se han podido cargar los datos de Firebase. Pulsa Entrar para reintentarlo.');openFirebaseAuth()}
 }
-async function startFirebaseRest(){addFirebaseRestUI();if(restRefreshToken){try{await refreshRestSession();await finishFirebaseRest();return}catch(error){clearRestSession()}}openFirebaseAuth()}
+async function startFirebaseRest(){if(DEMO_MODE){loadDemoData();return}addFirebaseRestUI();if(restRefreshToken){try{await refreshRestSession();await finishFirebaseRest();return}catch(error){clearRestSession()}}openFirebaseAuth()}
 
 
 // Descarga una copia de trabajo con los datos que están visibles tras la última sincronización.
