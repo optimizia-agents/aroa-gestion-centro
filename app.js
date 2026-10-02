@@ -90,10 +90,16 @@ const DEMO_DOCUMENT={
 };
 function loadDemoData(){
  document.body.dataset.demo='true';
+ document.body.dataset.sync='ok';
  document.body.classList.remove('auth-locked');
+ $('firebase-auth-fallback')?.remove();
  const value=structuredClone(DEMO_DOCUMENT);appRevision='demo';appDocument=value;firebaseUser={email:'demo@example.com'};
  centerRows.splice(0,centerRows.length,...value.center);pendingRows.splice(0,pendingRows.length,...value.pending);clientRows.splice(0,clientRows.length,...value.clients);caseRows.splice(0,caseRows.length,...value.cases);applicationRows.splice(0,applicationRows.length,...value.applications);improvementRows.splice(0,improvementRows.length,...value.improvements);templateRows.splice(0,templateRows.length,...value.templates);procedureRows.splice(0,procedureRows.length,...value.procedures);remoteKurroLists=structuredClone(value.lists);providerContactsByName={};providerDirectory=structuredClone(value.providerDirectory);directoryRows.splice(0,directoryRows.length);
- refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();renderCenter();renderPending();renderClients();renderCases();renderApplications();renderTemplates();renderProcedures();renderProviders();renderImprovements();renderEconomicAnalysis();renderAccessLogs();
+ if($('sync-label'))$('sync-label').textContent='Demo · datos ficticios';
+ if($('top-sync-time'))$('top-sync-time').textContent='Sin conexión a Firebase';
+ if($('sync-time'))$('sync-time').textContent='Sin conexión a Firebase';
+ renderCenter();renderPending();renderClients();
+ try{refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();renderCases();renderApplications();renderTemplates();renderProcedures();renderProviders();renderImprovements();renderEconomicAnalysis();renderAccessLogs()}catch(error){console.warn('La demo se ha cargado con una vista parcial',error)}
  document.querySelectorAll('[data-new-center],[data-new-pending],[data-new-client],[data-new-case],[data-new-application],[data-new-improvement],[data-new-provider],[data-new-template],[data-new-procedure]').forEach(node=>node.remove());
  const account=$('firebase-auth-open');if(account)account.remove();
  const badge=document.createElement('span');badge.className='demo-badge';badge.textContent='DEMO · datos ficticios';document.querySelector('.top-actions')?.prepend(badge);
