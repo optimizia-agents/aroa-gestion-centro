@@ -479,7 +479,7 @@ async function finishFirebaseRest(){
   if(ok){closeFirebaseAuth(true);resetIdleTimer();await recordAccess();await ensureEvidenceTestLine();unlockPrivateApp()}
   else{firebaseUser=null;document.body.classList.add('auth-locked');firebaseAuthMessage('No se han podido cargar los datos de Firebase. Pulsa Entrar para reintentarlo.');openFirebaseAuth()}
 }
-async function startFirebaseRest(){if(DEMO_MODE){loadDemoData();return}addFirebaseRestUI();if(restRefreshToken){try{await refreshRestSession();await finishFirebaseRest();return}catch(error){clearRestSession()}}openFirebaseAuth()}
+async function startFirebaseRest(){if(DEMO_MODE){setTimeout(loadDemoData,0);return}addFirebaseRestUI();if(restRefreshToken){try{await refreshRestSession();await finishFirebaseRest();return}catch(error){clearRestSession()}}openFirebaseAuth()}
 
 
 // Descarga una copia de trabajo con los datos que están visibles tras la última sincronización.
