@@ -213,7 +213,8 @@ document.querySelector('[data-new-pending]')?.addEventListener('click',()=>openP
 function setDataAlert(message){const alert=$('data-alert');if(!alert)return;alert.textContent=message;alert.hidden=!message}
 
 let kurroRefreshInFlight=false;
-function showSyncToast(message){const toast=$('toast');if(!toast)return;toast.textContent=message;toast.classList.add('show');clearTimeout(window.kurroToastTimer);window.kurroToastTimer=setTimeout(()=>toast.classList.remove('show'),2200)}
+function feedbackTone(message){const text=String(message||'').toLocaleLowerCase('es');if(/no se ha|no se pudo|no se puede|error|conflicto|sigue sin cambios|escribe |actualiza |comprueba|intenta de nuevo|caducado|no coincide/.test(text))return'error';if(/guardad|guardado|guardada|eliminad|copiad|copiado|añadid|actualizad|confirmad|completad/.test(text))return'success';return'info'}
+function showSyncToast(message){const toast=$('toast');if(!toast)return;toast.textContent=message;toast.classList.remove('success','error','info');toast.classList.add(feedbackTone(message),'show');toast.setAttribute('role','status');clearTimeout(window.kurroToastTimer);window.kurroToastTimer=setTimeout(()=>toast.classList.remove('show'),2800)}
 // Mantiene abiertas las sesiones en otros equipos al día sin volver a depender de Google Sheets.
 // El intervalo corto permite que un cambio guardado en Firebase aparezca normalmente en pocos segundos.
 setInterval(()=>{if(document.visibilityState==='visible')refreshKURROFromFirebase(true)},60000);
@@ -906,7 +907,7 @@ function editorMessage(modal,text){
  if(text==='')modal.dataset.dirty='false';
  let node=modal.querySelector('.save-feedback');
  if(!node){node=document.createElement('p');node.className='save-feedback';node.setAttribute('role','status');modal.querySelector('.modal-actions').before(node)}
- node.textContent=text;
+ node.classList.remove('success','error','info');if(text)node.classList.add(feedbackTone(text));node.textContent=text;
 }
 function setEditorBusy(modal,busy){
  editorBusy=busy;modal.setAttribute('aria-busy',String(busy));
