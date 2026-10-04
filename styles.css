@@ -100,11 +100,14 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 @media(max-width:620px){.app-shell .topbar{padding:16px}.app-shell .top-actions{gap:8px}.app-shell .top-actions .avatar{display:none}.app-shell .data-alert{margin-left:14px;margin-right:14px}.app-shell .metric{padding:14px}.app-shell .metric-value{font-size:24px}.app-shell #directory-view .toolbar .search{flex-basis:100%}}
 
 /* Ficha amplia de Compras y mejoras: ordena los bloques y deja las acciones siempre accesibles. */
-#improvement-editor .modal-card{width:min(980px,calc(100vw - 64px));max-height:calc(100vh - 40px);display:flex;flex-direction:column}
-#improvement-editor .editor-grid{min-height:0;overflow-y:auto;padding:0 10px 10px 0;scrollbar-width:thin;scrollbar-color:#b0c7c1 #f3f7f6}
+#improvement-editor .modal-card{width:min(1180px,calc(100vw - 48px))!important;max-height:calc(100vh - 32px)!important;display:flex;flex-direction:column}
+#improvement-editor .editor-grid{grid-template-columns:repeat(3,minmax(0,1fr));min-height:0;overflow-y:auto;padding:0 10px 10px 0;scrollbar-width:thin;scrollbar-color:#b0c7c1 #f3f7f6}
+#improvement-editor .editor-grid .editor-wide{grid-column:1/-1}
+#improvement-editor .editor-grid textarea{min-height:78px}
 #improvement-editor .modal-actions{position:static;flex-shrink:0;margin:16px 0 0;padding:16px 0 0;border-top:1px solid #d9e7e3;background:#fff}
 #improvement-editor .improvement-section-label{margin-top:8px;padding:14px 0 7px;font-size:12px;color:#286e68}
-@media(max-width:620px){#improvement-editor .modal-card{width:100%;max-height:calc(100vh - 24px)}#improvement-editor .editor-grid{padding-right:2px}}
+@media(max-width:900px){#improvement-editor .modal-card{width:min(960px,calc(100vw - 32px))!important}#improvement-editor .editor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){#improvement-editor .modal-card{width:100%!important;max-height:calc(100vh - 24px)!important}#improvement-editor .editor-grid{grid-template-columns:1fr;padding-right:2px}}
 .app-shell .view{padding:28px 32px 40px}
 .app-shell .hero-row{align-items:center;gap:24px;margin-bottom:24px}
 .app-shell .hero-row h2{font-size:28px;line-height:1.25;letter-spacing:-.02em;margin:0 0 6px}
