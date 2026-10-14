@@ -900,7 +900,7 @@ function applyConfirmedDocument(doc){
  centerRows.splice(0,centerRows.length,...value.center);pendingRows.splice(0,pendingRows.length,...value.pending);clientRows.splice(0,clientRows.length,...value.clients);caseRows.splice(0,caseRows.length,...(Array.isArray(value.cases)?value.cases:[]));appDocument.cases=structuredClone(caseRows);applicationRows.splice(0,applicationRows.length,...(Array.isArray(value.applications)?value.applications:[]));appDocument.applications=structuredClone(applicationRows);
  improvementRows.splice(0,improvementRows.length,...(Array.isArray(value.improvements)?value.improvements:[]));
  templateRows.splice(0,templateRows.length,...appDocument.templates);
- workPermitRows.splice(0,workPermitRows.length,...appDocument.workPermits);
+ workPermitRows.splice(0,workPermitRows.length,...(appDocument.workPermits||[]));
  procedureRows.splice(0,procedureRows.length,...appDocument.procedures);
  remoteKurroLists=structuredClone(value.lists||{});providerContactsByName=structuredClone(value.providerContacts||{});providerDirectory=Array.isArray(value.providerDirectory)?structuredClone(value.providerDirectory):[];clientsLoading=false;
  refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();renderCenter();renderPending();renderClients();renderCases();renderApplications();renderTemplates();renderWorkPermits();renderProcedures();renderProviders();renderImprovements();renderEconomicAnalysis();renderAccessLogs();
