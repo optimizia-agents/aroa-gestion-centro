@@ -409,3 +409,7 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 #improvement-editor .improvement-contact-field .contact-search-input{display:block;width:100%;min-width:0}
 #improvement-editor .improvement-contact-field .provider-contact-details{display:block;width:100%;min-height:20px;margin-top:6px}
 #improvement-editor .improvement-contact-field .improvement-add-contact{display:inline-flex;margin-top:8px;min-height:36px;white-space:nowrap}
+
+/* Acciones de las fichas: todos los botones quedan agrupados en la misma zona. */
+.modal .modal-actions .modal-spacer{display:none}
+.modal .modal-actions{justify-content:flex-end}
