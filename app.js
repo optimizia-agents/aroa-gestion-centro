@@ -3,11 +3,13 @@ const centerRows = [];
 const pendingRows = [];
 const directoryRows = [];
 const templateRows = [];
+const workPermitRows = [];
 const procedureRows = [];
 const improvementRows = [];
 const caseRows = [];
 const applicationRows = [];
 const TEMPLATE_LIBRARY_REVISION = '20260919-biblioteca-15';
+const WORK_PERMIT_LIBRARY_REVISION = '20261014-permisos-1';
 const PROCEDURE_LIBRARY_REVISION = '20260919-procedimientos-8';
 const DEFAULT_TEMPLATE_ROWS = [
  {id:'template-01',name:'Registro de recepción',url:''},
@@ -84,6 +86,7 @@ const DEMO_DOCUMENT={
  applications:[{id:'demo-application-1',name:'Aplicación de ejemplo',description:'Herramienta interna de muestra',status:'Activa',url:''}],
  improvements:[{id:'demo-improvement-1',name:'Mejora de organización',category:'Mejora',date:'02/10/2026',provider:'Proveedor Demo',status:'Necesidad detectada',justification:'Ejemplo de compra y mejora',action:'Pendiente de valorar',result:'',amount:'125,00 €'}],
  templates:DEFAULT_TEMPLATE_ROWS.map((row,index)=>({...row,id:`demo-${row.id}`,url:''})).slice(0,5),
+ workPermits:[],
  procedures:[{id:'demo-procedure-1',number:'DEMO-001',name:'Procedimiento de ejemplo',version:'1.0',author:'Equipo Demo',status:'Pendiente',notes:'Contenido ficticio para la demostración.',url:''}],
  lists:{category:['Operaciones','Mantenimiento','Mejora'],owner:['Responsable del centro','Mantenimiento','Equipo del centro'],provider:['Proveedor Demo'],person:['Cliente Demo Norte','Equipo del centro']},
  providerContacts:{},providerDirectory:[{name:'Proveedor Demo',supplierNumber:'SUP-001',description:'Proveedor ficticio para la demostración.'}],accessLogs:[]
@@ -94,13 +97,13 @@ function loadDemoData(){
  document.body.classList.remove('auth-locked');
  $('firebase-auth-fallback')?.remove();
  const value=structuredClone(DEMO_DOCUMENT);appRevision='demo';appDocument=value;firebaseUser={email:'demo@example.com'};
- centerRows.splice(0,centerRows.length,...value.center);pendingRows.splice(0,pendingRows.length,...value.pending);clientRows.splice(0,clientRows.length,...value.clients);caseRows.splice(0,caseRows.length,...value.cases);applicationRows.splice(0,applicationRows.length,...value.applications);improvementRows.splice(0,improvementRows.length,...value.improvements);templateRows.splice(0,templateRows.length,...value.templates);procedureRows.splice(0,procedureRows.length,...value.procedures);remoteKurroLists=structuredClone(value.lists);providerContactsByName={};providerDirectory=structuredClone(value.providerDirectory);directoryRows.splice(0,directoryRows.length);
+ centerRows.splice(0,centerRows.length,...value.center);pendingRows.splice(0,pendingRows.length,...value.pending);clientRows.splice(0,clientRows.length,...value.clients);caseRows.splice(0,caseRows.length,...value.cases);applicationRows.splice(0,applicationRows.length,...value.applications);improvementRows.splice(0,improvementRows.length,...value.improvements);templateRows.splice(0,templateRows.length,...value.templates);workPermitRows.splice(0,workPermitRows.length,...(value.workPermits||[]));procedureRows.splice(0,procedureRows.length,...value.procedures);remoteKurroLists=structuredClone(value.lists);providerContactsByName={};providerDirectory=structuredClone(value.providerDirectory);directoryRows.splice(0,directoryRows.length);
  if($('sync-label'))$('sync-label').textContent='Demo · datos ficticios';
  if($('top-sync-time'))$('top-sync-time').textContent='Sin conexión a Firebase';
  if($('sync-time'))$('sync-time').textContent='Sin conexión a Firebase';
  renderCenter();renderPending();renderClients();
- try{refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();renderCases();renderApplications();renderTemplates();renderProcedures();renderProviders();renderImprovements();renderEconomicAnalysis();renderAccessLogs()}catch(error){console.warn('La demo se ha cargado con una vista parcial',error)}
- document.querySelectorAll('[data-new-center],[data-new-pending],[data-new-client],[data-new-case],[data-new-application],[data-new-improvement],[data-new-provider],[data-new-template],[data-new-procedure]').forEach(node=>node.remove());
+ try{refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();renderCases();renderApplications();renderTemplates();renderWorkPermits();renderProcedures();renderProviders();renderImprovements();renderEconomicAnalysis();renderAccessLogs()}catch(error){console.warn('La demo se ha cargado con una vista parcial',error)}
+ document.querySelectorAll('[data-new-center],[data-new-pending],[data-new-client],[data-new-case],[data-new-application],[data-new-improvement],[data-new-provider],[data-new-template],[data-new-work-permit],[data-new-procedure]').forEach(node=>node.remove());
  const account=$('firebase-auth-open');if(account)account.remove();
  const badge=document.createElement('span');badge.className='demo-badge';badge.textContent='DEMO · datos ficticios';document.querySelector('.top-actions')?.prepend(badge);
 }
@@ -422,7 +425,7 @@ function restoreViewFilters(view){
   (VIEW_FILTER_FIELDS[view]||[]).forEach(id=>{const node=$(id);if(node&&saved[id]!==undefined)node.value=saved[id]});
 }
 document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
- const titles={center:'Control del centro',templates:'Plantillas',procedures:'Procedimientos',providers:'Proveedores',pending:'Agenda de trabajo',clients:'Gestiones con clientes',cases:'Casos y acciones',applications:'Aplicaciones',directory:'Directorio',improvements:'Compras y mejoras',analysis:'Análisis económico'};
+ const titles={center:'Control del centro',templates:'Plantillas',workPermits:'Permisos de trabajo',procedures:'Procedimientos',providers:'Proveedores',pending:'Agenda de trabajo',clients:'Gestiones con clientes',cases:'Casos y acciones',applications:'Aplicaciones',directory:'Directorio',improvements:'Compras y mejoras',analysis:'Análisis económico'};
   if($('page-title'))$('page-title').textContent=titles[button.dataset.view]||'Centro';
 }));
 
@@ -634,7 +637,7 @@ $('client-filter-client').addEventListener('change',renderClients);
 $('center-date-filter').addEventListener('change',renderCenter);
 $('center-evidence-filter')?.addEventListener('change',()=>{renderCenter();saveViewFilters('center')});
 $('center-sort')?.remove();
- renderCenter();renderPending();renderClients();renderCases();renderApplications();renderTemplates();renderProcedures();renderImprovements();
+ renderCenter();renderPending();renderClients();renderCases();renderApplications();renderTemplates();renderWorkPermits();renderProcedures();renderImprovements();
 startFirebaseRest();
 function init(){
  window.person='all';
@@ -643,7 +646,7 @@ function init(){
  document.querySelectorAll('.nav-item').forEach(button=>button.addEventListener('click',()=>{
   document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b===button);b.setAttribute('aria-current',b===button?'page':'false')});
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active-view',v.id===button.dataset.view+'-view'));
-  $('page-title').textContent={center:'Control del centro',templates:'Plantillas',procedures:'Procedimientos',pending:'Agenda de trabajo',clients:'Gestiones con clientes',cases:'Casos y acciones',directory:'Directorio',improvements:'Compras y mejoras',analysis:'Análisis económico'}[button.dataset.view];
+  $('page-title').textContent={center:'Control del centro',templates:'Plantillas',workPermits:'Permisos de trabajo',procedures:'Procedimientos',pending:'Agenda de trabajo',clients:'Gestiones con clientes',cases:'Casos y acciones',directory:'Directorio',improvements:'Compras y mejoras',analysis:'Análisis económico'}[button.dataset.view];
   if(button.dataset.view==='directory')loadDirectoryFromFirebase();if(button.dataset.view==='providers')renderProviders();if(button.dataset.view==='applications')renderApplications();
  }));
  ['center-search','center-category','center-status'].forEach(id=>$(id)?.addEventListener('input',()=>{renderCenter();saveViewFilters('center')}));
@@ -658,7 +661,7 @@ function init(){
  restoreViewFilters('center');restoreViewFilters('pending');restoreViewFilters('clients');restoreViewFilters('cases');
  $('pending-status').value='all';
  window.person=$('pending-person')?.value||'all';
- renderCenter();renderPending();renderClients();renderCases();renderApplications();renderTemplates();renderProcedures();renderProviders();renderImprovements();renderDirectory();
+ renderCenter();renderPending();renderClients();renderCases();renderApplications();renderTemplates();renderWorkPermits();renderProcedures();renderProviders();renderImprovements();renderDirectory();
 }
 
 // Allocate colors from the complete canonical list, consistently on every device.
@@ -696,6 +699,29 @@ async function saveTemplateEditor(){
 }
 async function deleteTemplateEditor(){if(templateEditorIndex<0||!confirm('¿Quieres eliminar esta plantilla?'))return;const next=templateRows.filter((_,index)=>index!==templateEditorIndex);const payload=structuredClone(appDocument);payload.templates=next;payload.updated=new Date().toISOString();payload.lastMutation=crypto.randomUUID();try{const confirmed=await writeDocument('appState','main',payload,appRevision);applyConfirmedDocument(confirmed);closeTemplateEditor();showSyncToast('Plantilla eliminada')}catch(error){showSyncToast('No se ha podido eliminar la plantilla.')}}
 document.querySelector('[data-new-template]')?.addEventListener('click',()=>openTemplateEditor());document.querySelectorAll('[data-close-template]').forEach(button=>button.addEventListener('click',closeTemplateEditor));$('save-template-editor')?.addEventListener('click',saveTemplateEditor);$('delete-template-editor')?.addEventListener('click',deleteTemplateEditor);$('template-search')?.addEventListener('input',renderTemplates);$('template-clear-search')?.addEventListener('click',()=>{$('template-search').value='';renderTemplates()});
+
+let workPermitEditorIndex=-1;
+function renderWorkPermits(){
+ const query=String($('work-permit-search')?.value||'').trim().toLocaleLowerCase('es');
+ const rows=workPermitRows.filter(row=>String(row.name||'').toLocaleLowerCase('es').includes(query));
+ const body=$('work-permit-table'); if(!body)return;
+ body.innerHTML=rows.length?rows.map(row=>{const index=workPermitRows.indexOf(row);return `<article class="template-card" role="listitem"><div class="template-card-icon" aria-hidden="true">🦺</div><div class="template-card-content"><h4>${htmlEscape(row.name||'Sin nombre')}</h4><div class="template-card-actions">${row.url?`<a class="center-evidence-link template-open-link" href="${htmlEscape(row.url)}" target="_blank" rel="noopener noreferrer" aria-label="Abrir permiso de trabajo" title="Abrir permiso de trabajo">⇩</a>`:'<span class="center-evidence-link evidence-missing" role="img" aria-label="Enlace pendiente" title="Enlace pendiente">⇩</span>'}<button class="edit-btn" type="button" onclick="openWorkPermitEditor(${index})">Editar</button></div></div></article>`}).join(''):'<div class="empty template-empty">No hay permisos ni checklists que coincidan con la búsqueda.</div>';
+ $('work-permit-count').textContent=`${rows.length} documentos`;
+ if($('work-permit-hero-summary'))$('work-permit-hero-summary').textContent=`· ${rows.length} disponibles`;
+}
+function openWorkPermitEditor(index=-1){workPermitEditorIndex=index;const row=index<0?{}:workPermitRows[index]||{};$('work-permit-edit-name').value=row.name||'';$('work-permit-edit-url').value=row.url||'';$('work-permit-editor-title').textContent=index<0?'Nuevo permiso de trabajo':'Editar permiso de trabajo';$('delete-work-permit-editor').hidden=index<0;$('work-permit-editor').classList.add('open');$('work-permit-editor').setAttribute('aria-hidden','false');$('work-permit-edit-name').focus()}
+function closeWorkPermitEditor(){if(!$('work-permit-editor'))return;$('work-permit-editor').classList.remove('open');$('work-permit-editor').setAttribute('aria-hidden','true');workPermitEditorIndex=-1}
+async function saveWorkPermitEditor(){
+ if(!firebaseUser||!appRevision){showSyncToast('Actualiza los datos de Firebase antes de guardar.');return}
+ const name=$('work-permit-edit-name').value.trim(),url=$('work-permit-edit-url').value.trim();
+ if(!name){showSyncToast('Escribe el nombre del permiso o checklist.');return}
+ if(url){try{if(new URL(url).protocol!=='https:')throw new Error()}catch{showSyncToast('Añade un enlace HTTPS válido de SharePoint.');return}}
+ const next=structuredClone(workPermitRows);const item={id:workPermitEditorIndex<0?crypto.randomUUID():(next[workPermitEditorIndex]?.id||crypto.randomUUID()),name,url};if(workPermitEditorIndex<0)next.push(item);else next[workPermitEditorIndex]=item;
+ const payload=structuredClone(appDocument);payload.workPermits=next;payload.updated=new Date().toISOString();payload.lastMutation=crypto.randomUUID();
+ try{const confirmed=await writeDocument('appState','main',payload,appRevision);applyConfirmedDocument(confirmed);closeWorkPermitEditor();showSyncToast('Permiso de trabajo guardado')}catch(error){showSyncToast(error.message==='CONFLICT'?'Los datos han cambiado. Pulsa Actualizar e inténtalo de nuevo.':'No se ha podido guardar el permiso de trabajo.')}
+}
+async function deleteWorkPermitEditor(){if(workPermitEditorIndex<0||!confirm('¿Quieres eliminar este permiso de trabajo?'))return;const next=workPermitRows.filter((_,index)=>index!==workPermitEditorIndex);const payload=structuredClone(appDocument);payload.workPermits=next;payload.updated=new Date().toISOString();payload.lastMutation=crypto.randomUUID();try{const confirmed=await writeDocument('appState','main',payload,appRevision);applyConfirmedDocument(confirmed);closeWorkPermitEditor();showSyncToast('Permiso de trabajo eliminado')}catch(error){showSyncToast('No se ha podido eliminar el permiso de trabajo.')}}
+document.querySelector('[data-new-work-permit]')?.addEventListener('click',()=>openWorkPermitEditor());document.querySelectorAll('[data-close-work-permit]').forEach(button=>button.addEventListener('click',closeWorkPermitEditor));$('save-work-permit-editor')?.addEventListener('click',saveWorkPermitEditor);$('delete-work-permit-editor')?.addEventListener('click',deleteWorkPermitEditor);$('work-permit-search')?.addEventListener('input',renderWorkPermits);$('work-permit-clear-search')?.addEventListener('click',()=>{$('work-permit-search').value='';renderWorkPermits()});
 
 let procedureEditorIndex=-1;
 function procedureStatusClass(status){return {'Implementado':'done','Aceptado':'process','Enviado':'process','En proceso':'process','Pendiente':'open'}[status]||'open'}
@@ -874,9 +900,10 @@ function applyConfirmedDocument(doc){
  centerRows.splice(0,centerRows.length,...value.center);pendingRows.splice(0,pendingRows.length,...value.pending);clientRows.splice(0,clientRows.length,...value.clients);caseRows.splice(0,caseRows.length,...(Array.isArray(value.cases)?value.cases:[]));appDocument.cases=structuredClone(caseRows);applicationRows.splice(0,applicationRows.length,...(Array.isArray(value.applications)?value.applications:[]));appDocument.applications=structuredClone(applicationRows);
  improvementRows.splice(0,improvementRows.length,...(Array.isArray(value.improvements)?value.improvements:[]));
  templateRows.splice(0,templateRows.length,...appDocument.templates);
+ workPermitRows.splice(0,workPermitRows.length,...appDocument.workPermits);
  procedureRows.splice(0,procedureRows.length,...appDocument.procedures);
  remoteKurroLists=structuredClone(value.lists||{});providerContactsByName=structuredClone(value.providerContacts||{});providerDirectory=Array.isArray(value.providerDirectory)?structuredClone(value.providerDirectory):[];clientsLoading=false;
- refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();renderCenter();renderPending();renderClients();renderCases();renderApplications();renderTemplates();renderProcedures();renderProviders();renderImprovements();renderEconomicAnalysis();renderAccessLogs();
+ refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();renderCenter();renderPending();renderClients();renderCases();renderApplications();renderTemplates();renderWorkPermits();renderProcedures();renderProviders();renderImprovements();renderEconomicAnalysis();renderAccessLogs();
  markSyncSuccess();setDataAlert('');
 }
 function sapCategory(provider){const name=String(provider||'').toLocaleUpperCase('es');if(/ESTRUCTURAS/.test(name))return 'Mejora';if(/NOVODINAMICA/.test(name))return 'Equipamiento';if(/ORION/.test(name))return 'Formación';if(/CYRASA|RISC|APAVE|EUROCONTROL|MOVISTAR|WATERFIRE|ESPAIS DE SALUT/.test(name))return 'Seguridad / cumplimiento';if(/LINDE|PROPERVALL|MANTENIMIENTOS|PUERTAS|BRICOLAJES/.test(name))return 'Reparación / mantenimiento';if(/DOMENECH|KALAMAZOO|VIVA AQUA|FIC SUMINISTROS/.test(name))return 'Suministro / consumible';if(/ANTICIMEX|ISS FACILITY|DIAGONAL|VITALIS|E COORDINA|IPAT/.test(name))return 'Servicio';return 'Otro'}
