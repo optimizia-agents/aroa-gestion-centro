@@ -633,6 +633,7 @@ function centerInternalContactName(row){return (providerContactsByName[INTERNAL_
 function refreshKURROMetrics(){renderSimpleCenterSummary()}
 let dataLoadInFlight=null;
 async function refreshKURROFromFirebase(silent=false){
+ if(DEMO_MODE)return false;
  if(!firebaseUser||editorBusy||directoryImportBusy||kurroRefreshInFlight||document.querySelector('.modal.open'))return false;
  kurroRefreshInFlight=true;
  try{let ok=await loadRemoteData();if(ok)await ensureEvidenceTestLine();if($('directory-view')?.classList.contains('active-view')){if(!silent)directoryLoaded=false;ok=await loadDirectoryFromFirebase()&&ok}if(!silent&&ok)showSyncToast('Datos actualizados desde Firebase');return ok}finally{kurroRefreshInFlight=false}
@@ -883,6 +884,7 @@ function mergeConcurrentDocument(latest,next){
  return merged;
 }
 async function writeDocument(collection,id,value,revision,retry=true){
+ if(DEMO_MODE)throw new Error('La demo no permite guardar datos reales.');
  const condition=revision?{'currentDocument.updateTime':revision}:{'currentDocument.exists':'false'};
  const response=await restFetch(documentURL(collection,id)+'?'+new URLSearchParams(condition),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:fireFields(value)})});
  if(!response.ok){
@@ -918,6 +920,7 @@ async function mergeImportedImprovementRows(importRows){const sapByOrder=new Map
 async function importSapWorkbook(file){if(!firebaseUser){showSyncToast('Inicia sesión para importar el Excel');openFirebaseAuth();return}if(typeof XLSX==='undefined'){showSyncToast('Excel todavía está cargando. Espera un momento y vuelve a intentarlo');return}try{const data=await file.arrayBuffer(),book=XLSX.read(data,{type:'array',cellDates:false}),sheet=book.Sheets[book.SheetNames[0]],matrix=XLSX.utils.sheet_to_json(sheet,{header:1,defval:''});const headers=(matrix.shift()||[]).map(v=>String(v).trim()),idx=key=>headers.indexOf(key),z=idx('Documento de compras'),supplier=idx('Acreedor'),provider=idx('Nombre del proveedor'),reference=idx('Referencia'),gross=idx('Impte.bruto factura'),posted=idx('Fecha contabiliz.'),invoice=idx('Nº documento factura MM');if([z,supplier,provider,reference,gross,posted].some(i=>i<0))throw new Error('No se han encontrado las columnas SAP necesarias.');const groups=new Map();matrix.forEach(row=>{const order=String(row[z]??'').trim();if(!/^4\d{6,}$/.test(order))return;if(!groups.has(order))groups.set(order,[]);groups.get(order).push(row)});const rows=[...groups.entries()].map(([order,items])=>{const first=items[0],refs=[...new Set(items.map(r=>String(r[reference]??'').trim()).filter(Boolean))],invoices=invoice>=0?[...new Set(items.map(r=>String(r[invoice]??'').trim()).filter(Boolean))]:[],amount=items.reduce((sum,r)=>sum+(Number(String(r[gross]??'').replace(',','.'))||0),0),notes=`Importado del export SAP; referencias de factura: ${refs.join(', ')}`+(invoices.length?`; documentos factura MM: ${invoices.join(', ')}`:'');return{id:`sapx-${order}`,name:`Factura ${refs[0]||order}`,category:sapCategory(first[provider]),status:'Finalizado',date:excelSerialDate(first[posted]),provider:String(first[provider]??'').trim(),supplierNumber:String(first[supplier]??'').trim(),orderNumber:order,amount:`${amount.toFixed(2).replace('.',',')} €`,observations:notes,source:'sap-export-importado'}});const count=await mergeImportedImprovementRows(rows);showSyncToast(`${rows.length} pedidos leídos; ${count} líneas nuevas o actualizadas`)}catch(error){showSyncToast(error.message||'No se ha podido importar el Excel')}finally{if($('improvement-sap-import'))$('improvement-sap-import').value=''}}
 function normalizeImprovementOrderDates(){let changed=false;const rows=improvementRows.map(row=>{const order=String(row.orderNumber||'').trim(),documentDate=SAP_DOCUMENT_DATES[order];if(!documentDate)return row;const next={...row};/* SAP supplies a default only for empty fields; manual dates must remain editable. */if(!String(next.date||'').trim()){next.date=documentDate;next.detectionDate=next.detectionDate||documentDate;changed=true}if(!String(next.orderDate||'').trim()){next.orderDate=documentDate;changed=true}return next});return{rows,changed}}
 async function loadRemoteData(){
+ if(DEMO_MODE)return true;
  if(!firebaseUser||editorBusy||document.querySelector('#center-editor.open,#pending-editor.open,#client-editor.open,#case-editor.open,#application-editor.open'))return false;
  if(dataLoadInFlight)return dataLoadInFlight;
  const revisionBefore=appRevision;
