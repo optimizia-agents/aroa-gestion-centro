@@ -72,20 +72,41 @@ let firebaseDb=null,firebaseAuth=null,firebaseUser=null,firebaseWriteQueue=Promi
 const DEMO_DOCUMENT={
  center:[
   {id:'demo-center-1',activity:'Revisión mensual del inventario',category:'Operaciones',frequency:'Mensual',last:'01/09/2026',next:'01/10/2026',owner:'Responsable del centro',type:'INTERNO',provider:'',action:'Comprobar diferencias y cerrar el registro.',status:'open'},
-  {id:'demo-center-2',activity:'Mantenimiento de la puerta de acceso',category:'Mantenimiento',frequency:'Anual',last:'15/02/2026',next:'15/02/2027',owner:'Mantenimiento',type:'EXTERNO',provider:'Proveedor Demo',action:'Solicitar fecha de revisión.',status:'process'}
+  {id:'demo-center-2',activity:'Mantenimiento de la puerta de acceso',category:'Mantenimiento',frequency:'Anual',last:'15/02/2026',next:'15/02/2027',owner:'Mantenimiento',type:'EXTERNO',provider:'Proveedor Demo',action:'Solicitar fecha de revisión.',status:'process'},
+  {id:'demo-center-3',activity:'Comprobación de señalización de evacuación',category:'Seguridad',frequency:'Trimestral',last:'20/09/2026',next:'20/12/2026',owner:'Equipo del centro',type:'INTERNO',provider:'',action:'Revisar carteles de salida y reponer los deteriorados.',status:'done'},
+  {id:'demo-center-4',activity:'Revisión de extintores de muestra',category:'Seguridad',frequency:'Anual',last:'12/01/2026',next:'12/01/2027',owner:'Proveedor Demo',type:'EXTERNO',provider:'Servicios Técnicos Demo',action:'Confirmar visita anual.',status:'open'},
+  {id:'demo-center-5',activity:'Checklist de apertura del almacén',category:'Operaciones',frequency:'Diario',last:'14/10/2026',next:'15/10/2026',owner:'Responsable del centro',type:'INTERNO',provider:'',action:'Completar la comprobación de apertura.',status:'process'},
+  {id:'demo-center-6',activity:'Prueba del kit de derrames',category:'Medio ambiente',frequency:'Semestral',last:'05/07/2026',next:'05/01/2027',owner:'Equipo del centro',type:'INTERNO',provider:'',action:'Verificar absorbentes y registrar reposición.',status:'done'}
  ],
  pending:[
   {id:'demo-pending-1',text:'Confirmar fecha de entrega del material',person:'Cliente Demo Norte',priority:'ALTA',status:'PENDIENTE',date:'05/10/2026',updated:'02/10/2026',comments:'Llamar después de las 10:00.'},
-  {id:'demo-pending-2',text:'Revisar propuesta de mejora',person:'Equipo del centro',priority:'NORMAL',status:'EN PROCESO',date:'10/10/2026',updated:'01/10/2026',comments:''}
+  {id:'demo-pending-2',text:'Revisar propuesta de mejora',person:'Equipo del centro',priority:'NORMAL',status:'EN PROCESO',date:'10/10/2026',updated:'01/10/2026',comments:'Comparar las dos opciones recibidas.'},
+  {id:'demo-pending-3',text:'Enviar checklist de acceso a contrata',person:'Proveedor Demo',priority:'NORMAL',status:'PENDIENTE',date:'13/10/2026',updated:'03/10/2026',comments:'Pendiente de confirmar la persona asistente.'},
+  {id:'demo-pending-4',text:'Archivar acta de revisión mensual',person:'Responsable del centro',priority:'BAJA',status:'REALIZADO',date:'30/09/2026',updated:'30/09/2026',comments:'Guardado en la carpeta de demostración.'}
  ],
  clients:[
   {id:'demo-client-1',clientNumber:'CLI-001',client:'Cliente Demo Norte',contact:'Persona de contacto',text:'Confirmar condiciones de entrega',priority:'ALTA',status:'PENDIENTE',date:'06/10/2026',updated:'02/10/2026',comments:'Seguimiento pendiente.'},
-  {id:'demo-client-2',clientNumber:'CLI-002',client:'Cliente Demo Sur',contact:'Contacto de ejemplo',text:'Enviar información solicitada',priority:'NORMAL',status:'EN PROCESO',date:'08/10/2026',updated:'01/10/2026',comments:''}
+  {id:'demo-client-2',clientNumber:'CLI-002',client:'Cliente Demo Sur',contact:'Contacto de ejemplo',text:'Enviar información solicitada',priority:'NORMAL',status:'EN PROCESO',date:'08/10/2026',updated:'01/10/2026',comments:'Preparar respuesta con la documentación disponible.'},
+  {id:'demo-client-3',clientNumber:'CLI-003',client:'Cliente Demo Centro',contact:'Lucía Ejemplo',text:'Registrar nueva solicitud',priority:'NORMAL',status:'REALIZADO',date:'01/10/2026',updated:'01/10/2026',comments:'Solicitud cerrada en la demostración.'},
+  {id:'demo-client-4',clientNumber:'CLI-004',client:'Cliente Demo Este',contact:'Mario Ficticio',text:'Llamar para confirmar la visita',priority:'BAJA',status:'PENDIENTE',date:'14/10/2026',updated:'04/10/2026',comments:''}
  ],
- cases:[{id:'demo-case-1',title:'Caso de ejemplo',status:'Abierto',priority:'Normal',owner:'Responsable del centro',description:'Registro ficticio para mostrar el seguimiento.'}],
- applications:[{id:'demo-application-1',name:'Aplicación de ejemplo',description:'Herramienta interna de muestra',status:'Activa',url:''}],
- improvements:[{id:'demo-improvement-1',name:'Mejora de organización',category:'Mejora',date:'02/10/2026',provider:'Proveedor Demo',status:'Necesidad detectada',justification:'Ejemplo de compra y mejora',action:'Pendiente de valorar',result:'',amount:'125,00 €'}],
- templates:DEFAULT_TEMPLATE_ROWS.map((row,index)=>({...row,id:`demo-${row.id}`,url:''})).slice(0,5),
+ cases:[
+  {id:'demo-case-1',title:'Caso de ejemplo: señalización',status:'Abierto',priority:'Alta',owner:'Responsable del centro',description:'Registro ficticio para mostrar el seguimiento de una acción.'},
+  {id:'demo-case-2',title:'Seguimiento de proveedor',status:'En curso',priority:'Normal',owner:'Mantenimiento',description:'Solicitar una fecha de intervención y dejar constancia.'},
+  {id:'demo-case-3',title:'Revisión de checklist',status:'Cerrado',priority:'Baja',owner:'Equipo del centro',description:'Ejemplo de caso finalizado con documentación asociada.'}
+ ],
+ applications:[
+  {id:'demo-application-1',name:'Portal de pedidos demo',description:'Herramienta ficticia para consultar pedidos.',status:'Activa',url:'https://example.com/demo/pedidos'},
+  {id:'demo-application-2',name:'Registro de visitas demo',description:'Formulario ficticio de control de accesos.',status:'Activa',url:'https://example.com/demo/visitas'},
+  {id:'demo-application-3',name:'Panel de indicadores demo',description:'Cuadro de mando de ejemplo.',status:'En revisión',url:'https://example.com/demo/indicadores'}
+ ],
+ improvements:[
+  {id:'demo-improvement-1',name:'Mejora de organización del almacén',category:'Mejora',date:'02/10/2026',provider:'Proveedor Demo',status:'Necesidad detectada',justification:'Ejemplo de compra y mejora',action:'Pendiente de valorar',result:'',amount:'125,00 €'},
+  {id:'demo-improvement-2',name:'Reposición de señalización',category:'Seguridad / cumplimiento',date:'18/09/2026',provider:'Servicios Técnicos Demo',status:'Pedido emitido',justification:'Actualizar la señalización del recorrido de evacuación.',action:'Esperar fecha de entrega.',result:'',amount:'480,00 €'},
+  {id:'demo-improvement-3',name:'Kit adicional de derrames',category:'Medio ambiente',date:'05/08/2026',provider:'Suministros Demo',status:'Finalizado',justification:'Disponer de material suficiente en la zona de carga.',action:'Material colocado y revisado.',result:'Mejora implantada.',amount:'210,00 €'},
+  {id:'demo-improvement-4',name:'Checklist digital de apertura',category:'Operaciones',date:'25/07/2026',provider:'Proveedor Demo',status:'En curso',justification:'Homogeneizar la comprobación diaria.',action:'Validar la versión final con el equipo.',result:'',amount:'75,00 €'}
+ ],
+ templates:DEFAULT_TEMPLATE_ROWS.map((row,index)=>({...row,id:`demo-${row.id}`,url:`https://example.com/demo/plantilla-${String(index+1).padStart(2,'0')}`})).slice(0,8),
  workPermits:[
   {id:'demo-permit-1',name:'Permiso de trabajo en caliente · zona de carga',url:'https://example.com/demo/permiso-trabajo-caliente'},
   {id:'demo-permit-2',name:'Permiso de trabajo en altura · revisión de cubierta',url:'https://example.com/demo/permiso-trabajo-altura'},
@@ -93,9 +114,15 @@ const DEMO_DOCUMENT={
   {id:'demo-permit-4',name:'Checklist de entrada de contratas y CAE',url:'https://example.com/demo/checklist-cae'},
   {id:'demo-permit-5',name:'Permiso de acceso a espacio confinado',url:'https://example.com/demo/espacio-confinado'}
  ],
- procedures:[{id:'demo-procedure-1',number:'DEMO-001',name:'Procedimiento de ejemplo',version:'1.0',author:'Equipo Demo',status:'Pendiente',notes:'Contenido ficticio para la demostración.',url:''}],
- lists:{category:['Operaciones','Mantenimiento','Mejora'],owner:['Responsable del centro','Mantenimiento','Equipo del centro'],provider:['Proveedor Demo'],person:['Cliente Demo Norte','Equipo del centro']},
- providerContacts:{},providerDirectory:[{name:'Proveedor Demo',supplierNumber:'SUP-001',description:'Proveedor ficticio para la demostración.'}],accessLogs:[]
+ procedures:[
+  {id:'demo-procedure-1',number:'DEMO-001',name:'Procedimiento de recepción de visitas',version:'1.0',author:'Equipo Demo',status:'Vigente',notes:'Contenido ficticio para la demostración.',url:'https://example.com/demo/procedimiento-visitas'},
+  {id:'demo-procedure-2',number:'DEMO-002',name:'Instrucción de apertura del almacén',version:'1.1',author:'Equipo Demo',status:'En revisión',notes:'Pendiente de validar con el responsable.',url:'https://example.com/demo/procedimiento-apertura'},
+  {id:'demo-procedure-3',number:'DEMO-003',name:'Actuación ante derrame accidental',version:'1.0',author:'Equipo Demo',status:'Vigente',notes:'Ejemplo de procedimiento operativo.',url:'https://example.com/demo/procedimiento-derrames'},
+  {id:'demo-procedure-4',number:'DEMO-004',name:'Coordinación de contratas',version:'0.9',author:'Equipo Demo',status:'Pendiente',notes:'Borrador ficticio para enseñar el flujo.',url:'https://example.com/demo/procedimiento-contratas'}
+ ],
+ lists:{category:['Operaciones','Mantenimiento','Mejora','Seguridad / cumplimiento','Medio ambiente'],owner:['Responsable del centro','Mantenimiento','Equipo del centro','Proveedor Demo'],provider:['Proveedor Demo','Servicios Técnicos Demo','Suministros Demo'],person:['Cliente Demo Norte','Equipo del centro','Lucía Ejemplo']},
+ providerContacts:{'Proveedor Demo':[{id:'demo-contact-1',name:'Ana Ficticia',role:'Coordinación de servicios',phone:'600 000 001',email:'ana.demo@example.com'}],'Servicios Técnicos Demo':[{id:'demo-contact-2',name:'Carlos Ejemplo',role:'Técnico de referencia',phone:'600 000 002',email:'carlos.demo@example.com'}]},
+ providerDirectory:[{name:'Proveedor Demo',supplierNumber:'SUP-001',description:'Proveedor ficticio para la demostración.'},{name:'Servicios Técnicos Demo',supplierNumber:'SUP-002',description:'Mantenimiento y revisiones de ejemplo.'},{name:'Suministros Demo',supplierNumber:'SUP-003',description:'Material y consumibles ficticios.'}],accessLogs:[]
 };
 function loadDemoData(){
  document.body.dataset.demo='true';
