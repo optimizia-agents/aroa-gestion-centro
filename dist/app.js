@@ -86,7 +86,13 @@ const DEMO_DOCUMENT={
  applications:[{id:'demo-application-1',name:'Aplicación de ejemplo',description:'Herramienta interna de muestra',status:'Activa',url:''}],
  improvements:[{id:'demo-improvement-1',name:'Mejora de organización',category:'Mejora',date:'02/10/2026',provider:'Proveedor Demo',status:'Necesidad detectada',justification:'Ejemplo de compra y mejora',action:'Pendiente de valorar',result:'',amount:'125,00 €'}],
  templates:DEFAULT_TEMPLATE_ROWS.map((row,index)=>({...row,id:`demo-${row.id}`,url:''})).slice(0,5),
- workPermits:[],
+ workPermits:[
+  {id:'demo-permit-1',name:'Permiso de trabajo en caliente · zona de carga',url:'https://example.com/demo/permiso-trabajo-caliente'},
+  {id:'demo-permit-2',name:'Permiso de trabajo en altura · revisión de cubierta',url:'https://example.com/demo/permiso-trabajo-altura'},
+  {id:'demo-permit-3',name:'Checklist de bloqueo y consignación (LOTO)',url:'https://example.com/demo/checklist-loto'},
+  {id:'demo-permit-4',name:'Checklist de entrada de contratas y CAE',url:'https://example.com/demo/checklist-cae'},
+  {id:'demo-permit-5',name:'Permiso de acceso a espacio confinado',url:'https://example.com/demo/espacio-confinado'}
+ ],
  procedures:[{id:'demo-procedure-1',number:'DEMO-001',name:'Procedimiento de ejemplo',version:'1.0',author:'Equipo Demo',status:'Pendiente',notes:'Contenido ficticio para la demostración.',url:''}],
  lists:{category:['Operaciones','Mantenimiento','Mejora'],owner:['Responsable del centro','Mantenimiento','Equipo del centro'],provider:['Proveedor Demo'],person:['Cliente Demo Norte','Equipo del centro']},
  providerContacts:{},providerDirectory:[{name:'Proveedor Demo',supplierNumber:'SUP-001',description:'Proveedor ficticio para la demostración.'}],accessLogs:[]
