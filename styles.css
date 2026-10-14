@@ -403,3 +403,9 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 #improvement-editor .modal-actions{position:static;flex-shrink:0;margin:14px 0 0;padding:14px 0 0;border-top:1px solid #d9e7e3;background:#fff}
 @media(max-width:900px){#improvement-editor .improvement-form-section-fields,#improvement-editor .improvement-form-section-fields--sap{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){#improvement-editor .improvement-modal-card{width:100%!important;max-height:calc(100vh - 24px)!important}#improvement-editor .improvement-form-grid{padding-right:2px}#improvement-editor .improvement-form-section{padding:14px}#improvement-editor .improvement-form-section-fields,#improvement-editor .improvement-form-section-fields--identity,#improvement-editor .improvement-form-section-fields--sap,#improvement-editor .improvement-document-fields,#improvement-editor .improvement-history-fields{grid-template-columns:1fr}#improvement-editor .improvement-contact-field{display:block}#improvement-editor .improvement-add-contact{margin-top:8px}}
+
+/* Contacto de proveedor: buscador y acción siempre visibles y a todo lo ancho. */
+#improvement-editor .improvement-contact-field{display:block!important}
+#improvement-editor .improvement-contact-field .contact-search-input{display:block;width:100%;min-width:0}
+#improvement-editor .improvement-contact-field .provider-contact-details{display:block;width:100%;min-height:20px;margin-top:6px}
+#improvement-editor .improvement-contact-field .improvement-add-contact{display:inline-flex;margin-top:8px;min-height:36px;white-space:nowrap}
