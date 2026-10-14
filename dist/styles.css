@@ -413,3 +413,6 @@ body[data-sync="error"] .sync-dot,body[data-sync="error"] .pulse{background:#df9
 /* Acciones de las fichas: todos los botones quedan agrupados en la misma zona. */
 .modal .modal-actions .modal-spacer{display:none}
 .modal .modal-actions{justify-content:flex-end}
+
+/* El pie de acciones queda después del contenido de la ficha, sin superponerse. */
+.modal .modal-actions{position:static!important;bottom:auto!important;margin-bottom:0!important}
