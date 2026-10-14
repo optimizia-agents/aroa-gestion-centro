@@ -1,4 +1,5 @@
-const DEMO_MODE = new URLSearchParams(window.location.search).get('demo') === '1';
+const PRESENTATION_KEY = '8f31c';
+const DEMO_MODE = new URLSearchParams(window.location.search).get('p') === PRESENTATION_KEY;
 const centerRows = [];
 const pendingRows = [];
 const directoryRows = [];
@@ -131,14 +132,14 @@ function loadDemoData(){
  $('firebase-auth-fallback')?.remove();
  const value=structuredClone(DEMO_DOCUMENT);appRevision='demo';appDocument=value;firebaseUser={email:'demo@example.com'};
  centerRows.splice(0,centerRows.length,...value.center);pendingRows.splice(0,pendingRows.length,...value.pending);clientRows.splice(0,clientRows.length,...value.clients);caseRows.splice(0,caseRows.length,...value.cases);applicationRows.splice(0,applicationRows.length,...value.applications);improvementRows.splice(0,improvementRows.length,...value.improvements);templateRows.splice(0,templateRows.length,...value.templates);workPermitRows.splice(0,workPermitRows.length,...(value.workPermits||[]));procedureRows.splice(0,procedureRows.length,...value.procedures);remoteKurroLists=structuredClone(value.lists);providerContactsByName={};providerDirectory=structuredClone(value.providerDirectory);directoryRows.splice(0,directoryRows.length);
- if($('sync-label'))$('sync-label').textContent='Demo · datos ficticios';
+ if($('sync-label'))$('sync-label').textContent='Vista de presentación · datos ficticios';
  if($('top-sync-time'))$('top-sync-time').textContent='Sin conexión a Firebase';
  if($('sync-time'))$('sync-time').textContent='Sin conexión a Firebase';
  renderCenter();renderPending();renderClients();
  try{refreshKurroPeopleOptions();refreshClientOptions();refreshKURROMetrics();renderCases();renderApplications();renderTemplates();renderWorkPermits();renderProcedures();renderProviders();renderImprovements();renderEconomicAnalysis();renderAccessLogs()}catch(error){console.warn('La demo se ha cargado con una vista parcial',error)}
  document.querySelectorAll('[data-new-center],[data-new-pending],[data-new-client],[data-new-case],[data-new-application],[data-new-improvement],[data-new-provider],[data-new-template],[data-new-work-permit],[data-new-procedure]').forEach(node=>node.remove());
  const account=$('firebase-auth-open');if(account)account.remove();
- const badge=document.createElement('span');badge.className='demo-badge';badge.textContent='DEMO · datos ficticios';document.querySelector('.top-actions')?.prepend(badge);
+ const badge=document.createElement('span');badge.className='demo-badge';badge.textContent='Vista de presentación · datos ficticios';document.querySelector('.top-actions')?.prepend(badge);
 }
 
 const $ = id => document.getElementById(id);
